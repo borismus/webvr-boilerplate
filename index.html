@@ -1,176 +1,148 @@
 <!DOCTYPE html>
 
 <html lang="en">
-	<head>
-		<title>Basic Web VR boilerplate</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<style>
-			body {
-				background-color: #000;
-				color: #fff;
-				margin: 0px;
-				padding: 0;
-				overflow: hidden;
-			}
+<head>
+<title>Web VR boilerplate (Cardboard and Oculus)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+body {
+  background-color: #000;
+  color: #fff;
+  margin: 0px;
+  padding: 0;
+  overflow: hidden;
+}
 
-      #vr {
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 64px;
-        height: 64px;
-        background-size: cover;
-        background-color: transparent;
-        border: 0;
-      }
+/**
+ * VR-related styles.
+ */
+#vr {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 64px;
+  height: 64px;
+  background-size: cover;
+  background-color: transparent;
+  border: 0;
+}
 
-      #vr.not-compatible {
-        display: none;
-      }
-      #vr.compatible {
-        background-image: url(img/vr_dark_256.png);
-      }
-      #vr.in-vr {
-        background-image: url(img/exit_dark_256.png);
-      }
-		</style>
-	</head>
+#vr.not-compatible {
+  display: none;
+}
+#vr.compatible {
+  background-image: url(img/vr_dark_256.png);
+}
+#vr.in-vr {
+  background-image: url(img/exit_dark_256.png);
+}
+</style>
+</head>
 
-	<body>
+<body>
 
-	</body>
+</body>
 
-	<!--
-	three.js 3d library
-	-->
-	<script src="js/three.min.js"></script>
+<!--
+  three.js 3d library
+  -->
+<script src="js/three.min.js"></script>
 
-  <!--
+<!--
+  VRControls.js acquires positional information from connected VR devices and applies the transformations to a three.js camera object.
+   -->
+<script src="js/VRControls.js"></script>
+
+<!--
+  VREffect.js handles stereo camera setup and rendering.
+  -->
+<script src="js/VREffect.js"></script>
+
+<!--
   A polyfill for WebVR using the Device{Motion,Orientation}Event API.
   -->
-  <script src="js/webvr-polyfill.js"></script>
+<script src="js/webvr-polyfill.js"></script>
 
-	<!--
-	VRControls.js acquires positional information from connected VR devices and applies the transformations to a three.js camera object.
-	 -->
-	<script src="js/VRControls.js"></script>
+<!--
+  vr-manager.js helps enter and exit VR mode.
+  -->
+<script src="js/vr-manager.js"></script>
 
-	<!--
-	VREffect.js handles stereo camera setup and rendering.
-	-->
-	<script src="js/VREffect.js"></script>
+<script>
+//Setup three.js WebGL renderer
+var renderer = new THREE.WebGLRenderer({ antialias: true });
 
-	<!--
-	vr-manager.js helps enter and exit VR mode.
-	-->
-	<script src="js/vr-manager.js"></script>
+// Append the canvas element created by the renderer to document body element.
+document.body.appendChild(renderer.domElement);
 
-	<script>
-		/*
-		Setup three.js WebGL renderer
-		*/
-		var renderer = new THREE.WebGLRenderer({ antialias: true });
+// Create a three.js scene
+var scene = new THREE.Scene();
 
-		/*
-		Append the canvas element created by the renderer to document body element.
-		*/
-		document.body.appendChild(renderer.domElement);
+// Create a three.js camera
+var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 
-		/*
-		Create a three.js scene
-		*/
-		var scene = new THREE.Scene();
+// Apply VR headset positional data to camera.
+var controls = new THREE.VRControls( camera );
 
-		/*
-		Create a three.js camera
-		*/
-		var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+// Apply VR stereo rendering to renderer
+var effect = new THREE.VREffect(renderer);
+effect.setSize(window.innerWidth, window.innerHeight);
 
-		/*
-		Apply VR headset positional data to camera.
-		*/
-		var controls = new THREE.VRControls( camera );
+// Create a VR manager helper to enter and exit VR mode.
+var vrManager = new VRManager(effect);
 
-		/*
-		Apply VR stereo rendering to renderer
-		*/
-		var effect = new THREE.VREffect(renderer);
-		effect.setSize(window.innerWidth, window.innerHeight);
+// Create 3d objects
+var geometry = new THREE.BoxGeometry(10, 10, 10);
+var material = new THREE.MeshNormalMaterial();
+var cube = new THREE.Mesh(geometry, material);
 
-    var vrManager = new VRManager(effect);
+// Position cube mesh
+cube.position.z = -20;
 
-		/*
-		Create 3d objects
-		*/
-		var geometry = new THREE.BoxGeometry(10, 10, 10);
-		var material = new THREE.MeshNormalMaterial();
-		var cube = new THREE.Mesh(geometry, material);
+// Add cube mesh to your three.js scene
+scene.add(cube);
 
-		/*
-		Position cube mesh
-		*/
-		cube.position.z = -20;
+// Request animation frame loop function
+function animate() {
+  // Apply rotation to cube mesh
+  cube.rotation.y += 0.01;
 
-		/*
-		Add cube mesh to your three.js scene
-		*/
-		scene.add(cube);
+  // Update VR headset position and apply to camera.
+  controls.update();
 
-		/*
-		Request animation frame loop function
-		*/
-		function animate() {
-			/*
-			Apply rotation to cube mesh
-			*/
-			cube.rotation.y += 0.01;
+  // Render the scene through the VREffect, but only if it's in VR mode.
+  if (vrManager.isVRMode()) {
+    effect.render(scene, camera);
+  } else {
+    renderer.render(scene, camera);
+  }
 
-			/*
-			Update VR headset position and apply to camera.
-			*/
-			controls.update();
+  requestAnimationFrame( animate );
+}
 
-			/*
-			Render the scene through the VREffect.
-			*/
-      if (vrManager.isVRMode()) {
-        effect.render(scene, camera);
-      } else {
-        renderer.render(scene, camera);
-      }
+// Kick off animation loop
+animate();
 
-			requestAnimationFrame( animate );
-		}
+// Listen for keyboard event and zero positional sensor on appropriate keypress.
+function onKey(event) {
+  if (event.keyCode == 90) { // z
+    controls.zeroSensor();
+  }
+};
 
-		/*
-		Kick off animation loop
-		*/
-		animate();
-
-		/*
-		Listen for keyboard event and zero positional sensor on appropriate keypress.
-		*/
-		function onKey(event) {
-	    if (event.keyCode == 90) { // z
-	    	controls.zeroSensor();
-	    }
-	  };
-
-	  window.addEventListener('keydown', onKey, true);
+window.addEventListener('keydown', onKey, true);
 
 
-		/*
-		Handle window resizes
-		*/
-		function onWindowResize() {
-			camera.aspect = window.innerWidth / window.innerHeight;
-			camera.updateProjectionMatrix();
+// Handle window resizes
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
 
-			effect.setSize( window.innerWidth, window.innerHeight );
-		}
+  effect.setSize( window.innerWidth, window.innerHeight );
+}
 
-		window.addEventListener('resize', onWindowResize, false);
+window.addEventListener('resize', onWindowResize, false);
 
-	</script>
+</script>
 </html>

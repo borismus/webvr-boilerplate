@@ -17,9 +17,8 @@
  * - Orientation lock
  * - Wake lock
  *
- * 5. Provides a way to exit VR mode:
- * - Escape key
- * - Exit button
+ * 5. To leave VR mode, you exit full-screen mode (desktop: escape, mobile:
+ * drag from top).
  */
 function VRManager(effect) {
   // Save the THREE.js effect for later.
@@ -30,11 +29,11 @@ function VRManager(effect) {
   // Check if the browser is compatible with WebVR.
   if (this.isWebVRCompatible()) {
     this.setClass('compatible');
+    // If it is, activate VR mode.
+    this.activateVR();
   } else {
     this.setClass('not-compatible');
-    return;
   }
-  this.activateVR();
 }
 
 /**
@@ -67,13 +66,13 @@ VRManager.prototype.setClass = function(className) {
  * Makes it possible to go into VR mode.
  */
 VRManager.prototype.activateVR = function() {
-  // Double click.
+  // Make it possible to enter VR via double click.
   window.addEventListener('dblclick', this.enterVR.bind(this));
-  // Double tap needs a touch handler.
+  // Or via double tap.
   window.addEventListener('touchend', this.onTouchEnd.bind(this));
-  // Clicking on the button.
-  this.vrButton.addEventListener('click', this.onClick.bind(this));
-  // Hitting the 'f' key.
+  // Or via clicking on the VR button.
+  this.vrButton.addEventListener('click', this.onButtonClick.bind(this));
+  // Or by hitting the 'f' key.
   window.addEventListener('keydown', this.onKeyDown.bind(this));
 
   // Whenever we enter fullscreen, this is tantamount to entering VR mode.
@@ -84,17 +83,17 @@ VRManager.prototype.activateVR = function() {
 };
 
 VRManager.prototype.onTouchEnd = function(e) {
+  // TODO: Implement better double tap that takes distance into account.
   // https://github.com/mckamey/doubleTap.js/blob/master/doubleTap.js
 
   var now = new Date();
-  // TODO: Implement a better double tap detector.
   if (now - this.lastTouchTime < 300) {
     this.enterVR();
   }
   this.lastTouchTime = now;
 };
 
-VRManager.prototype.onClick = function() {
+VRManager.prototype.onButtonClick = function() {
   this.toggleVRMode();
 };
 
