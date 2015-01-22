@@ -2,7 +2,7 @@
 
 <html lang="en">
 	<head>
-		<title>Basic Three.js VR boilerplate</title>
+		<title>Basic Web VR boilerplate</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -13,6 +13,27 @@
 				padding: 0;
 				overflow: hidden;
 			}
+
+      #vr {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 64px;
+        height: 64px;
+        background-size: cover;
+        background-color: transparent;
+        border: 0;
+      }
+
+      #vr.not-compatible {
+        display: none;
+      }
+      #vr.compatible {
+        background-image: url(img/vr_dark_256.png);
+      }
+      #vr.in-vr {
+        background-image: url(img/exit_dark_256.png);
+      }
 		</style>
 	</head>
 
@@ -25,6 +46,11 @@
 	-->
 	<script src="js/three.min.js"></script>
 
+  <!--
+  A polyfill for WebVR using the Device{Motion,Orientation}Event API.
+  -->
+  <script src="js/webvr-polyfill.js"></script>
+
 	<!--
 	VRControls.js acquires positional information from connected VR devices and applies the transformations to a three.js camera object.
 	 -->
@@ -35,16 +61,21 @@
 	-->
 	<script src="js/VREffect.js"></script>
 
+	<!--
+	vr-manager.js helps enter and exit VR mode.
+	-->
+	<script src="js/vr-manager.js"></script>
+
 	<script>
 		/*
 		Setup three.js WebGL renderer
 		*/
-		var renderer = new THREE.WebGLRenderer( { antialias: true } );
+		var renderer = new THREE.WebGLRenderer({ antialias: true });
 
 		/*
 		Append the canvas element created by the renderer to document body element.
 		*/
-		document.body.appendChild( renderer.domElement );
+		document.body.appendChild(renderer.domElement);
 
 		/*
 		Create a three.js scene
@@ -64,17 +95,17 @@
 		/*
 		Apply VR stereo rendering to renderer
 		*/
-		var effect = new THREE.VREffect( renderer );
-		effect.setSize( window.innerWidth, window.innerHeight );
+		var effect = new THREE.VREffect(renderer);
+		effect.setSize(window.innerWidth, window.innerHeight);
+
+    var vrManager = new VRManager(effect);
 
 		/*
 		Create 3d objects
 		*/
-		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
-
+		var geometry = new THREE.BoxGeometry(10, 10, 10);
 		var material = new THREE.MeshNormalMaterial();
-
-		var cube = new THREE.Mesh( geometry, material );
+		var cube = new THREE.Mesh(geometry, material);
 
 		/*
 		Position cube mesh
@@ -84,7 +115,7 @@
 		/*
 		Add cube mesh to your three.js scene
 		*/
-		scene.add( cube );
+		scene.add(cube);
 
 		/*
 		Request animation frame loop function
@@ -103,7 +134,11 @@
 			/*
 			Render the scene through the VREffect.
 			*/
-			effect.render( scene, camera );
+      if (vrManager.isVRMode()) {
+        effect.render(scene, camera);
+      } else {
+        renderer.render(scene, camera);
+      }
 
 			requestAnimationFrame( animate );
 		}
@@ -114,24 +149,15 @@
 		animate();
 
 		/*
-		Listen for double click event to enter full-screen VR mode
-		*/
-		document.body.addEventListener( 'dblclick', function() {
-			effect.setFullScreen( true );
-		});
-
-		/*
 		Listen for keyboard event and zero positional sensor on appropriate keypress.
 		*/
-		function onkey(event) {
-	    event.preventDefault();
-
+		function onKey(event) {
 	    if (event.keyCode == 90) { // z
 	    	controls.zeroSensor();
 	    }
 	  };
 
-	  window.addEventListener("keydown", onkey, true);
+	  window.addEventListener('keydown', onKey, true);
 
 
 		/*
@@ -144,7 +170,7 @@
 			effect.setSize( window.innerWidth, window.innerHeight );
 		}
 
-		window.addEventListener( 'resize', onWindowResize, false );
+		window.addEventListener('resize', onWindowResize, false);
 
 	</script>
 </html>
