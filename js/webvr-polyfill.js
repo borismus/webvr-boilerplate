@@ -117,7 +117,7 @@ HMDVRDevice.prototype.getEyeTranslation = function(whichEye) {
 
 
 /**
- * The positional sensor, implemented using web Device* APIs.
+ * The positional sensor, implemented using web DeviceOrientation APIs.
  */
 function PositionSensorVRDevice() {
   // Subscribe to deviceorientation events.
@@ -179,6 +179,16 @@ PositionSensorVRDevice.prototype.getOrientation = function() {
 
   return this.finalQuaternion;
 };
+
+
+/**
+ * Another virtual position sensor, this time implemented using keyboard and
+ * mouse APIs. This is designed as for desktops/laptops where no Device*
+ * events work.
+ */
+function MouseKeyboardPositionSensorVRDevice() {
+  // TODO: implement me!
+}
 
 
 new WebVRPolyfill();

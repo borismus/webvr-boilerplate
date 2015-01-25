@@ -1,5 +1,5 @@
 /**
- * Helper for getting in and out of VR mode.
+ * Helper for getting in and out of VR mode. VR mode == full screen mode.
  *
  * 1. Detects whether or not VR mode is possible by feature detecting for
  * WebVR (or polyfill).
@@ -9,13 +9,13 @@
  * - Double tap
  * - Click "Enter VR" button
  *
- * 3. If WebVR is not available, shows how to get a VR compatible browser.
+ * 3. TODO: If WebVR is not available, shows how to get a VR compatible browser.
  * - Oculus (FF Nightly, Chrome+VR), Cardboard (Chrome, Safari).
  *
  * 4. Provides best practices while in VR mode.
  * - Full screen
- * - Orientation lock
  * - Wake lock
+ * - Orientation lock (mobile only)
  *
  * 5. To leave VR mode, you exit full-screen mode (desktop: escape, mobile:
  * drag from top).
@@ -34,6 +34,8 @@ function VRManager(effect) {
   } else {
     this.setClass('not-compatible');
   }
+
+  this.os = this.getOS();
 }
 
 /**
@@ -80,6 +82,26 @@ VRManager.prototype.activateVR = function() {
       this.onFullscreenChange.bind(this));
   document.addEventListener('mozfullscreenchange',
       this.onFullscreenChange.bind(this));
+
+  this.setupWakeLock();
+};
+
+VRManager.prototype.setupWakeLock = function() {
+  // Create a small video element.
+  this.wakeLockVideo = document.createElement('video');
+
+  // Loop the video.
+  this.wakeLockVideo.addEventListener('ended', function(ev) {
+    this.wakeLockVideo.play();
+  }.bind(this));
+
+  // Turn on wake lock as soon as the screen is tapped.
+  var triggerWakeLock = function() {
+    console.log('Requesting wake lock due to user input.');
+    this.requestWakeLock();
+    window.removeEventListener('touchstart', triggerWakeLock, false);
+  }.bind(this);
+  window.addEventListener('touchstart', triggerWakeLock, false);
 };
 
 VRManager.prototype.onTouchEnd = function(e) {
@@ -121,10 +143,57 @@ VRManager.prototype.onFullscreenChange = function(e) {
     // Set style on button.
     this.setClass('in-vr');
   } else {
+    // Unlock orientation.
     screen.orientation.unlock();
+    // Relinquish wake lock.
+    this.releaseWakeLock();
+    // Go back to compatible mode.
     this.setClass('compatible');
   }
+};
 
+/**
+ * Add cross-browser functionality to keep a mobile device from
+ * auto-locking.
+ */
+VRManager.prototype.requestWakeLock = function() {
+  if (this.os == 'iOS') {
+    this.releaseWakeLock();
+    this.wakeLockTimer = setInterval(function() {
+      window.location = window.location;
+      setTimeout(window.stop, 0);
+    }, 30000);
+  } else if (this.os == 'Android') {
+    this.wakeLockVideo.src = 'videos/no-sleep.webm';
+    this.wakeLockVideo.play();
+  }
+
+}
+
+/**
+ * Turn off cross-browser functionality to keep a mobile device from
+ * auto-locking.
+ */
+VRManager.prototype.releaseWakeLock = function() {
+  if (this.os == 'iOS') {
+    if (this.wakeLockTimer) {
+      clearInterval(this.wakeLockTimer);
+      this.wakeLockTimer = null;
+    }
+  } else if (this.os == 'Android') {
+    this.wakeLockVideo.pause();
+    this.wakeLockVideo.src = '';
+  }
+}
+
+VRManager.prototype.getOS = function(osName) {
+  var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  if (userAgent.match(/iPhone/i) || userAgent.match(/iPod/i)) {
+    return 'iOS';
+  } else if (userAgent.match(/Android/i)) {
+    return 'Android';
+  }
+  return 'unknown';
 };
 
 VRManager.prototype.enterVR = function() {
