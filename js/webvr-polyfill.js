@@ -28,7 +28,9 @@ var DEFAULT_MAX_FOV_BOTTOM = 40;
 var DEFAULT_MAX_FOV_TOP = 40;
 
 // How much to rotate per key stroke.
-var KEY_SPEED = 0.05;
+var KEY_SPEED = 0.15;
+var KEY_ANIMATION_DURATION = 80;
+
 // How much to rotate for mouse events.
 var MOUSE_SPEED_X = 0.5;
 var MOUSE_SPEED_Y = 0.3;
@@ -43,7 +45,7 @@ function WebVRPolyfill() {
 
   // Initialize our virtual VR devices.
   if (this.isCardboardCompatible()) {
-    this.devices.push(new HMDVRDevice());
+    this.devices.push(new CardboardHMDVRDevice());
   }
 
   // Polyfill using the right position sensor.
@@ -56,7 +58,7 @@ function WebVRPolyfill() {
   // Provide navigator.getVRDevices.
   navigator.getVRDevices = this.getVRDevices.bind(this);
 
-  // Provide the HMDVRDevice and PositionSensorVRDevice objects.
+  // Provide the CardboardHMDVRDevice and PositionSensorVRDevice objects.
   window.HMDVRDevice = HMDVRDevice;
   window.PositionSensorVRDevice = PositionSensorVRDevice;
 }
@@ -89,13 +91,28 @@ WebVRPolyfill.prototype.isCardboardCompatible = function() {
  * The base class for all VR devices.
  */
 function VRDevice() {
-  this.hardwareUnitId = 'cardboard';
+  this.hardwareUnitId = 'polyfill';
 }
+
+/**
+ * The base class for all VR HMD devices.
+ */
+function HMDVRDevice() {
+}
+HMDVRDevice.prototype = new VRDevice();
+
+/**
+ * The base class for all VR position sensor devices.
+ */
+function PositionSensorVRDevice() {
+}
+PositionSensorVRDevice.prototype = new VRDevice();
+
 
 /**
  * The HMD itself, providing rendering parameters.
  */
-function HMDVRDevice() {
+function CardboardHMDVRDevice() {
   // Set display constants.
   this.eyeTranslationLeft = {
     x: INTERPUPILLARY_DISTANCE * -0.5,
@@ -116,30 +133,19 @@ function HMDVRDevice() {
     rightDegrees: DEFAULT_MAX_FOV_LEFT_RIGHT
   };
 }
-HMDVRDevice.prototype = new VRDevice();
+CardboardHMDVRDevice.prototype = new HMDVRDevice();
 
-HMDVRDevice.prototype.getRecommendedEyeFieldOfView = function(whichEye) {
+CardboardHMDVRDevice.prototype.getRecommendedEyeFieldOfView = function(whichEye) {
   return this.recommendedFOV;
 };
 
-HMDVRDevice.prototype.getEyeTranslation = function(whichEye) {
+CardboardHMDVRDevice.prototype.getEyeTranslation = function(whichEye) {
   if (whichEye == 'left') {
     return this.eyeTranslationLeft;
   }
   if (whichEye == 'right') {
     return this.eyeTranslationRight;
   }
-};
-
-
-/**
- * The base class for all VR position sensor devices.
- */
-function PositionSensorVRDevice() {
-}
-PositionSensorVRDevice.prototype = new VRDevice();
-
-PositionSensorVRDevice.prototype.getState = function() {
 };
 
 
@@ -248,7 +254,10 @@ function MouseKeyboardPositionSensorVRDevice() {
   this.phi = 0;
   this.theta = 0;
 
-  // Variables for keyboard-based rotation.
+  // Variables for keyboard-based rotation animation.
+  this.targetAngle = null;
+
+  // State variables for calculations.
   this.euler = new THREE.Euler();
   this.orientation = new THREE.Quaternion();
 
@@ -261,7 +270,7 @@ MouseKeyboardPositionSensorVRDevice.prototype = new PositionSensorVRDevice();
 
 /**
  * Returns {orientation: {x,y,z,w}, position: null}.
- * Position is not supported since we can't do 6DOF.
+ * Position is not supported for parity with other PositionSensors.
  */
 MouseKeyboardPositionSensorVRDevice.prototype.getState = function() {
   this.euler.set(this.phi, this.theta, 0, 'YXZ');
@@ -273,18 +282,50 @@ MouseKeyboardPositionSensorVRDevice.prototype.getState = function() {
   }
 };
 
-// TODO(smus): Transition the camera, rather than making it jump.
 MouseKeyboardPositionSensorVRDevice.prototype.onKeyDown_ = function(e) {
   // Track WASD and arrow keys.
   if (e.keyCode == 38 || e.keyCode == 87) { // W or Up key.
-    this.phi += KEY_SPEED;
+    this.animatePhi_(this.phi + KEY_SPEED);
   } else if (e.keyCode == 39 || e.keyCode == 68) { // D or Right key.
-    this.theta += -KEY_SPEED;
+    this.animateTheta_(this.theta - KEY_SPEED);
   } else if (e.keyCode == 40 || e.keyCode == 83) { // S or Down key.
-    this.phi += -KEY_SPEED;
+    this.animatePhi_(this.phi - KEY_SPEED);
   } else if (e.keyCode == 37 || e.keyCode == 65) { // A or Left key.
-    this.theta += KEY_SPEED;
+    this.animateTheta_(this.theta + KEY_SPEED);
   }
+};
+
+MouseKeyboardPositionSensorVRDevice.prototype.animateTheta_ = function(targetAngle) {
+  this.animateKeyTransitions_('theta', targetAngle);
+};
+
+MouseKeyboardPositionSensorVRDevice.prototype.animatePhi_ = function(targetAngle) {
+  this.animateKeyTransitions_('phi', targetAngle);
+};
+
+/**
+ * Start an animation to transition an angle from one value to another.
+ */
+MouseKeyboardPositionSensorVRDevice.prototype.animateKeyTransitions_ = function(angleName, targetAngle) {
+  // If an animation is currently running, cancel it.
+  if (this.angleAnimation) {
+    clearInterval(this.angleAnimation);
+  }
+  var startAngle = this[angleName];
+  var startTime = new Date();
+  // Set up an interval timer to perform the animation.
+  this.angleAnimation = setInterval(function() {
+    // Once we're finished the animation, we're done.
+    var elapsed = new Date() - startTime;
+    if (elapsed >= KEY_ANIMATION_DURATION) {
+      this[angleName] = targetAngle;
+      clearInterval(this.angleAnimation);
+      return;
+    }
+    // Linearly interpolate the angle some amount.
+    var percent = elapsed / KEY_ANIMATION_DURATION;
+    this[angleName] = startAngle + (targetAngle - startAngle) * percent;
+  }.bind(this), 1000/60);
 };
 
 MouseKeyboardPositionSensorVRDevice.prototype.onMouseDown_ = function(e) {

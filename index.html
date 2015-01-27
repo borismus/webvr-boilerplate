@@ -41,9 +41,9 @@ body {
 <script src="js/webvr-polyfill.js"></script>
 
 <!--
-  vr-manager.js helps enter and exit VR mode.
+  Helps enter and exit VR mode, provides best practices while in VR.
   -->
-<script src="js/vr-manager.js"></script>
+<script src="js/webvr-manager.js"></script>
 
 <script>
 //Setup three.js WebGL renderer
@@ -66,7 +66,7 @@ var effect = new THREE.VREffect(renderer);
 effect.setSize(window.innerWidth, window.innerHeight);
 
 // Create a VR manager helper to enter and exit VR mode.
-var vrManager = new VRManager(effect);
+var vrmgr = new WebVRManager(effect);
 
 // Create 3d objects
 var geometry = new THREE.BoxGeometry(10, 10, 10);
@@ -88,7 +88,7 @@ function animate() {
   controls.update();
 
   // Render the scene through the VREffect, but only if it's in VR mode.
-  if (vrManager.isVRMode()) {
+  if (vrmgr.isVRMode()) {
     effect.render(scene, camera);
   } else {
     renderer.render(scene, camera);
