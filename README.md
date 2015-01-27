@@ -7,7 +7,7 @@ experiencing the same content without requiring a VR device.
 
 # Features
 
-WebVR polyfill:
+## WebVR polyfill:
 
 - Provides an CardboardHMDVRDevice with the correct parameters
   for Cardboard rendering.
@@ -18,7 +18,7 @@ WebVR polyfill:
 - Feature detects (and UA sniffs) to determine which of the above to
   inject into the page.
 
-WebVR manager:
+## WebVR manager:
 
 - Feature detects for WebVR (or the polyfill).
 - If WebVR is available, places a generic button in the top right
@@ -33,12 +33,15 @@ WebVR manager:
 
 1. Include webvr-polyfill.js in your project.
 2. Include webvr-manager.js and instantiate a WebVRManager object,
-   passing in your VREffect instance as first argument:
+   passing in your VREffect instance as first argument.
+
+For example,
 
     var effect = new THREE.VREffect(renderer);
     var mgr = new WebVRManager(effect);
 
-The index.html file should be well commented and self-explanatory.
+For more information, see index.html, which should be well commented and
+self-explanatory.
 
 # Related projects
 
