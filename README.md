@@ -7,7 +7,7 @@ experiencing the same content without requiring a VR device.
 
 # Features
 
-### WebVR polyfill:
+**WebVR polyfill**
 
 - Provides an CardboardHMDVRDevice with the correct parameters
   for Cardboard rendering.
@@ -18,7 +18,7 @@ experiencing the same content without requiring a VR device.
 - Feature detects (and UA sniffs) to determine which of the above to
   inject into the page.
 
-### WebVR manager:
+**WebVR manager**
 
 - Feature detects for WebVR (or the polyfill).
 - If WebVR is available, places a generic button in the top right
