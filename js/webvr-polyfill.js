@@ -132,13 +132,14 @@ HMDVRDevice.prototype.getEyeTranslation = function(whichEye) {
 };
 
 
+/**
+ * The base class for all VR position sensor devices.
+ */
 function PositionSensorVRDevice() {
-  console.error('Implement me!');
 }
 PositionSensorVRDevice.prototype = new VRDevice();
 
 PositionSensorVRDevice.prototype.getState = function() {
-  console.error('Implement me!');
 };
 
 
