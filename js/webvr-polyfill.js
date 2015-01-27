@@ -27,19 +27,31 @@ var DEFAULT_MAX_FOV_LEFT_RIGHT = 40;
 var DEFAULT_MAX_FOV_BOTTOM = 40;
 var DEFAULT_MAX_FOV_TOP = 40;
 
+// How much to rotate per key stroke.
+var KEY_SPEED = 0.05;
+// How much to rotate for mouse events.
+var MOUSE_SPEED_X = 0.5;
+var MOUSE_SPEED_Y = 0.3;
+
 function WebVRPolyfill() {
+  this.devices = [];
+
   // Feature detect for existing WebVR API.
   if (navigator.getVRDevices) {
     return;
   }
 
-  // Check if we are a device that can be polyfilled.
-  if (!this.isCompatibleDevice()) {
-    return;
+  // Initialize our virtual VR devices.
+  if (this.isCardboardCompatible()) {
+    this.devices.push(new HMDVRDevice());
   }
 
-  // Initialize our virtual VR devices.
-  this.devices = [new HMDVRDevice(), new PositionSensorVRDevice()];
+  // Polyfill using the right position sensor.
+  if (this.isMobile()) {
+    this.devices.push(new GyroPositionSensorVRDevice());
+  } else {
+    this.devices.push(new MouseKeyboardPositionSensorVRDevice());
+  }
 
   // Provide navigator.getVRDevices.
   navigator.getVRDevices = this.getVRDevices.bind(this);
@@ -61,12 +73,16 @@ WebVRPolyfill.prototype.getVRDevices = function() {
 };
 
 /**
- * Determine if a device is Cardboard-compatible.
+ * Determine if a device is mobile.
  */
-WebVRPolyfill.prototype.isCompatibleDevice = function() {
-  // For now, support all iOS and Android devices.
+WebVRPolyfill.prototype.isMobile = function() {
   return /Android/i.test(navigator.userAgent) ||
       /iPhone|iPad|iPod/i.test(navigator.userAgent);;
+};
+
+WebVRPolyfill.prototype.isCardboardCompatible = function() {
+  // For now, support all iOS and Android devices.
+  return this.isMobile();
 };
 
 /**
@@ -116,10 +132,20 @@ HMDVRDevice.prototype.getEyeTranslation = function(whichEye) {
 };
 
 
+function PositionSensorVRDevice() {
+  console.error('Implement me!');
+}
+PositionSensorVRDevice.prototype = new VRDevice();
+
+PositionSensorVRDevice.prototype.getState = function() {
+  console.error('Implement me!');
+};
+
+
 /**
  * The positional sensor, implemented using web DeviceOrientation APIs.
  */
-function PositionSensorVRDevice() {
+function GyroPositionSensorVRDevice() {
   // Subscribe to deviceorientation events.
   window.addEventListener('deviceorientation', this.onDeviceOrientationChange.bind(this));
   window.addEventListener('orientationchange', this.onScreenOrientationChange.bind(this));
@@ -132,45 +158,70 @@ function PositionSensorVRDevice() {
   this.screenTransform = new THREE.Quaternion();
   // -PI/2 around the x-axis.
   this.worldTransform = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
+
+  // TODO: Try with DeviceMotionEvent, remove it if it fails.
+  // Is devicemotion any better?
+  window.addEventListener('devicemotion', this.onDeviceMotionChange.bind(this));
+  this.totalRotation = {alpha: 0, beta: 0, gamma: 0};
 }
-PositionSensorVRDevice.prototype = new VRDevice();
+GyroPositionSensorVRDevice.prototype = new PositionSensorVRDevice();
 
 /**
  * Returns {orientation: {x,y,z,w}, position: null}.
  * Position is not supported since we can't do 6DOF.
  */
-PositionSensorVRDevice.prototype.getState = function() {
+GyroPositionSensorVRDevice.prototype.getState = function() {
   return {
     orientation: this.getOrientation(),
     position: null
   }
 };
 
-PositionSensorVRDevice.prototype.onDeviceOrientationChange =
+GyroPositionSensorVRDevice.prototype.onDeviceOrientationChange =
     function(deviceOrientation) {
   this.deviceOrientation = deviceOrientation;
 };
 
-PositionSensorVRDevice.prototype.onScreenOrientationChange =
+GyroPositionSensorVRDevice.prototype.onScreenOrientationChange =
     function(screenOrientation) {
   this.screenOrientation = window.orientation;
 };
 
-PositionSensorVRDevice.prototype.getOrientation = function() {
+GyroPositionSensorVRDevice.prototype.onDeviceMotionChange =
+    function(deviceMotion) {
+  var rotationRate = deviceMotion.rotationRate;
+  // Rotation around the y-axis.
+  this.totalRotation.alpha += rotationRate.alpha;
+  // Rotation around the z-axis.
+  this.totalRotation.beta += rotationRate.beta;
+  // Rotation around the x-axis.
+  this.totalRotation.gamma += rotationRate.gamma;
+};
+
+GyroPositionSensorVRDevice.prototype.getOrientation = function() {
   if (this.deviceOrientation == null) {
     return null;
   }
+  /*
+  // Rotation around the z-axis.
+  var alpha = THREE.Math.degToRad(this.totalRotation.alpha);
+  // Front-to-back (in portrait) rotation (x-axis).
+  var beta = THREE.Math.degToRad(-this.totalRotation.gamma);
+  // Left to right (in portrait) rotation (y-axis).
+  var gamma = THREE.Math.degToRad(this.totalRotation.beta);
+  */
+
   // Rotation around the z-axis.
   var alpha = THREE.Math.degToRad(this.deviceOrientation.alpha);
-  // Front-to-back (in portrait) rotation.
+  // Front-to-back (in portrait) rotation (x-axis).
   var beta = THREE.Math.degToRad(this.deviceOrientation.beta);
-  // Left to right (in portrait) rotation.
+  // Left to right (in portrait) rotation (y-axis).
   var gamma = THREE.Math.degToRad(this.deviceOrientation.gamma);
   var orient = THREE.Math.degToRad(this.screenOrientation);
 
   // Use three.js to convert to quaternion. Lifted from
   // https://github.com/richtr/threeVR/blob/master/js/DeviceOrientationController.js
-  this.deviceEuler.set(beta, alpha, - gamma, 'YXZ');
+  this.deviceEuler.set(beta, alpha, -gamma, 'YXZ');
   this.finalQuaternion.setFromEuler(this.deviceEuler);
   this.minusHalfAngle = -orient / 2;
   this.screenTransform.set(0, Math.sin(this.minusHalfAngle), 0, Math.cos(this.minusHalfAngle));
@@ -187,8 +238,78 @@ PositionSensorVRDevice.prototype.getOrientation = function() {
  * events work.
  */
 function MouseKeyboardPositionSensorVRDevice() {
-  // TODO: implement me!
+  // Attach to mouse and keyboard events.
+  window.addEventListener('keydown', this.onKeyDown_.bind(this));
+  window.addEventListener('mousemove', this.onMouseMove_.bind(this));
+  window.addEventListener('mousedown', this.onMouseDown_.bind(this));
+  window.addEventListener('mouseup', this.onMouseUp_.bind(this));
+
+  this.phi = 0;
+  this.theta = 0;
+
+  // Variables for keyboard-based rotation.
+  this.euler = new THREE.Euler();
+  this.orientation = new THREE.Quaternion();
+
+  // Variables for mouse-based rotation.
+  this.rotateStart = new THREE.Vector2();
+  this.rotateEnd = new THREE.Vector2();
+  this.rotateDelta = new THREE.Vector2();
 }
+MouseKeyboardPositionSensorVRDevice.prototype = new PositionSensorVRDevice();
+
+/**
+ * Returns {orientation: {x,y,z,w}, position: null}.
+ * Position is not supported since we can't do 6DOF.
+ */
+MouseKeyboardPositionSensorVRDevice.prototype.getState = function() {
+  this.euler.set(this.phi, this.theta, 0, 'YXZ');
+  this.orientation.setFromEuler(this.euler);
+
+  return {
+    orientation: this.orientation,
+    position: null
+  }
+};
+
+// TODO(smus): Transition the camera, rather than making it jump.
+MouseKeyboardPositionSensorVRDevice.prototype.onKeyDown_ = function(e) {
+  // Track WASD and arrow keys.
+  if (e.keyCode == 38 || e.keyCode == 87) { // W or Up key.
+    this.phi += KEY_SPEED;
+  } else if (e.keyCode == 39 || e.keyCode == 68) { // D or Right key.
+    this.theta += -KEY_SPEED;
+  } else if (e.keyCode == 40 || e.keyCode == 83) { // S or Down key.
+    this.phi += -KEY_SPEED;
+  } else if (e.keyCode == 37 || e.keyCode == 65) { // A or Left key.
+    this.theta += KEY_SPEED;
+  }
+};
+
+MouseKeyboardPositionSensorVRDevice.prototype.onMouseDown_ = function(e) {
+  this.rotateStart.set(e.clientX, e.clientY);
+  this.isDragging = true;
+};
+
+// Very similar to https://gist.github.com/mrflix/8351020
+MouseKeyboardPositionSensorVRDevice.prototype.onMouseMove_ = function(e) {
+  if (!this.isDragging) {
+    return;
+  }
+  this.rotateEnd.set(e.clientX, e.clientY);
+  // Calculate how much we moved in mouse space.
+  this.rotateDelta.subVectors(this.rotateEnd, this.rotateStart);
+  this.rotateStart.copy(this.rotateEnd);
+
+  // Keep track of the cumulative euler angles.
+  var element = document.body;
+  this.phi += 2 * Math.PI * this.rotateDelta.y / element.clientHeight * MOUSE_SPEED_Y;
+  this.theta += 2 * Math.PI * this.rotateDelta.x / element.clientWidth * MOUSE_SPEED_X;
+};
+
+MouseKeyboardPositionSensorVRDevice.prototype.onMouseUp_ = function(e) {
+  this.isDragging = false;
+};
 
 
 new WebVRPolyfill();
