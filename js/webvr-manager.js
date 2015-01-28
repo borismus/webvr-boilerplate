@@ -1,5 +1,23 @@
+/*
+ * Copyright 2015 Boris Smus. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+
 /**
- * Helper for getting in and out of VR mode. VR mode == full screen mode.
+ * Helper for getting in and out of VR mode.
+ * Here we assume VR mode == full screen mode.
  *
  * 1. Detects whether or not VR mode is possible by feature detecting for
  * WebVR (or polyfill).
@@ -14,6 +32,8 @@
  * - Wake lock
  * - Orientation lock (mobile only)
  */
+(function() {
+
 function WebVRManager(effect) {
   // Save the THREE.js effect for later.
   this.effect = effect;
@@ -255,3 +275,8 @@ WebVRManager.prototype.enterVR = function() {
 WebVRManager.prototype.exitVR = function() {
   this.effect.setFullScreen(false);
 };
+
+// Expose the WebVRManager class globally.
+window.WebVRManager = WebVRManager;
+
+})();
