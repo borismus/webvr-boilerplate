@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Fetch the latest versions of three.js, VRControls and VREffect from the
+# three.js repository.
 
 curl -o js/VRControls.js https://raw.githubusercontent.com/mrdoob/three.js/master/examples/js/controls/VRControls.js
 curl -o js/VREffect.js https://raw.githubusercontent.com/mrdoob/three.js/master/examples/js/effects/VREffect.js
