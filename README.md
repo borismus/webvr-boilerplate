@@ -4,19 +4,33 @@ A starting point for web-based VR experiences that work well in both
 Google Cardboard and Oculus Rift. Also provides a good fallback for
 experiencing the same content without requiring a VR device.
 
+Uses the [webvr-polyfill project][polyfill] to provide VR support even
+if no VR device is available. This gives good fallbacks for Cardboard,
+mobile devices and desktop devices.
 
-# Features
+[polyfill]: https://github.com/borismus/webvr-polyfill
+
+# What's inside...
+
+**THREE.js** `three.min.js`
+
+- WebGL helper library that greatly simplifies 3D graphics.
+
+**VRControls** `VRControls.js`
+
+- THREE.js controls which take advantage of the WebVR API.
+- Usually attached to the THREE.Camera to look around the scene.
+
+**VREffect** `VREffect.js`
+
+- THREE.js effect which renders a scene with two cameras in it.
+- Puts the two images side-by-side.
 
 **WebVR polyfill** `webvr-polyfill.js`
 
-- Provides an CardboardHMDVRDevice with the correct parameters
-  for Cardboard rendering.
-- On mobile, provides a virtual GyroPositionSensorVRDevice, which tracks
-  using DeviceOrientationEvent.
-- On desktop, provides a virtual MouseKeyboardPositionSensorVRDevice,
-  which uses mouse and arrow keys to look around the scene.
-- Feature detects (and UA sniffs) to determine which of the above to
-  inject into the page.
+- For Cardboard rendering.
+- On mobile, supports rotation via DeviceOrientation.
+- On desktop, supports looking with the mouse or with arrow keys.
 
 **WebVR manager** `webvr-manager.js`
 
@@ -46,6 +60,7 @@ self-explanatory.
 
 # Related projects
 
+- WebVR Polyfill: <https://github.com/borismus/webvr-polyfill>
 - A yeoman-based getting started template: <https://github.com/dmarcos/vrwebgl>
 - LEAP's VR quickstart: <https://github.com/leapmotion-examples/javascript/blob/master/v2/vr-quickstart/index.html>
 - A WebVR Polyfill that is unfortunately incomplete: <https://github.com/thomasfoster96/WebVR-polyfill>
