@@ -12,27 +12,27 @@ mobile devices and desktop devices.
 
 # What's inside...
 
-**THREE.js** `three.min.js`
+[**THREE.js** `three.min.js`](http://threejs.org/)
 
 - WebGL helper library that greatly simplifies 3D graphics.
 
-**VRControls** `VRControls.js`
+[**VRControls** `VRControls.js`](https://github.com/mrdoob/three.js/blob/master/examples/js/controls/VRControls.js)
 
 - THREE.js controls which take advantage of the WebVR API.
 - Usually attached to the THREE.Camera to look around the scene.
 
-**VREffect** `VREffect.js`
+[**VREffect** `VREffect.js`](https://github.com/mrdoob/three.js/blob/master/examples/js/effects/VREffect.js)
 
 - THREE.js effect which renders a scene with two cameras in it.
 - Puts the two images side-by-side.
 
-**WebVR polyfill** `webvr-polyfill.js`
+[**WebVR polyfill** `webvr-polyfill.js`](https://github.com/borismus/webvr-polyfill)
 
 - For Cardboard rendering.
 - On mobile, supports rotation via DeviceOrientation.
 - On desktop, supports looking with the mouse or with arrow keys.
 
-**WebVR manager** `webvr-manager.js`
+**WebVR manager** `webvr-manager.js` (lives in this repository)
 
 - Feature detects for WebVR (or the polyfill).
 - If WebVR is available, places a generic button in the top right
