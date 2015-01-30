@@ -33,7 +33,8 @@ experiencing the same content without requiring a VR device.
 
 1. Include webvr-polyfill.js in your project.
 2. Include webvr-manager.js and instantiate a WebVRManager object,
-   passing in your VREffect instance as first argument.
+   passing in your VREffect instance (from the THREE.js effect library)
+   as first argument.
 
 For example,
 

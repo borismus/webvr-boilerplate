@@ -182,11 +182,6 @@ function GyroPositionSensorVRDevice() {
   this.screenTransform = new THREE.Quaternion();
   // -PI/2 around the x-axis.
   this.worldTransform = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
-
-  // TODO: Try with DeviceMotionEvent, remove it if it fails.
-  // Is devicemotion any better?
-  window.addEventListener('devicemotion', this.onDeviceMotionChange.bind(this));
-  this.totalRotation = {alpha: 0, beta: 0, gamma: 0};
 }
 GyroPositionSensorVRDevice.prototype = new PositionSensorVRDevice();
 
@@ -211,29 +206,10 @@ GyroPositionSensorVRDevice.prototype.onScreenOrientationChange =
   this.screenOrientation = window.orientation;
 };
 
-GyroPositionSensorVRDevice.prototype.onDeviceMotionChange =
-    function(deviceMotion) {
-  var rotationRate = deviceMotion.rotationRate;
-  // Rotation around the y-axis.
-  this.totalRotation.alpha += rotationRate.alpha;
-  // Rotation around the z-axis.
-  this.totalRotation.beta += rotationRate.beta;
-  // Rotation around the x-axis.
-  this.totalRotation.gamma += rotationRate.gamma;
-};
-
 GyroPositionSensorVRDevice.prototype.getOrientation = function() {
   if (this.deviceOrientation == null) {
     return null;
   }
-  /*
-  // Rotation around the z-axis.
-  var alpha = THREE.Math.degToRad(this.totalRotation.alpha);
-  // Front-to-back (in portrait) rotation (x-axis).
-  var beta = THREE.Math.degToRad(-this.totalRotation.gamma);
-  // Left to right (in portrait) rotation (y-axis).
-  var gamma = THREE.Math.degToRad(this.totalRotation.beta);
-  */
 
   // Rotation around the z-axis.
   var alpha = THREE.Math.degToRad(this.deviceOrientation.alpha);
