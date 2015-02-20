@@ -295,6 +295,8 @@ MouseKeyboardPositionSensorVRDevice.prototype.animateTheta_ = function(targetAng
 };
 
 MouseKeyboardPositionSensorVRDevice.prototype.animatePhi_ = function(targetAngle) {
+  // Clamp phi to be in [-Math.PI, Math.PI].
+  targetAngle = this.clamp_(targetAngle, -Math.PI, Math.PI);
   this.animateKeyTransitions_('phi', targetAngle);
 };
 
@@ -342,10 +344,17 @@ MouseKeyboardPositionSensorVRDevice.prototype.onMouseMove_ = function(e) {
   var element = document.body;
   this.phi += 2 * Math.PI * this.rotateDelta.y / element.clientHeight * MOUSE_SPEED_Y;
   this.theta += 2 * Math.PI * this.rotateDelta.x / element.clientWidth * MOUSE_SPEED_X;
+
+  // Clamp phi to be in [-Math.PI, Math.PI].
+  this.phi = this.clamp_(this.phi, -Math.PI, Math.PI);
 };
 
 MouseKeyboardPositionSensorVRDevice.prototype.onMouseUp_ = function(e) {
   this.isDragging = false;
+};
+
+MouseKeyboardPositionSensorVRDevice.prototype.clamp_ = function(value, min, max) {
+  return Math.min(Math.max(min, value), max);
 };
 
 module.exports = MouseKeyboardPositionSensorVRDevice;
