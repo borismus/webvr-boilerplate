@@ -120,8 +120,12 @@ WebVRManager.prototype.createVRButton = function() {
   s.border = 0;
   s.userSelect = 'none';
   s.webkitUserSelect = 'none';
-  s.mozUserSelect = 'none';
+  s.MozUserSelect = 'none';
+  // Prevent button from being dragged.
   button.draggable = false;
+  button.addEventListener('dragstart', function(e) {
+    e.preventDefault();
+  });
   document.body.appendChild(button);
   return button;
 };

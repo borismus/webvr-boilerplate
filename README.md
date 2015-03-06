@@ -35,13 +35,15 @@ mobile devices and desktop devices.
 **WebVR manager** `webvr-manager.js` (lives in this repository)
 
 - Feature detects for WebVR (or the polyfill).
-- If WebVR is available, places a generic button in the top right
-  corner, which, when clicked, takes you to VR mode.
+- If WebVR is available, places an active WebVR button on the bottom.
 - Other means of getting into VR mode: double click anywhere, double tap
   anywhere.
-- Sets good defaults for VR mode: full screen, orientation lock, wake
-  lock.
+- For desktop, if an HMD is connected, goes into split-screen rendering
+  mode. Otherwise, goes into immersive fullscreen mode (with pointer lock).
+- For mobile, goes into Cardboard side-by-side rendering mode.
 
+TODO: Provide a configuration UI for switching modes if we guessed
+wrong.
 
 # Instructions
 
