@@ -53,6 +53,8 @@ function WebVRManager(effect, opts) {
       this.activateVR();
     } else {
       this.setMode(Modes.INCOMPATIBLE);
+      // Incompatible? At least prepare for "immersive" mode.
+      this.activateBig();
     }
   }.bind(this));
 
@@ -83,12 +85,16 @@ WebVRManager.prototype.isWebVRCompatible = function() {
 WebVRManager.prototype.isHMDAvailable = function() {
   return new Promise(function(resolve, reject) {
     navigator.getVRDevices().then(function(devices) {
+      // Promise succeeds, but check if there are any devices actually.
       for (var i = 0; i < devices.length; i++) {
         if (devices[i] instanceof HMDVRDevice) {
           resolve(true);
           break;
         }
       }
+      resolve(false);
+    }, function() {
+      // No devices are found.
       resolve(false);
     });
   });
@@ -112,16 +118,12 @@ WebVRManager.prototype.createVRButton = function() {
   s.backgroundSize = 'cover';
   s.backgroundColor = 'transparent';
   s.border = 0;
+  s.userSelect = 'none';
+  s.webkitUserSelect = 'none';
+  s.mozUserSelect = 'none';
+  button.draggable = false;
   document.body.appendChild(button);
   return button;
-};
-
-WebVRManager.prototype.setVisibility = function(isVisible) {
-  if (isVisible && this.hideButton == false) {
-    this.vrButton.style.display = 'block'
-  } else {
-    this.vrButton.style.display = 'none'
-  }
 };
 
 WebVRManager.prototype.setMode = function(mode) {
@@ -129,15 +131,18 @@ WebVRManager.prototype.setMode = function(mode) {
   switch (mode) {
     case Modes.INCOMPATIBLE:
       this.vrButton.src = this.base64('image/svg+xml', 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOC4xLjEsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB2aWV3Qm94PSIwIDAgMTkyIDE5MiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTkyIDE5MiIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8Zz4NCgk8Zz4NCgkJPHBhdGggaWQ9Il94M0NfUGF0aF94M0VfXzlfIiBkPSJNMTcxLjIsMTQ0LjJjMC01LjYtMy42LTcuMi04LjgtNy4ySDE1NXYyNmg2di0xMWgtMC40bDYuNCwxMWg2LjJsLTcuNC0xMS4zDQoJCQlDMTY5LjMsMTUxLjEsMTcxLjIsMTQ3LjYsMTcxLjIsMTQ0LjJ6IE0xNjEuMiwxNDlIMTYxdi05aDAuM2MyLjcsMCw0LjgsMS4yLDQuOCw0LjRDMTY2LDE0Ny42LDE2NC4xLDE0OSwxNjEuMiwxNDl6Ii8+DQoJCTxwb2x5Z29uIHBvaW50cz0iMTMyLjMsMTUzIDEzMi4yLDE1MyAxMjUuOSwxMzcgMTIwLjQsMTM3IDEzMC40LDE2MyAxMzMuNCwxNjMgMTQzLjYsMTM3IDEzOC4xLDEzNyAJCSIvPg0KCQk8cGF0aCBpZD0iX3gzQ19QYXRoX3gzRV9fOF8iIGQ9Ik0xMDUsMTQ3LjljMS42LTEsMi4zLTIuNSwyLjMtNC40YzAtNS4yLTMtNi41LTcuOS02LjVIOTN2MjZoOC4xYzQuOCwwLDguNC0yLjksOC40LTgNCgkJCUMxMDkuNSwxNTIuMSwxMDguMSwxNDguNCwxMDUsMTQ3Ljl6IE05OCwxNDBoMC44YzIuMiwwLDMuNywwLjgsMy43LDMuNWMwLDIuNy0xLjIsMy41LTMuNywzLjVIOThWMTQweiBNOTkuMywxNThIOTh2LTdoMQ0KCQkJYzIuNiwwLDUuNCwwLDUuNCwzLjRTMTAyLDE1OCw5OS4zLDE1OHoiLz4NCgkJPHBvbHlnb24gcG9pbnRzPSI2NSwxNjMgNzksMTYzIDc5LDE1OCA3MSwxNTggNzEsMTUxIDc5LDE1MSA3OSwxNDcgNzEsMTQ3IDcxLDE0MCA3OSwxNDAgNzksMTM3IDY1LDEzNyAJCSIvPg0KCQk8cG9seWdvbiBwb2ludHM9IjQzLjMsMTU0IDQzLjIsMTU0IDM3LjgsMTM3IDM0LjcsMTM3IDI5LjUsMTU0IDI5LjQsMTU0IDI0LjEsMTM3IDE4LjgsMTM3IDI3LjEsMTYzIDMwLjksMTYzIDM1LjgsMTQ2IDM1LjksMTQ2IA0KCQkJNDEuMSwxNjMgNDQuOSwxNjMgNTMuOCwxMzcgNDguNCwxMzcgCQkiLz4NCgk8L2c+DQoJPGNpcmNsZSBjeD0iNjIuNCIgY3k9IjczLjUiIHI9IjEzLjkiLz4NCgk8Y2lyY2xlIGN4PSIxMzAiIGN5PSI3My41IiByPSIxMy45Ii8+DQoJPHBhdGggaWQ9Il94M0NfUGF0aF94M0VfXzVfIiBkPSJNMTI5LjYsMTE3YzM0LjUsMCw1Ni4xLTQzLjksNTYuMS00My45cy0yMS42LTQzLjgtNTYuMS00My45YzAsMC02Ny4yLDAuMS02Ny4zLDAuMQ0KCQljLTM0LjUsMC01Ni4xLDQzLjgtNTYuMSw0My44UzI3LjgsMTE3LDYyLjQsMTE3YzEzLjMsMCwyNC43LTYuNSwzMy42LTE0LjVDMTA1LDExMC41LDExNi4zLDExNywxMjkuNiwxMTd6IE04NS43LDkxLjcNCgkJYy02LjIsNS43LTE0LjEsMTAuNi0yMy41LDEwLjZjLTIzLjIsMC0zNy43LTI5LjMtMzcuNy0yOS4zczE0LjUtMjkuMywzNy43LTI5LjNjOS42LDAsMTcuNiw1LDIzLjgsMTAuOGM0LjEsMy45LDcuNCw4LjIsOS44LDExLjcNCgkJYzIuNC0zLjUsNS44LTgsMTAuMS0xMS45YzYuMi01LjcsMTQuMS0xMC42LDIzLjYtMTAuNmMyMy4yLDAsMzcuNywyOS4zLDM3LjcsMjkuM3MtMTQuNSwyOS4zLTM3LjcsMjkuM2MtOS4zLDAtMTcuMS00LjctMjMuMy0xMC4zDQoJCWMtNC40LTQuMS03LjktOC42LTEwLjQtMTIuMkM5My40LDgzLjIsOTAsODcuNyw4NS43LDkxLjd6Ii8+DQoJPHBhdGggZmlsbD0ibm9uZSIgZD0iTTAsMGgxOTJ2MTkySDBWMHoiLz4NCjwvZz4NCjwvc3ZnPg0K');
-      this.vrButton.style.webkitFilter = 'contrast(50%)';
+      this.vrButton.title = 'Open in immersive mode';
+      this.setContrast(0.5);
       break;
     case Modes.COMPATIBLE:
       this.vrButton.src = this.base64('image/svg+xml', 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOC4xLjEsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB2aWV3Qm94PSIwIDAgMTkyIDE5MiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTkyIDE5MiIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8Zz4NCgk8Zz4NCgkJPHBhdGggaWQ9Il94M0NfUGF0aF94M0VfXzlfIiBkPSJNMTcxLjIsMTQ0LjJjMC01LjYtMy42LTcuMi04LjgtNy4ySDE1NXYyNmg2di0xMWgtMC40bDYuNCwxMWg2LjJsLTcuNC0xMS4zDQoJCQlDMTY5LjMsMTUxLjEsMTcxLjIsMTQ3LjYsMTcxLjIsMTQ0LjJ6IE0xNjEuMiwxNDlIMTYxdi05aDAuM2MyLjcsMCw0LjgsMS4yLDQuOCw0LjRDMTY2LDE0Ny42LDE2NC4xLDE0OSwxNjEuMiwxNDl6Ii8+DQoJCTxwb2x5Z29uIHBvaW50cz0iMTMyLjMsMTUzIDEzMi4yLDE1MyAxMjUuOSwxMzcgMTIwLjQsMTM3IDEzMC40LDE2MyAxMzMuNCwxNjMgMTQzLjYsMTM3IDEzOC4xLDEzNyAJCSIvPg0KCQk8cGF0aCBpZD0iX3gzQ19QYXRoX3gzRV9fOF8iIGQ9Ik0xMDUsMTQ3LjljMS42LTEsMi4zLTIuNSwyLjMtNC40YzAtNS4yLTMtNi41LTcuOS02LjVIOTN2MjZoOC4xYzQuOCwwLDguNC0yLjksOC40LTgNCgkJCUMxMDkuNSwxNTIuMSwxMDguMSwxNDguNCwxMDUsMTQ3Ljl6IE05OCwxNDBoMC44YzIuMiwwLDMuNywwLjgsMy43LDMuNWMwLDIuNy0xLjIsMy41LTMuNywzLjVIOThWMTQweiBNOTkuMywxNThIOTh2LTdoMQ0KCQkJYzIuNiwwLDUuNCwwLDUuNCwzLjRTMTAyLDE1OCw5OS4zLDE1OHoiLz4NCgkJPHBvbHlnb24gcG9pbnRzPSI2NSwxNjMgNzksMTYzIDc5LDE1OCA3MSwxNTggNzEsMTUxIDc5LDE1MSA3OSwxNDcgNzEsMTQ3IDcxLDE0MCA3OSwxNDAgNzksMTM3IDY1LDEzNyAJCSIvPg0KCQk8cG9seWdvbiBwb2ludHM9IjQzLjMsMTU0IDQzLjIsMTU0IDM3LjgsMTM3IDM0LjcsMTM3IDI5LjUsMTU0IDI5LjQsMTU0IDI0LjEsMTM3IDE4LjgsMTM3IDI3LjEsMTYzIDMwLjksMTYzIDM1LjgsMTQ2IDM1LjksMTQ2IA0KCQkJNDEuMSwxNjMgNDQuOSwxNjMgNTMuOCwxMzcgNDguNCwxMzcgCQkiLz4NCgk8L2c+DQoJPGNpcmNsZSBjeD0iNjIuNCIgY3k9IjczLjUiIHI9IjEzLjkiLz4NCgk8Y2lyY2xlIGN4PSIxMzAiIGN5PSI3My41IiByPSIxMy45Ii8+DQoJPHBhdGggaWQ9Il94M0NfUGF0aF94M0VfXzVfIiBkPSJNMTI5LjYsMTE3YzM0LjUsMCw1Ni4xLTQzLjksNTYuMS00My45cy0yMS42LTQzLjgtNTYuMS00My45YzAsMC02Ny4yLDAuMS02Ny4zLDAuMQ0KCQljLTM0LjUsMC01Ni4xLDQzLjgtNTYuMSw0My44UzI3LjgsMTE3LDYyLjQsMTE3YzEzLjMsMCwyNC43LTYuNSwzMy42LTE0LjVDMTA1LDExMC41LDExNi4zLDExNywxMjkuNiwxMTd6IE04NS43LDkxLjcNCgkJYy02LjIsNS43LTE0LjEsMTAuNi0yMy41LDEwLjZjLTIzLjIsMC0zNy43LTI5LjMtMzcuNy0yOS4zczE0LjUtMjkuMywzNy43LTI5LjNjOS42LDAsMTcuNiw1LDIzLjgsMTAuOGM0LjEsMy45LDcuNCw4LjIsOS44LDExLjcNCgkJYzIuNC0zLjUsNS44LTgsMTAuMS0xMS45YzYuMi01LjcsMTQuMS0xMC42LDIzLjYtMTAuNmMyMy4yLDAsMzcuNywyOS4zLDM3LjcsMjkuM3MtMTQuNSwyOS4zLTM3LjcsMjkuM2MtOS4zLDAtMTcuMS00LjctMjMuMy0xMC4zDQoJCWMtNC40LTQuMS03LjktOC42LTEwLjQtMTIuMkM5My40LDgzLjIsOTAsODcuNyw4NS43LDkxLjd6Ii8+DQoJPHBhdGggZmlsbD0ibm9uZSIgZD0iTTAsMGgxOTJ2MTkySDBWMHoiLz4NCjwvZz4NCjwvc3ZnPg0K');
-      this.vrButton.style.webkitFilter = 'contrast(25%)';
+      this.vrButton.title = 'Open in VR mode';
+      this.setContrast(0.25);
       break;
     case Modes.IMMERSED:
       this.vrButton.src = this.base64('image/svg+xml', 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOC4xLjEsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB2aWV3Qm94PSIwIDAgMTkyIDE5MiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTkyIDE5MiIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8Zz4NCgk8cGF0aCBkPSJNMTQzLjksOTYuNGMwLTcuNi02LjItMTMuOS0xMy45LTEzLjljLTcuNSwwLTEzLjUsNS45LTEzLjgsMTMuM2wxNC40LDE0LjRDMTM4LDEwOS45LDE0My45LDEwMy45LDE0My45LDk2LjR6Ii8+DQoJPHBhdGggZD0iTTEwNS44LDc3YzYuMi01LjcsMTQuMS0xMC42LDIzLjYtMTAuNmMyMy4yLDAsMzcuNywyOS4zLDM3LjcsMjkuM3MtOS4yLDE4LjctMjQuOCwyNi4ybDEwLjksMTAuOQ0KCQljMjAuNS0xMi40LDMyLjUtMzYuOSwzMi41LTM2LjlzLTIxLjYtNDMuOC01Ni4xLTQzLjljMCwwLTM4LjMsMC01Ny4yLDAuMWwyOS4xLDI5LjFDMTAyLjksNzkuOSwxMDQuMyw3OC40LDEwNS44LDc3eiIvPg0KCTxwYXRoIGQ9Ik0xNjIuOSwxNjIuOWwtMjQtMjRjMCwwLDAsMCwwLDBsLTE0LjItMTQuMmMwLDAsMCwwLDAsMEw2Ni45LDY2LjljMCwwLDAsMCwwLDBMNTMuMyw1My4yYzAsMCwwLDAsMCwwTDIzLjEsMjMuMUwxMywzMy4zDQoJCWwyNS45LDI1LjlDMTguMyw3MS41LDYuMiw5Niw2LjIsOTZzMjEuNiw0My44LDU2LjEsNDMuOGMxMy4zLDAsMjQuNy02LjUsMzMuNi0xNC41YzYuMiw1LjUsMTMuNSwxMC4zLDIxLjgsMTIuN2wzNC45LDM0LjkNCgkJTDE2Mi45LDE2Mi45eiBNODUuNywxMTQuNWMtNi4yLDUuNy0xNC4xLDEwLjYtMjMuNSwxMC42Yy0yMy4yLDAtMzcuNy0yOS4zLTM3LjctMjkuM3M5LjMtMTguNywyNC44LTI2LjJsMTMsMTMNCgkJYy03LjYsMC4xLTEzLjcsNi4yLTEzLjcsMTMuOGMwLDcuNyw2LjIsMTMuOSwxMy45LDEzLjljNy42LDAsMTMuOC02LjEsMTMuOC0xMy43bDEzLjYsMTMuNkM4OC42LDExMS43LDg3LjIsMTEzLjEsODUuNywxMTQuNXoiLz4NCgk8cGF0aCBmaWxsPSJub25lIiBkPSJNMCwwaDE5MnYxOTJIMFYweiIvPg0KPC9nPg0KPC9zdmc+DQo=');
-      this.vrButton.style.webkitFilter = 'contrast(25%)';
+      this.vrButton.title = 'Leave VR mode';
+      this.setContrast(0.25);
       break;
   }
 
@@ -146,6 +151,15 @@ WebVRManager.prototype.setMode = function(mode) {
   this.vrButton.style.display = 'inline-block';
   this.vrButton.offsetHeight;
   this.vrButton.style.display = 'block';
+};
+
+/**
+ * Sets the contrast on the button (percent in [0, 1]).
+ */
+WebVRManager.prototype.setContrast = function(percent) {
+  var value = Math.floor(percent * 100);
+  this.vrButton.style.webkitFilter = 'contrast(' + value + '%)';
+  this.vrButton.style.filter = 'contrast(' + value + '%)';
 };
 
 WebVRManager.prototype.base64 = function(format, base64) {
@@ -176,6 +190,16 @@ WebVRManager.prototype.activateVR = function() {
   this.setupWakeLock();
 };
 
+WebVRManager.prototype.activateBig = function() {
+  // Next time a user does anything with their mouse, we trigger big mode.
+  this.vrButton.addEventListener('click', this.enterBig.bind(this));
+};
+
+WebVRManager.prototype.enterBig = function() {
+  this.requestPointerLock();
+  this.requestFullscreen();
+};
+
 WebVRManager.prototype.setupWakeLock = function() {
   // Create a small video element.
   this.wakeLockVideo = document.createElement('video');
@@ -203,7 +227,8 @@ WebVRManager.prototype.onTouchEnd = function(e) {
   this.lastTouchTime = now;
 };
 
-WebVRManager.prototype.onButtonClick = function() {
+WebVRManager.prototype.onButtonClick = function(e) {
+  e.stopPropagation();
   this.toggleVRMode();
 };
 
@@ -224,7 +249,8 @@ WebVRManager.prototype.toggleVRMode = function() {
 
 WebVRManager.prototype.onFullscreenChange = function(e) {
   // If we leave full-screen, also exit VR mode.
-  if (document.webkitFullscreenElement === null) {
+  if (document.webkitFullscreenElement === null ||
+      document.mozFullScreenElement === null) {
     this.exitVR();
   }
 };
@@ -270,7 +296,48 @@ WebVRManager.prototype.releaseWakeLock = function() {
     this.wakeLockVideo.pause();
     this.wakeLockVideo.src = '';
   }
-}
+};
+
+WebVRManager.prototype.requestPointerLock = function() {
+  var canvas = this.effect._renderer.domElement;
+  canvas.requestPointerLock = canvas.requestPointerLock ||
+      canvas.mozRequestPointerLock ||
+      canvas.webkitRequestPointerLock;
+
+  canvas.requestPointerLock();
+};
+
+WebVRManager.prototype.releasePointerLock = function() {
+  document.exitPointerLock = document.exitPointerLock ||
+      document.mozExitPointerLock ||
+      document.webkitExitPointerLock;
+
+  document.exitPointerLock();
+};
+
+WebVRManager.prototype.requestOrientationLock = function() {
+  if (screen.orientation) {
+    screen.orientation.lock('landscape');
+  }
+};
+
+WebVRManager.prototype.releaseOrientationLock = function() {
+  if (screen.orientation) {
+    screen.orientation.unlock();
+  }
+};
+
+WebVRManager.prototype.requestFullscreen = function() {
+  var canvas = this.effect._renderer.domElement;
+  if (canvas.mozRequestFullScreen) {
+    canvas.mozRequestFullScreen();
+  } else if (canvas.webkitRequestFullscreen) {
+    canvas.webkitRequestFullscreen();
+  }
+};
+
+WebVRManager.prototype.releaseFullscreen = function() {
+};
 
 WebVRManager.prototype.getOS = function(osName) {
   var userAgent = navigator.userAgent || navigator.vendor || window.opera;
@@ -286,10 +353,8 @@ WebVRManager.prototype.enterVR = function() {
   console.log('Entering VR.');
   // Enter fullscreen mode (note: this doesn't work in iOS).
   this.effect.setFullScreen(true);
-  // Orientation lock.
-  if (screen.orientation) {
-    screen.orientation.lock('landscape');
-  }
+  // Lock down orientation, pointer, etc.
+  this.requestOrientationLock();
   // Set style on button.
   this.setMode(Modes.IMMERSED);
 };
@@ -298,11 +363,8 @@ WebVRManager.prototype.exitVR = function() {
   console.log('Exiting VR.');
   // Leave fullscreen mode (note: this doesn't work in iOS).
   this.effect.setFullScreen(false);
-  // Unlock orientation.
-  if (screen.orientation) {
-    screen.orientation.unlock();
-  }
-  // Relinquish wake lock.
+  // Release orientation, wake, pointer lock.
+  this.releaseOrientationLock();
   this.releaseWakeLock();
   // Go back to compatible mode.
   this.setMode(Modes.COMPATIBLE);
