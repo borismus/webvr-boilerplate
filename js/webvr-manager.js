@@ -279,10 +279,10 @@ WebVRManager.prototype.getOS = function(osName) {
 
 WebVRManager.prototype.enterVR = function() {
   console.log('Entering VR.');
-  if (this.os != 'iOS') {
-    // Enter fullscreen unless we're on iOS (fullscreen not available).
-    this.effect.setFullScreen(true);
-    // Orientation lock.
+  // Enter fullscreen mode (note: this doesn't work in iOS).
+  this.effect.setFullScreen(true);
+  // Orientation lock.
+  if (screen.orientation) {
     screen.orientation.lock('landscape');
   }
   // Set style on button.
@@ -291,10 +291,10 @@ WebVRManager.prototype.enterVR = function() {
 
 WebVRManager.prototype.exitVR = function() {
   console.log('Exiting VR.');
-  if (this.os != 'iOS') {
-    // Leave fullscreen unless we're on iOS (fullscreen not available).
-    this.effect.setFullScreen(false);
-    // Unlock orientation.
+  // Leave fullscreen mode (note: this doesn't work in iOS).
+  this.effect.setFullScreen(false);
+  // Unlock orientation.
+  if (screen.orientation) {
     screen.orientation.unlock();
   }
   // Relinquish wake lock.
