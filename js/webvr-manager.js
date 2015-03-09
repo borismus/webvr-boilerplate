@@ -180,7 +180,8 @@ WebVRManager.prototype.activateVR = function() {
   // Or via double tap.
   window.addEventListener('touchend', this.onTouchEnd.bind(this));
   // Or via clicking on the VR button.
-  this.vrButton.addEventListener('click', this.onButtonClick.bind(this));
+  this.vrButton.addEventListener('mousedown', this.onButtonClick.bind(this));
+  this.vrButton.addEventListener('touchstart', this.onButtonClick.bind(this));
   // Or by hitting the 'f' key.
   window.addEventListener('keydown', this.onKeyDown.bind(this));
 
@@ -233,6 +234,7 @@ WebVRManager.prototype.onTouchEnd = function(e) {
 
 WebVRManager.prototype.onButtonClick = function(e) {
   e.stopPropagation();
+  e.preventDefault();
   this.toggleVRMode();
 };
 
