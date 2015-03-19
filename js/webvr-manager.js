@@ -162,7 +162,6 @@ WebVRManager.prototype.setMode = function(mode) {
  */
 WebVRManager.prototype.setContrast = function(percent) {
   var value = Math.floor(percent * 100);
-  this.vrButton.style.webkitFilter = 'contrast(' + value + '%)';
   this.vrButton.style.filter = 'contrast(' + value + '%)';
 };
 
