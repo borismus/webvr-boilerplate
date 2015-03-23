@@ -59,7 +59,7 @@ document.body.appendChild(renderer.domElement);
 var scene = new THREE.Scene();
 
 // Create a three.js camera
-var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.3, 10000);
 
 // Apply VR headset positional data to camera.
 var controls = new THREE.VRControls(camera);
@@ -72,12 +72,12 @@ effect.setSize(window.innerWidth, window.innerHeight);
 var vrmgr = new WebVRManager(effect);
 
 // Create 3d objects
-var geometry = new THREE.BoxGeometry(10, 10, 10);
+var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
 var material = new THREE.MeshNormalMaterial();
 var cube = new THREE.Mesh(geometry, material);
 
 // Position cube mesh
-cube.position.z = -20;
+cube.position.z = -1;
 
 // Add cube mesh to your three.js scene
 scene.add(cube);
