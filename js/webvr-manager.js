@@ -310,7 +310,9 @@ WebVRManager.prototype.requestPointerLock = function() {
       canvas.mozRequestPointerLock ||
       canvas.webkitRequestPointerLock;
 
-  canvas.requestPointerLock();
+  if (canvas.requestPointerLock) {
+    canvas.requestPointerLock();
+  }
 };
 
 WebVRManager.prototype.releasePointerLock = function() {
