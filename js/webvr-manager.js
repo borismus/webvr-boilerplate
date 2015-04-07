@@ -49,20 +49,15 @@ function WebVRManager(renderer, effect, params) {
 
   // Check if the browser is compatible with WebVR.
   this.getHMD().then(function(hmd) {
+    // Activate either VR or Immersive mode.
     if (hmd) {
-      this.setMode(Modes.COMPATIBLE);
-      // If it is, activate VR mode.
       this.activateVR();
-
-      // If we're using the polyfill, implement a composer.
-      if (hmd.deviceId.indexOf('webvr-polyfill') == 0) {
-        this.composer = this.createComposer();
-      }
     } else {
-      this.setMode(Modes.INCOMPATIBLE);
-      // Incompatible? At least prepare for "immersive" mode.
-      this.activateBig();
+      this.activateImmersive();
     }
+    // Set the right mode.
+    this.defaultMode = hmd ? Modes.COMPATIBLE : Modes.INCOMPATIBLE;
+    this.setMode(this.defaultMode);
   }.bind(this));
 
   this.os = this.getOS();
@@ -76,7 +71,7 @@ var Modes = {
   // Compatible with WebVR.
   COMPATIBLE: 2,
   // In virtual reality via WebVR.
-  IMMERSED: 3,
+  VR: 3,
 };
 
 /**
@@ -101,7 +96,7 @@ WebVRManager.prototype.getHMD = function() {
 };
 
 WebVRManager.prototype.isVRMode = function() {
-  return this.mode == Modes.IMMERSED;
+  return this.mode == Modes.VR;
 };
 
 WebVRManager.prototype.render = function(scene, camera) {
@@ -149,7 +144,7 @@ WebVRManager.prototype.setMode = function(mode) {
       this.vrButton.src = this.logo;
       this.vrButton.title = 'Open in VR mode';
       break;
-    case Modes.IMMERSED:
+    case Modes.VR:
       this.vrButton.src = this.logoDisabled;
       this.vrButton.title = 'Leave VR mode';
       break;
@@ -200,12 +195,12 @@ WebVRManager.prototype.activateVR = function() {
   this.setupWakeLock();
 };
 
-WebVRManager.prototype.activateBig = function() {
-  // Next time a user does anything with their mouse, we trigger big mode.
-  this.vrButton.addEventListener('click', this.enterBig.bind(this));
+WebVRManager.prototype.activateImmersive = function() {
+  // Next time a user does anything with their mouse, we trigger immersive mode.
+  this.vrButton.addEventListener('click', this.enterImmersive.bind(this));
 };
 
-WebVRManager.prototype.enterBig = function() {
+WebVRManager.prototype.enterImmersive = function() {
   this.requestPointerLock();
   this.requestFullscreen();
 };
@@ -369,7 +364,7 @@ WebVRManager.prototype.enterVR = function() {
   // Lock down orientation, pointer, etc.
   this.requestOrientationLock();
   // Set style on button.
-  this.setMode(Modes.IMMERSED);
+  this.setMode(Modes.VR);
 };
 
 WebVRManager.prototype.exitVR = function() {
@@ -379,15 +374,11 @@ WebVRManager.prototype.exitVR = function() {
   // Release orientation, wake, pointer lock.
   this.releaseOrientationLock();
   this.releaseWakeLock();
-  // Go back to compatible mode.
-  this.setMode(Modes.COMPATIBLE);
-};
+  // Also, work around a problem in VREffect and resize the window.
+  this.effect.setSize(window.innerWidth, window.innerHeight);
 
-/**
- * Creates a THREE.EffectComposer for putting a CardboardBarrelDistortion effect
- * on top of the VREffect.
- */
-WebVRManager.prototype.createComposer = function() {
+  // Go back to the default mode.
+  this.setMode(this.defaultMode);
 };
 
 // Expose the WebVRManager class globally.

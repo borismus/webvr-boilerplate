@@ -2536,11 +2536,15 @@ var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
 function WebVRPolyfill() {
   this.devices = [];
 
-  if (!('getVRDevices' in navigator)) {
-    // If the WebVR API doesn't exist, we should enable the polyfill.
+  if (!this.isWebVRAvailable()) {
     this.enablePolyfill();
   }
 }
+
+WebVRPolyfill.prototype.isWebVRAvailable = function() {
+  return ('getVRDevices' in navigator) || ('mozGetVRDevices' in navigator);
+};
+
 
 WebVRPolyfill.prototype.enablePolyfill = function() {
   // Initialize our virtual VR devices.
