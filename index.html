@@ -26,22 +26,22 @@ body {
 <!--
   three.js 3d library
   -->
-<script src="js/three.min.js"></script>
+<script src="js/deps/three.js"></script>
 
 <!--
   VRControls.js acquires positional information from connected VR devices and applies the transformations to a three.js camera object.
    -->
-<script src="js/VRControls.js"></script>
+<script src="js/deps/VRControls.js"></script>
 
 <!--
   VREffect.js handles stereo camera setup and rendering.
   -->
-<script src="js/VREffect.js"></script>
+<script src="js/deps/VREffect.js"></script>
 
 <!--
   A polyfill for WebVR using the Device{Motion,Orientation}Event API.
   -->
-<script src="js/webvr-polyfill.js"></script>
+<script src="js/deps/webvr-polyfill.js"></script>
 
 <!--
   Helps enter and exit VR mode, provides best practices while in VR.
@@ -56,23 +56,23 @@ renderer.setPixelRatio(window.devicePixelRatio);
 // Append the canvas element created by the renderer to document body element.
 document.body.appendChild(renderer.domElement);
 
-// Create a three.js scene
+// Create a three.js scene.
 var scene = new THREE.Scene();
 
-// Create a three.js camera
+// Create a three.js camera.
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.3, 10000);
 
 // Apply VR headset positional data to camera.
 var controls = new THREE.VRControls(camera);
 
-// Apply VR stereo rendering to renderer
+// Apply VR stereo rendering to renderer.
 var effect = new THREE.VREffect(renderer);
 effect.setSize(window.innerWidth, window.innerHeight);
 
 // Create a VR manager helper to enter and exit VR mode.
-var vrmgr = new WebVRManager(effect);
+var manager = new WebVRManager(renderer, effect);
 
-// Create 3d objects
+// Create 3D objects.
 var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
 var material = new THREE.MeshNormalMaterial();
 var cube = new THREE.Mesh(geometry, material);
@@ -91,12 +91,8 @@ function animate() {
   // Update VR headset position and apply to camera.
   controls.update();
 
-  // Render the scene through the VREffect, but only if it's in VR mode.
-  if (vrmgr.isVRMode()) {
-    effect.render(scene, camera);
-  } else {
-    renderer.render(scene, camera);
-  }
+  // Render the scene through the manager.
+  manager.render(scene, camera);
 
   requestAnimationFrame( animate );
 }

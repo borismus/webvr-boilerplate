@@ -18,7 +18,9 @@
  * The base class for all VR devices.
  */
 function VRDevice() {
-  this.hardwareUnitId = 'polyfill';
+  this.hardwareUnitId = 'webvr-polyfill hardwareUnitId';
+  this.deviceId = 'webvr-polyfill deviceId';
+  this.deviceName = 'webvr-polyfill deviceName';
 }
 
 /**
@@ -66,6 +68,13 @@ var DEFAULT_MAX_FOV_TOP = 40;
  * The HMD itself, providing rendering parameters.
  */
 function CardboardHMDVRDevice() {
+  // From com/google/vrtoolkit/cardboard/FieldOfView.java.
+  this.fov = {
+    upDegrees: DEFAULT_MAX_FOV_TOP,
+    downDegrees: DEFAULT_MAX_FOV_BOTTOM,
+    leftDegrees: DEFAULT_MAX_FOV_LEFT_RIGHT,
+    rightDegrees: DEFAULT_MAX_FOV_LEFT_RIGHT
+  };
   // Set display constants.
   this.eyeTranslationLeft = {
     x: INTERPUPILLARY_DISTANCE * -0.5,
@@ -77,28 +86,23 @@ function CardboardHMDVRDevice() {
     y: 0,
     z: 0
   };
-
-  // From com/google/vrtoolkit/cardboard/FieldOfView.java.
-  this.recommendedFOV = {
-    upDegrees: DEFAULT_MAX_FOV_TOP,
-    downDegrees: DEFAULT_MAX_FOV_BOTTOM,
-    leftDegrees: DEFAULT_MAX_FOV_LEFT_RIGHT,
-    rightDegrees: DEFAULT_MAX_FOV_LEFT_RIGHT
-  };
 }
 CardboardHMDVRDevice.prototype = new HMDVRDevice();
 
-CardboardHMDVRDevice.prototype.getRecommendedEyeFieldOfView = function(whichEye) {
-  return this.recommendedFOV;
-};
-
-CardboardHMDVRDevice.prototype.getEyeTranslation = function(whichEye) {
+CardboardHMDVRDevice.prototype.getEyeParameters = function(whichEye) {
+  var eyeTranslation;
   if (whichEye == 'left') {
-    return this.eyeTranslationLeft;
+    eyeTranslation = this.eyeTranslationLeft;
+  } else if (whichEye == 'right') {
+    eyeTranslation = this.eyeTranslationRight;
+  } else {
+    console.error('Invalid eye provided: %s', whichEye);
+    return null;
   }
-  if (whichEye == 'right') {
-    return this.eyeTranslationRight;
-  }
+  return {
+    recommendedFieldOfView: this.fov,
+    eyeTranslation: eyeTranslation
+  };
 };
 
 module.exports = CardboardHMDVRDevice;
@@ -125,6 +129,9 @@ var THREE = require('./three-math.js');
  * The positional sensor, implemented using web DeviceOrientation APIs.
  */
 function GyroPositionSensorVRDevice() {
+  this.deviceId = 'webvr-polyfill:gyro';
+  this.deviceName = 'VR Position Device (webvr-polyfill:gyro)';
+
   // Subscribe to deviceorientation events.
   window.addEventListener('deviceorientation', this.onDeviceOrientationChange.bind(this));
   window.addEventListener('orientationchange', this.onScreenOrientationChange.bind(this));
@@ -237,11 +244,14 @@ var MOUSE_SPEED_X = 0.5;
 var MOUSE_SPEED_Y = 0.3;
 
 /**
- * Another virtual position sensor, this time implemented using keyboard and
+ * A virtual position sensor, implemented using keyboard and
  * mouse APIs. This is designed as for desktops/laptops where no Device*
  * events work.
  */
 function MouseKeyboardPositionSensorVRDevice() {
+  this.deviceId = 'webvr-polyfill:mouse-keyboard';
+  this.deviceName = 'VR Position Device (webvr-polyfill:mouse-keyboard)';
+
   // Attach to mouse and keyboard events.
   window.addEventListener('keydown', this.onKeyDown_.bind(this));
   window.addEventListener('mousemove', this.onMouseMove_.bind(this));
@@ -299,8 +309,8 @@ MouseKeyboardPositionSensorVRDevice.prototype.animateTheta_ = function(targetAng
 };
 
 MouseKeyboardPositionSensorVRDevice.prototype.animatePhi_ = function(targetAngle) {
-  // Clamp phi to be in [-Math.PI, Math.PI].
-  targetAngle = this.clamp_(targetAngle, -Math.PI, Math.PI);
+  // Prevent looking too far up or down.
+  targetAngle = this.clamp_(targetAngle, -Math.PI/2, Math.PI/2);
   this.animateKeyTransitions_('phi', targetAngle);
 };
 
@@ -356,8 +366,8 @@ MouseKeyboardPositionSensorVRDevice.prototype.onMouseMove_ = function(e) {
   this.phi += 2 * Math.PI * this.rotateDelta.y / element.clientHeight * MOUSE_SPEED_Y;
   this.theta += 2 * Math.PI * this.rotateDelta.x / element.clientWidth * MOUSE_SPEED_X;
 
-  // Clamp phi to be in [-Math.PI, Math.PI].
-  this.phi = this.clamp_(this.phi, -Math.PI, Math.PI);
+  // Prevent looking too far up or down.
+  this.phi = this.clamp_(this.phi, -Math.PI/2, Math.PI/2);
 };
 
 MouseKeyboardPositionSensorVRDevice.prototype.onMouseUp_ = function(e) {
