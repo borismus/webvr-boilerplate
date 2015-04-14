@@ -129,7 +129,9 @@ WebVRManager.prototype.createVRButton = function() {
   button.addEventListener('dragstart', function(e) {
     e.preventDefault();
   });
-  if (!this.hideButton) document.body.appendChild(button);
+  if (!this.hideButton) {
+    document.body.appendChild(button);
+  }
   return button;
 };
 
