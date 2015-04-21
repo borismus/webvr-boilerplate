@@ -124,6 +124,7 @@ WebVRManager.prototype.createVRButton = function() {
   s.userSelect = 'none';
   s.webkitUserSelect = 'none';
   s.MozUserSelect = 'none';
+  s.cursor = 'pointer';
   // Prevent button from being dragged.
   button.draggable = false;
   button.addEventListener('dragstart', function(e) {
