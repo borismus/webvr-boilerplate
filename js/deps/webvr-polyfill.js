@@ -196,7 +196,7 @@ GyroPositionSensorVRDevice.prototype.getOrientation = function() {
   this.finalQuaternion.multiply(this.worldTransform);
 
   // Interpolate between the new estimate and the last quaternion.
-  this.finalQuaternion.slerp(this.lastOrientation, 0.5);
+  this.finalQuaternion.slerp(this.lastOrientation, 0.7);
 
   // Save this result as the last orientation.
   this.lastOrientation.copy(this.finalQuaternion);
