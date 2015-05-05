@@ -1,0 +1,457 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var DeviceInfo = require('./device-info.js');
+
+// TODO(dkovalev): Implement me.
+function CardboardDistorter() {
+}
+
+module.exports = CardboardDistorter;
+
+},{"./device-info.js":2}],2:[function(require,module,exports){
+var ANDROID_DB = {
+  // Nexus 5:
+  // Nexus 4:
+  // Moto X2:
+  // Moto X:
+};
+
+/**
+ * Gives the correct device DPI based on screen dimensions and user agent.
+ */
+function DeviceInfo() {
+  // TODO(smus): On Android, create a lookup table for common devices.
+  // On iOS, use screen dimensions to determine iPhone/iPad model.
+}
+
+DeviceInfo.prototype.getDPI = function() {
+  var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  var width = screen.availWidth;
+  var height = screen.availHeight;
+  return 316;
+};
+
+module.exports = DeviceInfo;
+
+},{}],3:[function(require,module,exports){
+function Emitter() {
+  this.callbacks = {};
+}
+
+Emitter.prototype.emit = function(eventName) {
+  var callbacks = this.callbacks[eventName];
+  if (!callbacks) {
+    console.log('No valid callback specified.');
+    return;
+  }
+  var args = [].slice.call(arguments)
+  // Eliminate the first param (the callback).
+  args.shift();
+  for (var i = 0; i < callbacks.length; i++) {
+    callbacks[i].apply(this, args);
+  }
+};
+
+Emitter.prototype.on = function(eventName, callback) {
+  if (eventName in this.callbacks) {
+    this.callbacks[eventName].push(callback);
+  } else {
+    this.callbacks[eventName] = [callback];
+  }
+};
+
+module.exports = Emitter;
+
+},{}],4:[function(require,module,exports){
+var WebVRManager = require('./webvr-manager.js');
+
+window.WebVRManager = WebVRManager;
+
+},{"./webvr-manager.js":9}],5:[function(require,module,exports){
+var Modes = {
+  UNKNOWN: 0,
+  // Incompatible with WebVR.
+  INCOMPATIBLE: 1,
+  // Compatible with WebVR.
+  COMPATIBLE: 2,
+  // In virtual reality via WebVR.
+  VR: 3,
+};
+
+module.exports = Modes;
+
+},{}],6:[function(require,module,exports){
+var Util = {};
+
+Util.base64 = function(mimeType, base64) {
+  return 'data:' + mimeType + ';base64,' + base64;
+};
+
+module.exports = Util;
+
+},{}],7:[function(require,module,exports){
+var Util = require('./util.js');
+
+function AndroidWakeLock() {
+  var video = document.createElement('video');
+
+  video.addEventListener('ended', function() {
+    video.play();
+  });
+
+  this.request = function() {
+    if (video.paused) {
+      // Base64 version of videos_src/no-sleep.webm.
+      video.src = Util.base64('video/webm', 'GkXfowEAAAAAAAAfQoaBAUL3gQFC8oEEQvOBCEKChHdlYm1Ch4ECQoWBAhhTgGcBAAAAAAACWxFNm3RALE27i1OrhBVJqWZTrIHfTbuMU6uEFlSua1OsggEuTbuMU6uEHFO7a1OsggI+7AEAAAAAAACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmAQAAAAAAAEMq17GDD0JATYCMTGF2ZjU2LjQuMTAxV0GMTGF2ZjU2LjQuMTAxc6SQ20Yv/Elws73A/+KfEjM11ESJiEBkwAAAAAAAFlSuawEAAAAAAABHrgEAAAAAAAA+14EBc8WBAZyBACK1nIN1bmSGhVZfVlA4g4EBI+ODhAT3kNXgAQAAAAAAABKwgRC6gRBTwIEBVLCBEFS6gRAfQ7Z1AQAAAAAAALHngQCgAQAAAAAAAFyho4EAAIAQAgCdASoQABAAAEcIhYWIhYSIAgIADA1gAP7/q1CAdaEBAAAAAAAALaYBAAAAAAAAJO6BAaWfEAIAnQEqEAAQAABHCIWFiIWEiAICAAwNYAD+/7r/QKABAAAAAAAAQKGVgQBTALEBAAEQEAAYABhYL/QACAAAdaEBAAAAAAAAH6YBAAAAAAAAFu6BAaWRsQEAARAQABgAGFgv9AAIAAAcU7trAQAAAAAAABG7j7OBALeK94EB8YIBgfCBAw==');
+      video.play();
+    }
+  };
+
+  this.release = function() {
+    video.pause();
+    video.src = '';
+  };
+}
+
+function iOSWakeLock() {
+  var timer = null;
+
+  this.request = function() {
+    if (!timer) {
+      timer = setInterval(function() {
+        window.location = window.location;
+        setTimeout(window.stop, 0);
+      }, 30000);
+    }
+  }
+
+  this.release = function() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+}
+
+
+function getWakeLock() {
+  var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  if (userAgent.match(/iPhone/i) || userAgent.match(/iPod/i)) {
+    return iOSWakeLock;
+  } else {
+    return AndroidWakeLock;
+  }
+}
+
+module.exports = getWakeLock();
+
+},{"./util.js":6}],8:[function(require,module,exports){
+var Modes = require('./modes.js');
+var Emitter = require('./emitter.js');
+var Util = require('./util.js');
+
+/**
+ * Everything having to do with the WebVR button.
+ * Emits a 'click' event when it's clicked.
+ */
+function WebVRButton() {
+  var button = this.createButton();
+  document.body.appendChild(button);
+  button.addEventListener('click', this.onClick_.bind(this));
+
+  this.button = button;
+  this.isVisible = true;
+
+  // Preload some hard-coded SVG.
+  this.logo = Util.base64('image/svg+xml', 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOC4xLjEsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB2aWV3Qm94PSIwIDAgMTkyIDE5MiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTkyIDE5MiIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8Zz4NCgk8Zz4NCgkJPHBhdGggZmlsbD0iZ3JheSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIxIiBpZD0iX3gzQ19QYXRoX3gzRV9fOV8iIGQ9Ik0xNzEuMiwxNDQuMmMwLTUuNi0zLjYtNy4yLTguOC03LjJIMTU1djI2aDZ2LTExaC0wLjRsNi40LDExaDYuMmwtNy40LTExLjMNCgkJCUMxNjkuMywxNTEuMSwxNzEuMiwxNDcuNiwxNzEuMiwxNDQuMnogTTE2MS4yLDE0OUgxNjF2LTloMC4zYzIuNywwLDQuOCwxLjIsNC44LDQuNEMxNjYsMTQ3LjYsMTY0LjEsMTQ5LDE2MS4yLDE0OXoiLz4NCgkJPHBvbHlnb24gZmlsbD0iZ3JheSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIxIiBwb2ludHM9IjEzMi4zLDE1MyAxMzIuMiwxNTMgMTI1LjksMTM3IDEyMC40LDEzNyAxMzAuNCwxNjMgMTMzLjQsMTYzIDE0My42LDEzNyAxMzguMSwxMzcgCQkiLz4NCgkJPHBhdGggZmlsbD0iZ3JheSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIxIiBpZD0iX3gzQ19QYXRoX3gzRV9fOF8iIGQ9Ik0xMDUsMTQ3LjljMS42LTEsMi4zLTIuNSwyLjMtNC40YzAtNS4yLTMtNi41LTcuOS02LjVIOTN2MjZoOC4xYzQuOCwwLDguNC0yLjksOC40LTgNCgkJCUMxMDkuNSwxNTIuMSwxMDguMSwxNDguNCwxMDUsMTQ3Ljl6IE05OCwxNDBoMC44YzIuMiwwLDMuNywwLjgsMy43LDMuNWMwLDIuNy0xLjIsMy41LTMuNywzLjVIOThWMTQweiBNOTkuMywxNThIOTh2LTdoMQ0KCQkJYzIuNiwwLDUuNCwwLDUuNCwzLjRTMTAyLDE1OCw5OS4zLDE1OHoiLz4NCgkJPHBvbHlnb24gZmlsbD0iZ3JheSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIxIiBwb2ludHM9IjY1LDE2MyA3OSwxNjMgNzksMTU4IDcxLDE1OCA3MSwxNTEgNzksMTUxIDc5LDE0NyA3MSwxNDcgNzEsMTQwIDc5LDE0MCA3OSwxMzcgNjUsMTM3IAkJIi8+DQoJCTxwb2x5Z29uIGZpbGw9ImdyYXkiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMSIgcG9pbnRzPSI0My4zLDE1NCA0My4yLDE1NCAzNy44LDEzNyAzNC43LDEzNyAyOS41LDE1NCAyOS40LDE1NCAyNC4xLDEzNyAxOC44LDEzNyAyNy4xLDE2MyAzMC45LDE2MyAzNS44LDE0NiAzNS45LDE0NiANCgkJCTQxLjEsMTYzIDQ0LjksMTYzIDUzLjgsMTM3IDQ4LjQsMTM3ICIvPg0KCTwvZz4NCgk8Y2lyY2xlIGZpbGw9ImdyYXkiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMyIgY3g9IjYyLjQiIGN5PSI3My41IiByPSIxMy45Ii8+DQoJPGNpcmNsZSBmaWxsPSJncmF5IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjMiIGN4PSIxMzAiIGN5PSI3My41IiByPSIxMy45Ii8+DQoJPHBhdGggZmlsbD0iZ3JheSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIzIiBpZD0iX3gzQ19QYXRoX3gzRV9fNV8iIGQ9Ik0xMjkuNiwxMTdjMzQuNSwwLDU2LjEtNDMuOSw1Ni4xLTQzLjlzLTIxLjYtNDMuOC01Ni4xLTQzLjljMCwwLTY3LjIsMC4xLTY3LjMsMC4xDQoJCWMtMzQuNSwwLTU2LjEsNDMuOC01Ni4xLDQzLjhTMjcuOCwxMTcsNjIuNCwxMTdjMTMuMywwLDI0LjctNi41LDMzLjYtMTQuNUMxMDUsMTEwLjUsMTE2LjMsMTE3LDEyOS42LDExN3ogTTg1LjcsOTEuNw0KCQljLTYuMiw1LjctMTQuMSwxMC42LTIzLjUsMTAuNmMtMjMuMiwwLTM3LjctMjkuMy0zNy43LTI5LjNzMTQuNS0yOS4zLDM3LjctMjkuM2M5LjYsMCwxNy42LDUsMjMuOCwxMC44YzQuMSwzLjksNy40LDguMiw5LjgsMTEuNw0KCQljMi40LTMuNSw1LjgtOCwxMC4xLTExLjljNi4yLTUuNywxNC4xLTEwLjYsMjMuNi0xMC42YzIzLjIsMCwzNy43LDI5LjMsMzcuNywyOS4zcy0xNC41LDI5LjMtMzcuNywyOS4zYy05LjMsMC0xNy4xLTQuNy0yMy4zLTEwLjMNCgkJYy00LjQtNC4xLTcuOS04LjYtMTAuNC0xMi4yQzkzLjQsODMuMiw5MCw4Ny43LDg1LjcsOTEuN3oiLz4NCgk8cGF0aCBmaWxsPSJub25lIiBkPSJNMCwwaDE5MnYxOTJIMFYweiIvPg0KPC9nPg0KPC9zdmc+DQo=');
+  this.logoDisabled = Util.base64('image/svg+xml', 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOC4xLjEsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB2aWV3Qm94PSIwIDAgMTkyIDE5MiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTkyIDE5MiIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8Zz4NCgk8cGF0aCBmaWxsPSJncmF5IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjMiIGQ9Ik0xNDMuOSw5Ni40YzAtNy42LTYuMi0xMy45LTEzLjktMTMuOWMtNy41LDAtMTMuNSw1LjktMTMuOCwxMy4zbDE0LjQsMTQuNEMxMzgsMTA5LjksMTQzLjksMTAzLjksMTQzLjksOTYuNHoiLz4NCgk8cGF0aCBmaWxsPSJncmF5IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjMiIGQ9Ik0xMDUuOCw3N2M2LjItNS43LDE0LjEtMTAuNiwyMy42LTEwLjZjMjMuMiwwLDM3LjcsMjkuMywzNy43LDI5LjNzLTkuMiwxOC43LTI0LjgsMjYuMmwxMC45LDEwLjkNCgkJYzIwLjUtMTIuNCwzMi41LTM2LjksMzIuNS0zNi45cy0yMS42LTQzLjgtNTYuMS00My45YzAsMC0zOC4zLDAtNTcuMiwwLjFsMjkuMSwyOS4xQzEwMi45LDc5LjksMTA0LjMsNzguNCwxMDUuOCw3N3oiLz4NCgk8cGF0aCBmaWxsPSJncmF5IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjMiIGQ9Ik0xNjIuOSwxNjIuOWwtMjQtMjRjMCwwLDAsMCwwLDBsLTE0LjItMTQuMmMwLDAsMCwwLDAsMEw2Ni45LDY2LjljMCwwLDAsMCwwLDBMNTMuMyw1My4yYzAsMCwwLDAsMCwwTDIzLjEsMjMuMUwxMywzMy4zDQoJCWwyNS45LDI1LjlDMTguMyw3MS41LDYuMiw5Niw2LjIsOTZzMjEuNiw0My44LDU2LjEsNDMuOGMxMy4zLDAsMjQuNy02LjUsMzMuNi0xNC41YzYuMiw1LjUsMTMuNSwxMC4zLDIxLjgsMTIuN2wzNC45LDM0LjkNCgkJTDE2Mi45LDE2Mi45eiBNODUuNywxMTQuNWMtNi4yLDUuNy0xNC4xLDEwLjYtMjMuNSwxMC42Yy0yMy4yLDAtMzcuNy0yOS4zLTM3LjctMjkuM3M5LjMtMTguNywyNC44LTI2LjJsMTMsMTMNCgkJYy03LjYsMC4xLTEzLjcsNi4yLTEzLjcsMTMuOGMwLDcuNyw2LjIsMTMuOSwxMy45LDEzLjljNy42LDAsMTMuOC02LjEsMTMuOC0xMy43bDEzLjYsMTMuNkM4OC42LDExMS43LDg3LjIsMTEzLjEsODUuNywxMTQuNXoiLz4NCgk8cGF0aCBmaWxsPSJub25lIiBkPSJNMCwwaDE5MnYxOTJIMFYweiIvPg0KPC9nPg0KPC9zdmc+DQo=');
+}
+WebVRButton.prototype = new Emitter();
+
+WebVRButton.prototype.createButton = function() {
+  var button = document.createElement('img');
+  var s = button.style;
+  s.position = 'absolute';
+  s.bottom = '5px';
+  s.left = 0;
+  s.right = 0;
+  s.marginLeft = 'auto';
+  s.marginRight = 'auto';
+  s.width = '64px'
+  s.height = '64px';
+  s.backgroundSize = 'cover';
+  s.backgroundColor = 'transparent';
+  s.border = 0;
+  s.userSelect = 'none';
+  s.webkitUserSelect = 'none';
+  s.MozUserSelect = 'none';
+  s.cursor = 'pointer';
+  // Prevent button from being dragged.
+  button.draggable = false;
+  button.addEventListener('dragstart', function(e) {
+    e.preventDefault();
+  });
+  return button;
+};
+
+WebVRButton.prototype.setMode = function(mode) {
+  if (!this.isVisible) {
+    return;
+  }
+  switch (mode) {
+    case Modes.INCOMPATIBLE:
+      this.button.src = this.logo;
+      this.button.title = 'Open in immersive mode';
+      break;
+    case Modes.COMPATIBLE:
+      this.button.src = this.logo;
+      this.button.title = 'Open in VR mode';
+      break;
+    case Modes.VR:
+      this.button.src = this.logoDisabled;
+      this.button.title = 'Leave VR mode';
+      break;
+  }
+
+  // Hack for Safari Mac/iOS to force relayout (svg-specific issue)
+  // http://goo.gl/hjgR6r
+  this.button.style.display = 'inline-block';
+  this.button.offsetHeight;
+  this.button.style.display = 'block';
+};
+
+WebVRButton.prototype.setVisibility = function(isVisible) {
+  this.isVisible = isVisible;
+  this.button.style.display = isVisible ? 'block' : 'none';
+};
+
+WebVRButton.prototype.onClick_ = function(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  this.emit('click');
+}
+
+module.exports = WebVRButton;
+
+},{"./emitter.js":3,"./modes.js":5,"./util.js":6}],9:[function(require,module,exports){
+/*
+ * Copyright 2015 Boris Smus. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+var Wakelock = require('./wakelock.js');
+var CardboardDistorter = require('./cardboard-distorter.js');
+var WebVRButton = require('./webvr-button.js');
+var Modes = require('./modes.js');
+
+
+/**
+ * Helper for getting in and out of VR mode.
+ * Here we assume VR mode == full screen mode.
+ *
+ * 1. Detects whether or not VR mode is possible by feature detecting for
+ * WebVR (or polyfill).
+ *
+ * 2. If WebVR is available, shows a button that lets you enter VR mode.
+ *
+ * 3. Provides Cardboard-style distortion if the webvr-polyfill is being used.
+ *
+ * 4. Provides best practices while in VR mode.
+ * - Full screen
+ * - Wake lock
+ * - Orientation lock (mobile only)
+ */
+function WebVRManager(renderer, effect, params) {
+  this.params = params || {};
+
+  this.mode = Modes.UNKNOWN;
+
+  // Set option to hide the button.
+  var hideButton = this.params.hideButton || false;
+
+  // Save the THREE.js renderer and effect for later.
+  this.renderer = renderer;
+  this.effect = effect;
+
+  this.button = new WebVRButton();
+  if (hideButton) {
+    this.button.setVisibility(false);
+  }
+
+  // Check if the browser is compatible with WebVR.
+  this.getHMD_().then(function(hmd) {
+    // Activate either VR or Immersive mode.
+    if (hmd) {
+      this.activateVR_();
+    } else {
+      this.activateImmersive_();
+    }
+    // Set the right mode.
+    this.defaultMode = hmd ? Modes.COMPATIBLE : Modes.INCOMPATIBLE;
+    this.button.setMode(this.defaultMode);
+  }.bind(this));
+}
+
+/**
+ * Promise returns true if there is at least one HMD device available.
+ */
+WebVRManager.prototype.getHMD_ = function() {
+  return new Promise(function(resolve, reject) {
+    navigator.getVRDevices().then(function(devices) {
+      // Promise succeeds, but check if there are any devices actually.
+      for (var i = 0; i < devices.length; i++) {
+        if (devices[i] instanceof HMDVRDevice) {
+          resolve(devices[i]);
+          break;
+        }
+      }
+      resolve(null);
+    }, function() {
+      // No devices are found.
+      resolve(null);
+    });
+  });
+};
+
+WebVRManager.prototype.isVRMode = function() {
+  return this.mode == Modes.VR;
+};
+
+WebVRManager.prototype.render = function(scene, camera) {
+  if (this.isVRMode()) {
+    this.effect.render(scene, camera);
+  } else {
+    this.renderer.render(scene, camera);
+  }
+};
+
+
+/**
+ * Makes it possible to go into VR mode.
+ */
+WebVRManager.prototype.activateVR_ = function() {
+  // Or via clicking on the VR button.
+  this.button.on('click', this.toggleVRMode.bind(this));
+
+  // Whenever we enter fullscreen, we are entering VR or immersive mode.
+  document.addEventListener('webkitfullscreenchange',
+      this.onFullscreenChange_.bind(this));
+  document.addEventListener('mozfullscreenchange',
+      this.onFullscreenChange_.bind(this));
+
+  // Create the necessary elements for wake lock to work.
+  this.wakelock = new Wakelock();
+};
+
+WebVRManager.prototype.activateImmersive_ = function() {
+  // Next time a user does anything with their mouse, we trigger immersive mode.
+  this.button.on('click', this.enterImmersive.bind(this));
+};
+
+WebVRManager.prototype.enterImmersive = function() {
+  this.requestPointerLock_();
+  this.requestFullscreen_();
+};
+
+WebVRManager.prototype.toggleVRMode = function() {
+  if (!this.isVRMode()) {
+    // Enter VR mode.
+    this.enterVR();
+  } else {
+    this.exitVR();
+  }
+};
+
+WebVRManager.prototype.onFullscreenChange_ = function(e) {
+  // If we leave full-screen, also exit VR mode.
+  if (document.webkitFullscreenElement === null ||
+      document.mozFullScreenElement === null) {
+    this.exitVR();
+  }
+};
+
+
+WebVRManager.prototype.requestPointerLock_ = function() {
+  var canvas = this.renderer.domElement;
+  canvas.requestPointerLock = canvas.requestPointerLock ||
+      canvas.mozRequestPointerLock ||
+      canvas.webkitRequestPointerLock;
+
+  if (canvas.requestPointerLock) {
+    canvas.requestPointerLock();
+  }
+};
+
+WebVRManager.prototype.releasePointerLock_ = function() {
+  document.exitPointerLock = document.exitPointerLock ||
+      document.mozExitPointerLock ||
+      document.webkitExitPointerLock;
+
+  if (document.exitPointerLock) {
+    document.exitPointerLock();
+  }
+};
+
+WebVRManager.prototype.requestOrientationLock_ = function() {
+  if (screen.orientation) {
+    screen.orientation.lock('landscape');
+  }
+};
+
+WebVRManager.prototype.releaseOrientationLock_ = function() {
+  if (screen.orientation) {
+    screen.orientation.unlock();
+  }
+};
+
+WebVRManager.prototype.requestFullscreen_ = function() {
+  var canvas = this.renderer.domElement;
+  if (canvas.mozRequestFullScreen) {
+    canvas.mozRequestFullScreen();
+  } else if (canvas.webkitRequestFullscreen) {
+    canvas.webkitRequestFullscreen();
+  }
+};
+
+WebVRManager.prototype.enterVR = function() {
+  console.log('Entering VR.');
+  // Enter fullscreen mode (note: this doesn't work in iOS).
+  this.effect.setFullScreen(true);
+  // Lock down orientation and wakelock.
+  this.requestOrientationLock_();
+  this.wakelock.request();
+
+  this.mode = Modes.VR;
+  // Set style on button.
+  this.button.setMode(this.mode);
+};
+
+WebVRManager.prototype.exitVR = function() {
+  console.log('Exiting VR.');
+  // Leave fullscreen mode (note: this doesn't work in iOS).
+  this.effect.setFullScreen(false);
+  // Release all locks.
+  this.releaseOrientationLock_();
+  this.releasePointerLock_();
+  this.wakelock.release();
+  // Also, work around a problem in VREffect and resize the window.
+  this.effect.setSize(window.innerWidth, window.innerHeight);
+
+  this.mode = this.defaultMode;
+  // Go back to the default mode.
+  this.button.setMode(this.mode);
+
+};
+
+module.exports = WebVRManager;
+
+},{"./cardboard-distorter.js":1,"./modes.js":5,"./wakelock.js":7,"./webvr-button.js":8}]},{},[4]);
