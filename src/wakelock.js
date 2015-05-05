@@ -1,5 +1,10 @@
 var Util = require('./util.js');
 
+/**
+ * Android and iOS compatible wakelock implementation.
+ *
+ * Thanks to dkovalev@.
+ */
 function AndroidWakeLock() {
   var video = document.createElement('video');
 
