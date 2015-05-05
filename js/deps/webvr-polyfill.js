@@ -138,6 +138,9 @@ function GyroPositionSensorVRDevice() {
   this.deviceOrientation = null;
   this.screenOrientation = window.orientation;
 
+  // The last orientation (for smooth interpolation).
+  this.lastOrientation = new THREE.Quaternion();
+
   // Helper objects for calculating orientation.
   this.finalQuaternion = new THREE.Quaternion();
   this.deviceEuler = new THREE.Euler();
@@ -191,6 +194,12 @@ GyroPositionSensorVRDevice.prototype.getOrientation = function() {
   this.screenTransform.set(0, Math.sin(this.minusHalfAngle), 0, Math.cos(this.minusHalfAngle));
   this.finalQuaternion.multiply(this.screenTransform);
   this.finalQuaternion.multiply(this.worldTransform);
+
+  // Interpolate between the new estimate and the last quaternion.
+  this.finalQuaternion.slerp(this.lastOrientation, 0.5);
+
+  // Save this result as the last orientation.
+  this.lastOrientation.copy(this.finalQuaternion);
 
   return this.finalQuaternion;
 };
