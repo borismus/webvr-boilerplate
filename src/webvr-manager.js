@@ -17,6 +17,7 @@ var Wakelock = require('./wakelock.js');
 var CardboardDistorter = require('./cardboard-distorter.js');
 var WebVRButton = require('./webvr-button.js');
 var Modes = require('./modes.js');
+var Util = require('./util.js');
 
 
 /**
@@ -54,6 +55,8 @@ function WebVRManager(renderer, effect, params) {
 
   // Check if the browser is compatible with WebVR.
   this.getHMD_().then(function(hmd) {
+    // If Cardboard debug flag is enabled, force cardboard compat mode.
+    hmd = hmd || window.CARDBOARD_DEBUG;
     // Activate either VR or Immersive mode.
     if (hmd) {
       this.activateVR_();
@@ -167,7 +170,7 @@ WebVRManager.prototype.releasePointerLock_ = function() {
 };
 
 WebVRManager.prototype.requestOrientationLock_ = function() {
-  if (screen.orientation) {
+  if (screen.orientation && Util.isMobile()) {
     screen.orientation.lock('landscape');
   }
 };

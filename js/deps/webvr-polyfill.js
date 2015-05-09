@@ -2610,7 +2610,8 @@ WebVRPolyfill.prototype.isMobile = function() {
 
 WebVRPolyfill.prototype.isCardboardCompatible = function() {
   // For now, support all iOS and Android devices.
-  return this.isMobile();
+  // Also enable the global CARDBOARD_DEBUG flag.
+  return this.isMobile() || window.CARDBOARD_DEBUG;
 };
 
 module.exports = WebVRPolyfill;
