@@ -47,6 +47,7 @@ function WebVRManager(renderer, effect, params) {
   // Save the THREE.js renderer and effect for later.
   this.renderer = renderer;
   this.effect = effect;
+  this.distorter = new CardboardDistorter(renderer);
 
   this.button = new WebVRButton();
   if (hideButton) {
@@ -96,7 +97,9 @@ WebVRManager.prototype.isVRMode = function() {
 
 WebVRManager.prototype.render = function(scene, camera) {
   if (this.isVRMode()) {
+    this.distorter.preRender();
     this.effect.render(scene, camera);
+    this.distorter.postRender();
   } else {
     this.renderer.render(scene, camera);
   }
@@ -201,6 +204,8 @@ WebVRManager.prototype.enterVR = function() {
   this.mode = Modes.VR;
   // Set style on button.
   this.button.setMode(this.mode);
+
+  this.distorter.patch();
 };
 
 WebVRManager.prototype.exitVR = function() {
@@ -218,6 +223,7 @@ WebVRManager.prototype.exitVR = function() {
   // Go back to the default mode.
   this.button.setMode(this.mode);
 
+  this.distorter.unpatch();
 };
 
 module.exports = WebVRManager;
