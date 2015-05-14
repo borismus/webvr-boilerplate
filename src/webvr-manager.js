@@ -61,6 +61,10 @@ function WebVRManager(renderer, effect, params) {
     // Activate either VR or Immersive mode.
     if (hmd) {
       this.activateVR_();
+      // Only enable distortion if we are dealing using the polyfill.
+      if (hmd.deviceName.indexOf('webvr-polyfill') == 0) {
+        this.distorter.setActive(true);
+      }
     } else {
       this.activateImmersive_();
     }

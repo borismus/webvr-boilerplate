@@ -10,4 +10,8 @@ Util.isMobile = function() {
   return check;
 };
 
+Util.isIOS = function() {
+  return /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
+};
+
 module.exports = Util;
