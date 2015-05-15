@@ -140,8 +140,8 @@ function CardboardDistorter(renderer) {
    * Toggles distortion. This is called externally by the boilerplate.
    * It should be enabled only if WebVR is provided by polyfill.
    */
-  this.setActive = function(isActive) {
-    isActive = isActive;
+  this.setActive = function(state) {
+    isActive = state;
   }
 }
 
