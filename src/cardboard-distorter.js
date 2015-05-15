@@ -4,7 +4,7 @@ var BarrelDistortion = {
   uniforms: {
     "tDiffuse":   { type: "t", value: null },
     "distortion": { type: "v2", value: new THREE.Vector2(0.441, 0.156) },
-    "background": { type: "v4", value: new THREE.Vector4(1.0, 0.0, 0.0, 1.0) },
+    "background": { type: "v4", value: new THREE.Vector4(0.0, 0.0, 0.0, 1.0) },
   },
 
   vertexShader: [
@@ -46,6 +46,13 @@ var BarrelDistortion = {
   ].join("\n")
 };
 
+// Show a red background if Cardboard is in debug mode.
+if (window.CARDBOARD_DEBUG) {
+  BarrelDistortion.uniforms.background =
+      { type: "v4", value: new THREE.Vector4(1.00, 0.00, 0.00, 1.0) };
+
+}
+
 
 var ShaderPass = function (shader) {
   this.uniforms = THREE.UniformsUtils.clone(shader.uniforms);
@@ -80,14 +87,19 @@ function createRenderTarget(renderer) {
   return new THREE.WebGLRenderTarget(width, height, parameters);
 }
 
+// TODO: Refactor into prototype-style classes.
 function CardboardDistorter(renderer) {
   var shaderPass = new ShaderPass(BarrelDistortion);
 
   var textureTarget = null;
   var genuineRender = renderer.render;
   var genuineSetSize = renderer.setSize;
+  var isActive = false || window.CARDBOARD_DEBUG;
 
   this.patch = function() {
+    if (!isActive) {
+      return;
+    }
     textureTarget = createRenderTarget(renderer);
 
     renderer.render = function(scene, camera, renderTarget, forceClear) {
@@ -101,18 +113,35 @@ function CardboardDistorter(renderer) {
   }
 
   this.unpatch = function() {
+    if (!isActive) {
+      return;
+    }
     renderer.render = genuineRender;
     renderer.setSize = genuineSetSize;
   }
 
   this.preRender = function() {
+    if (!isActive) {
+      return;
+    }
     renderer.setRenderTarget(textureTarget);
   }
 
   this.postRender = function() {
+    if (!isActive) {
+      return;
+    }
     var size = renderer.getSize();
     renderer.setViewport(0, 0, size.width, size.height);
     shaderPass.render(genuineRender.bind(renderer), textureTarget);
+  }
+
+  /**
+   * Toggles distortion. This is called externally by the boilerplate.
+   * It should be enabled only if WebVR is provided by polyfill.
+   */
+  this.setActive = function(state) {
+    isActive = state;
   }
 }
 
