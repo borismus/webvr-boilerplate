@@ -1,0 +1,11 @@
+{
+  "name": "webvr-boilerplate",
+  "version": "1.0.0",
+  "scripts": {
+    "watch-main": "watchify src/main.js -v -d -o build/webvr-manager.js",
+    "build-main": "browserify src/main.js > build/webvr-manager.js",
+    "watch-test": "watchify test/device-info-test.js -v -d -o build/device-info-test.js",
+    "build-test": "browserify test/device-info-test.js > build/device-info-test.js",
+    "lint": "jscs src/*.js"
+  }
+}
