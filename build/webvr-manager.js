@@ -226,14 +226,18 @@ DeviceInfo.prototype.determineDevice_ = function() {
 
   // On iOS, use screen dimensions to determine iPhone/iPad model.
   var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+  // Check both width and height since the phone may be in landscape.
   var width = screen.availWidth;
+  var height = screen.availHeight;
   var pixelWidth = width * window.devicePixelRatio;
+  var pixelHeight = height * window.devicePixelRatio;
 
   // Match the screen dimension to the correct device.
   for (var id in Devices) {
     var device = Devices[id];
     // Expect an exact match on width.
-    if (device.width == pixelWidth) {
+    if (device.width == pixelWidth || device.width == pixelHeight) {
       console.log('Detected iPhone: %s', id);
       // This is the right device.
       return device;
