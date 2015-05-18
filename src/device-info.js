@@ -51,6 +51,10 @@ var Enclosures = {
   })
 };
 
+
+var DEFAULT_LEFT_CENTER = {x: 0.5, y: 0.5};
+var DEFAULT_RIGHT_CENTER = {x: 0.5, y: 0.5};
+
 /**
  * Gives the correct device DPI based on screen dimensions and user agent.
  * For now, only iOS is supported.
@@ -63,7 +67,10 @@ function DeviceInfo() {
 /**
  * Gets the coordinates (in [0, 1]) for the left eye.
  */
-DeviceInfo.prototype.getLeftCentroid = function() {
+DeviceInfo.prototype.getLeftEyeCenter = function() {
+  if (!this.device) {
+    return DEFAULT_LEFT_CENTER;
+  }
   // Get parameters from the enclosure.
   var eyeToMid = this.enclosure.ipdMm / 2;
   var eyeToBase = this.enclosure.baselineLensCenterMm;
@@ -79,6 +86,14 @@ DeviceInfo.prototype.getLeftCentroid = function() {
   var py = 1 - (eyeToBevel / heightMm);
 
   return {x: px, y: py};
+};
+
+DeviceInfo.prototype.getRightEyeCenter = function() {
+  if (!this.device) {
+    return DEFAULT_RIGHT_CENTER;
+  }
+  var left = this.getLeftEyeCenter();
+  return {x: 1 - left.x, y: left.y};
 };
 
 DeviceInfo.prototype.determineDevice_ = function() {

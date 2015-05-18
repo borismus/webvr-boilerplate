@@ -15,6 +15,8 @@
 
 var DeviceInfo = require('./device-info.js');
 
+var deviceInfo = new DeviceInfo();
+
 var BarrelDistortion = {
   uniforms: {
     'tDiffuse': {type: 't', value: null},
@@ -109,6 +111,13 @@ function createRenderTarget(renderer) {
 
 // TODO: Refactor into prototype-style classes.
 function CardboardDistorter(renderer) {
+  var left = deviceInfo.getLeftEyeCenter();
+  var right = deviceInfo.getRightEyeCenter();
+
+  // Pass in left and right eye centers into the shader.
+  BarrelDistortion.leftCenter = {type: 'v2', value: new THREE.Vector2(left.x, left.y)};
+  BarrelDistortion.rightCenter = {type: 'v2', value: new THREE.Vector2(right.x, right.y)};
+
   var shaderPass = new ShaderPass(BarrelDistortion);
 
   var textureTarget = null;

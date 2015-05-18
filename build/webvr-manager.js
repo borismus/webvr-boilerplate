@@ -16,10 +16,14 @@
 
 var DeviceInfo = require('./device-info.js');
 
+var deviceInfo = new DeviceInfo();
+
 var BarrelDistortion = {
   uniforms: {
     'tDiffuse': {type: 't', value: null},
     'distortion': {type: 'v2', value: new THREE.Vector2(0.441, 0.156)},
+    'leftCenter': {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
+    'rightCenter': {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
     'background': {type: 'v4', value: new THREE.Vector4(0.0, 0.0, 0.0, 1.0)},
   },
 
@@ -28,7 +32,7 @@ var BarrelDistortion = {
 
     'void main() {',
       'vUV = uv;',
-      'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+      'gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
     '}'
 
   ].join('\n'),
@@ -37,6 +41,8 @@ var BarrelDistortion = {
     'uniform sampler2D tDiffuse;',
 
     'uniform vec2 distortion;',
+    'uniform vec2 leftCenter;',
+    'uniform vec2 rightCenter;',
     'uniform vec4 background;',
 
     'varying vec2 vUV;',
@@ -45,17 +51,19 @@ var BarrelDistortion = {
       'return 1.0 + (distortion.x + distortion.y * val) * val;',
     '}',
 
-    'vec2 barrel(vec2 v) {',
-      'vec2 w = v - vec2(0.5, 0.5);',
-      'return poly(dot(w, w)) * w + vec2(0.5, 0.5);',
+    'vec2 barrel(vec2 v, vec2 center) {',
+      'vec2 w = v - center;',
+      'return poly(dot(w, w)) * w + center;',
     '}',
 
     'void main() {',
-      'vec2 a = barrel(vec2(vUV.x < 0.5 ? vUV.x / 0.5 : (vUV.x - 0.5) / 0.5, vUV.y));',
+      'bool isLeft = (vUV.x < 0.5);',
+      'float offset = isLeft ? 0.0 : 0.5;',
+      'vec2 a = barrel(vec2((vUV.x - offset) / 0.5, vUV.y), isLeft ? leftCenter : rightCenter);',
       'if (a.x < 0.0 || a.x > 1.0 || a.y < 0.0 || a.y > 1.0) {',
         'gl_FragColor = background;',
       '} else {',
-        'gl_FragColor = texture2D(tDiffuse, vec2(vUV.x < 0.5 ? a.x * 0.5 : a.x * 0.5 + 0.5, a.y));',
+        'gl_FragColor = texture2D(tDiffuse, vec2(a.x * 0.5 + offset, a.y));',
       '}',
     '}'
 
@@ -104,6 +112,13 @@ function createRenderTarget(renderer) {
 
 // TODO: Refactor into prototype-style classes.
 function CardboardDistorter(renderer) {
+  var left = deviceInfo.getLeftEyeCenter();
+  var right = deviceInfo.getRightEyeCenter();
+
+  // Pass in left and right eye centers into the shader.
+  BarrelDistortion.leftCenter = {type: 'v2', value: new THREE.Vector2(left.x, left.y)};
+  BarrelDistortion.rightCenter = {type: 'v2', value: new THREE.Vector2(right.x, right.y)};
+
   var shaderPass = new ShaderPass(BarrelDistortion);
 
   var textureTarget = null;
@@ -216,6 +231,10 @@ var Enclosures = {
   })
 };
 
+
+var DEFAULT_LEFT_CENTER = {x: 0.5, y: 0.5};
+var DEFAULT_RIGHT_CENTER = {x: 0.5, y: 0.5};
+
 /**
  * Gives the correct device DPI based on screen dimensions and user agent.
  * For now, only iOS is supported.
@@ -228,7 +247,10 @@ function DeviceInfo() {
 /**
  * Gets the coordinates (in [0, 1]) for the left eye.
  */
-DeviceInfo.prototype.getLeftCentroid = function() {
+DeviceInfo.prototype.getLeftEyeCenter = function() {
+  if (!this.device) {
+    return DEFAULT_LEFT_CENTER;
+  }
   // Get parameters from the enclosure.
   var eyeToMid = this.enclosure.ipdMm / 2;
   var eyeToBase = this.enclosure.baselineLensCenterMm;
@@ -244,6 +266,14 @@ DeviceInfo.prototype.getLeftCentroid = function() {
   var py = 1 - (eyeToBevel / heightMm);
 
   return {x: px, y: py};
+};
+
+DeviceInfo.prototype.getRightEyeCenter = function() {
+  if (!this.device) {
+    return DEFAULT_RIGHT_CENTER;
+  }
+  var left = this.getLeftEyeCenter();
+  return {x: 1 - left.x, y: left.y};
 };
 
 DeviceInfo.prototype.determineDevice_ = function() {
