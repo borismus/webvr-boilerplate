@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Boris Smus. All Rights Reserved.
+ * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,7 +18,6 @@ var CardboardDistorter = require('./cardboard-distorter.js');
 var WebVRButton = require('./webvr-button.js');
 var Modes = require('./modes.js');
 var Util = require('./util.js');
-
 
 /**
  * Helper for getting in and out of VR mode.
@@ -109,7 +108,6 @@ WebVRManager.prototype.render = function(scene, camera) {
   }
 };
 
-
 /**
  * Makes it possible to go into VR mode.
  */
@@ -153,7 +151,6 @@ WebVRManager.prototype.onFullscreenChange_ = function(e) {
     this.exitVR();
   }
 };
-
 
 WebVRManager.prototype.requestPointerLock_ = function() {
   var canvas = this.renderer.domElement;

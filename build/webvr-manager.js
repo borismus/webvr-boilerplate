@@ -1,61 +1,75 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var DeviceInfo = require('./device-info.js');
 
 var BarrelDistortion = {
   uniforms: {
-    "tDiffuse":   { type: "t", value: null },
-    "distortion": { type: "v2", value: new THREE.Vector2(0.441, 0.156) },
-    "background": { type: "v4", value: new THREE.Vector4(0.0, 0.0, 0.0, 1.0) },
+    'tDiffuse': {type: 't', value: null},
+    'distortion': {type: 'v2', value: new THREE.Vector2(0.441, 0.156)},
+    'background': {type: 'v4', value: new THREE.Vector4(0.0, 0.0, 0.0, 1.0)},
   },
 
   vertexShader: [
-    "varying vec2 vUV;",
+    'varying vec2 vUV;',
 
-    "void main() {",
-      "vUV = uv;",
-      "gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
-    "}"
+    'void main() {',
+      'vUV = uv;',
+      'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+    '}'
 
-  ].join("\n"),
+  ].join('\n'),
 
   fragmentShader: [
-    "uniform sampler2D tDiffuse;",
+    'uniform sampler2D tDiffuse;',
 
-    "uniform vec2 distortion;",
-    "uniform vec4 background;",
+    'uniform vec2 distortion;',
+    'uniform vec4 background;',
 
-    "varying vec2 vUV;",
+    'varying vec2 vUV;',
 
-    "float poly(float val) {",
-      "return 1.0 + (distortion.x + distortion.y * val) * val;",
-    "}",
+    'float poly(float val) {',
+      'return 1.0 + (distortion.x + distortion.y * val) * val;',
+    '}',
 
-    "vec2 barrel(vec2 v) {",
-      "vec2 w = v - vec2(0.5, 0.5);",
-      "return poly(dot(w, w)) * w + vec2(0.5, 0.5);",
-    "}",
+    'vec2 barrel(vec2 v) {',
+      'vec2 w = v - vec2(0.5, 0.5);',
+      'return poly(dot(w, w)) * w + vec2(0.5, 0.5);',
+    '}',
 
-    "void main() {",
-      "vec2 a = barrel(vec2(vUV.x < 0.5 ? vUV.x / 0.5 : (vUV.x - 0.5) / 0.5, vUV.y));",
-      "if (a.x < 0.0 || a.x > 1.0 || a.y < 0.0 || a.y > 1.0) {",
-        "gl_FragColor = background;",
-      "} else {",
-        "gl_FragColor = texture2D(tDiffuse, vec2(vUV.x < 0.5 ? a.x * 0.5 : a.x * 0.5 + 0.5, a.y));",
-      "}",
-    "}"
+    'void main() {',
+      'vec2 a = barrel(vec2(vUV.x < 0.5 ? vUV.x / 0.5 : (vUV.x - 0.5) / 0.5, vUV.y));',
+      'if (a.x < 0.0 || a.x > 1.0 || a.y < 0.0 || a.y > 1.0) {',
+        'gl_FragColor = background;',
+      '} else {',
+        'gl_FragColor = texture2D(tDiffuse, vec2(vUV.x < 0.5 ? a.x * 0.5 : a.x * 0.5 + 0.5, a.y));',
+      '}',
+    '}'
 
-  ].join("\n")
+  ].join('\n')
 };
 
 // Show a red background if Cardboard is in debug mode.
 if (window.CARDBOARD_DEBUG) {
   BarrelDistortion.uniforms.background =
-      { type: "v4", value: new THREE.Vector4(1.00, 0.00, 0.00, 1.0) };
-
+      {type: 'v4', value: new THREE.Vector4(1.00, 0.00, 0.00, 1.0)};
 }
 
 
-var ShaderPass = function (shader) {
+var ShaderPass = function(shader) {
   this.uniforms = THREE.UniformsUtils.clone(shader.uniforms);
 
   this.material = new THREE.ShaderMaterial({
@@ -149,6 +163,21 @@ function CardboardDistorter(renderer) {
 module.exports = CardboardDistorter;
 
 },{"./device-info.js":2}],2:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var Util = require('./util.js');
 
 // Width, height and bevel measurements done on real iPhones.
@@ -186,7 +215,6 @@ var Enclosures = {
   FunkyMonkey: new CardboardEnclosure({
   })
 };
-
 
 /**
  * Gives the correct device DPI based on screen dimensions and user agent.
@@ -247,7 +275,6 @@ DeviceInfo.prototype.determineDevice_ = function() {
 };
 
 
-
 function Device(params) {
   this.width = params.width;
   this.height = params.height;
@@ -270,6 +297,21 @@ function CardboardEnclosure(params) {
 module.exports = DeviceInfo;
 
 },{"./util.js":6}],3:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 function Emitter() {
   this.callbacks = {};
 }
@@ -299,11 +341,41 @@ Emitter.prototype.on = function(eventName, callback) {
 module.exports = Emitter;
 
 },{}],4:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var WebVRManager = require('./webvr-manager.js');
 
 window.WebVRManager = WebVRManager;
 
 },{"./webvr-manager.js":9}],5:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var Modes = {
   UNKNOWN: 0,
   // Incompatible with WebVR.
@@ -317,6 +389,21 @@ var Modes = {
 module.exports = Modes;
 
 },{}],6:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var Util = {};
 
 Util.base64 = function(mimeType, base64) {
@@ -336,6 +423,21 @@ Util.isIOS = function() {
 module.exports = Util;
 
 },{}],7:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var Util = require('./util.js');
 
 /**
@@ -397,6 +499,21 @@ function getWakeLock() {
 module.exports = getWakeLock();
 
 },{"./util.js":6}],8:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var Modes = require('./modes.js');
 var Emitter = require('./emitter.js');
 var Util = require('./util.js');
@@ -486,7 +603,7 @@ module.exports = WebVRButton;
 
 },{"./emitter.js":3,"./modes.js":5,"./util.js":6}],9:[function(require,module,exports){
 /*
- * Copyright 2015 Boris Smus. All Rights Reserved.
+ * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -505,7 +622,6 @@ var CardboardDistorter = require('./cardboard-distorter.js');
 var WebVRButton = require('./webvr-button.js');
 var Modes = require('./modes.js');
 var Util = require('./util.js');
-
 
 /**
  * Helper for getting in and out of VR mode.
@@ -596,7 +712,6 @@ WebVRManager.prototype.render = function(scene, camera) {
   }
 };
 
-
 /**
  * Makes it possible to go into VR mode.
  */
@@ -640,7 +755,6 @@ WebVRManager.prototype.onFullscreenChange_ = function(e) {
     this.exitVR();
   }
 };
-
 
 WebVRManager.prototype.requestPointerLock_ = function() {
   var canvas = this.renderer.domElement;

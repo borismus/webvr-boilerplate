@@ -1,60 +1,74 @@
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var DeviceInfo = require('./device-info.js');
 
 var BarrelDistortion = {
   uniforms: {
-    "tDiffuse":   { type: "t", value: null },
-    "distortion": { type: "v2", value: new THREE.Vector2(0.441, 0.156) },
-    "background": { type: "v4", value: new THREE.Vector4(0.0, 0.0, 0.0, 1.0) },
+    'tDiffuse': {type: 't', value: null},
+    'distortion': {type: 'v2', value: new THREE.Vector2(0.441, 0.156)},
+    'background': {type: 'v4', value: new THREE.Vector4(0.0, 0.0, 0.0, 1.0)},
   },
 
   vertexShader: [
-    "varying vec2 vUV;",
+    'varying vec2 vUV;',
 
-    "void main() {",
-      "vUV = uv;",
-      "gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
-    "}"
+    'void main() {',
+      'vUV = uv;',
+      'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+    '}'
 
-  ].join("\n"),
+  ].join('\n'),
 
   fragmentShader: [
-    "uniform sampler2D tDiffuse;",
+    'uniform sampler2D tDiffuse;',
 
-    "uniform vec2 distortion;",
-    "uniform vec4 background;",
+    'uniform vec2 distortion;',
+    'uniform vec4 background;',
 
-    "varying vec2 vUV;",
+    'varying vec2 vUV;',
 
-    "float poly(float val) {",
-      "return 1.0 + (distortion.x + distortion.y * val) * val;",
-    "}",
+    'float poly(float val) {',
+      'return 1.0 + (distortion.x + distortion.y * val) * val;',
+    '}',
 
-    "vec2 barrel(vec2 v) {",
-      "vec2 w = v - vec2(0.5, 0.5);",
-      "return poly(dot(w, w)) * w + vec2(0.5, 0.5);",
-    "}",
+    'vec2 barrel(vec2 v) {',
+      'vec2 w = v - vec2(0.5, 0.5);',
+      'return poly(dot(w, w)) * w + vec2(0.5, 0.5);',
+    '}',
 
-    "void main() {",
-      "vec2 a = barrel(vec2(vUV.x < 0.5 ? vUV.x / 0.5 : (vUV.x - 0.5) / 0.5, vUV.y));",
-      "if (a.x < 0.0 || a.x > 1.0 || a.y < 0.0 || a.y > 1.0) {",
-        "gl_FragColor = background;",
-      "} else {",
-        "gl_FragColor = texture2D(tDiffuse, vec2(vUV.x < 0.5 ? a.x * 0.5 : a.x * 0.5 + 0.5, a.y));",
-      "}",
-    "}"
+    'void main() {',
+      'vec2 a = barrel(vec2(vUV.x < 0.5 ? vUV.x / 0.5 : (vUV.x - 0.5) / 0.5, vUV.y));',
+      'if (a.x < 0.0 || a.x > 1.0 || a.y < 0.0 || a.y > 1.0) {',
+        'gl_FragColor = background;',
+      '} else {',
+        'gl_FragColor = texture2D(tDiffuse, vec2(vUV.x < 0.5 ? a.x * 0.5 : a.x * 0.5 + 0.5, a.y));',
+      '}',
+    '}'
 
-  ].join("\n")
+  ].join('\n')
 };
 
 // Show a red background if Cardboard is in debug mode.
 if (window.CARDBOARD_DEBUG) {
   BarrelDistortion.uniforms.background =
-      { type: "v4", value: new THREE.Vector4(1.00, 0.00, 0.00, 1.0) };
-
+      {type: 'v4', value: new THREE.Vector4(1.00, 0.00, 0.00, 1.0)};
 }
 
 
-var ShaderPass = function (shader) {
+var ShaderPass = function(shader) {
   this.uniforms = THREE.UniformsUtils.clone(shader.uniforms);
 
   this.material = new THREE.ShaderMaterial({
