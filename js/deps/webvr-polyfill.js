@@ -130,7 +130,7 @@ var THREE = require('./three-math.js');
 // deviceorientation firing frequency (eg. on iOS, it is 20 Hz).
 // The larger this value (in [0, 1]), the smoother but more delayed the
 // head tracking is.
-var SMOOTHING_FACTOR = 0.4;
+var SMOOTHING_FACTOR = 0.1;
 
 /**
  * The positional sensor, implemented using web DeviceOrientation APIs.
