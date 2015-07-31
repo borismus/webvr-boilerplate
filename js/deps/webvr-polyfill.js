@@ -406,7 +406,7 @@ var SMOOTHING_FACTOR = 0.01;
 
 // The smallest quaternion magnitude per frame. If less rotation than this value
 // occurs, we don't do any prediction at all.
-var PREDICTION_THRESHOLD_DEG = 1;
+var PREDICTION_THRESHOLD_DEG = 2;
 
 // How far into the future to predict.
 var PREDICTION_TIME_MS = 40;
