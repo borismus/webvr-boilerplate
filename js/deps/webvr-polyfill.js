@@ -199,6 +199,10 @@ GyroPositionSensorVRDevice.prototype.getOrientation = function() {
   return this.posePredictor.getPrediction(this.finalQuaternion, new Date());
 };
 
+GyroPositionSensorVRDevice.prototype.resetSensor = function() {
+  console.error('Not implemented yet.');
+};
+
 
 module.exports = GyroPositionSensorVRDevice;
 
@@ -388,6 +392,10 @@ MouseKeyboardPositionSensorVRDevice.prototype.isPointerLocked_ = function() {
   return el !== undefined;
 };
 
+MouseKeyboardPositionSensorVRDevice.prototype.resetSensor = function() {
+  console.error('Not implemented yet.');
+};
+
 module.exports = MouseKeyboardPositionSensorVRDevice;
 
 },{"./base.js":1,"./three-math.js":7}],6:[function(require,module,exports){
@@ -411,7 +419,7 @@ module.exports = MouseKeyboardPositionSensorVRDevice;
 // deviceorientation firing frequency (eg. on iOS, it is 20 Hz).  The larger
 // this value (in [0, 1]), the smoother but more delayed the head tracking is.
 var INTERPOLATION_SMOOTHING_FACTOR = 0.01;
-var PREDICTION_SMOOTHING_FACTOR = 0.3;
+var PREDICTION_SMOOTHING_FACTOR = 0.1;
 
 // The smallest quaternion magnitude per frame. If less rotation than this value
 // occurs, we don't do any prediction at all.
@@ -485,7 +493,15 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
 
       this.outQ.copy(this.lastQ);
       this.outQ.multiply(this.deltaQ);
+
+      // Interpolate between the current position and the predicted one for more
+      // smoothness. This doesn't actually seem to help.
       this.outQ.slerp(currentQ, PREDICTION_SMOOTHING_FACTOR);
+
+      // For debugging, report the abs. difference between actual and predicted
+      // angles.
+      var angleDelta = THREE.Math.radToDeg(Math.abs(predictAngle - angle));
+      console.log('|Actual-Predicted| = %d deg', angleDelta);
 
       // Save the current quaternion for later.
       this.lastQ.copy(currentQ);
@@ -509,11 +525,16 @@ PosePredictor.prototype.getAxis_ = function(quat) {
 
 PosePredictor.prototype.getAngle_ = function(quat) {
   // angle = 2 * acos(qw)
-  // If w is greater than 1, this results in something invalid.
+  // If w is greater than 1 (THREE.js, how can this be?), arccos is not defined.
   if (quat.w > 1) {
     return 0;
   }
-  return 2 * Math.acos(quat.w);
+  var angle = 2 * Math.acos(quat.w);
+  // Normalize the angle to be in [-π, π].
+  if (angle > Math.PI) {
+    angle -= 2 * Math.PI;
+  }
+  return angle;
 };
 
 module.exports = PosePredictor;
