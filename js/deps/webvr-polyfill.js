@@ -454,8 +454,8 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       }
 
       // Convert from delta quaternion to axis-angle.
-      var axis = this.getAxis(this.deltaQ);
-      var angle = this.getAngle(this.deltaQ);
+      var axis = this.getAxis_(this.deltaQ);
+      var angle = this.getAngle_(this.deltaQ);
 
       // It took `elapsed` ms to travel the angle amount over the axis. Now,
       // we make a new quaternion based how far in the future we want to
