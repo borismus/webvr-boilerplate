@@ -411,11 +411,11 @@ var Modes = {
 }
 
 function PosePredictor() {
-  this.lastQ = new THREE.Q();
+  this.lastQ = new THREE.Quaternion();
   this.lastTimestamp = null;
 
-  this.outQ = new THREE.Q();
-  this.deltaQ = new THREE.Q();
+  this.outQ = new THREE.Quaternion();
+  this.deltaQ = new THREE.Quaternion();
 
   this.mode = Modes.INTERPOLATE;
   this.predictionTimeMs = 40;
@@ -429,7 +429,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
     this.lastTimestamp = timestamp;
     return currentQ;
   }
-  
+
   var elapsedMs = timestamp - this.lastTimestamp;
 
   switch (this.mode) {
