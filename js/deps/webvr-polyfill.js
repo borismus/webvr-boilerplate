@@ -465,7 +465,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
   }
 
   // Save the current quaternion for later.
-  this.lastQ.copy(this.currentQ);
+  this.lastQ.copy(currentQ);
 
   return this.outQ;
 };
