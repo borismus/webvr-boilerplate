@@ -477,8 +477,8 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       this.outQ.copy(this.lastQ);
       this.outQ.multiply(this.deltaQ);
 
-      // Save the predicted quaternion for later.
-      this.lastQ.copy(this.outQ);
+      // Save the current quaternion for later.
+      this.lastQ.copy(currentQ);
       break;
     case Modes.NONE:
     default:
