@@ -418,7 +418,7 @@ module.exports = MouseKeyboardPositionSensorVRDevice;
 // deviceorientation firing frequency (eg. on iOS, it is 20 Hz).  The larger
 // this value (in [0, 1]), the smoother but more delayed the head tracking is.
 var INTERPOLATION_SMOOTHING_FACTOR = 0.01;
-var PREDICTION_SMOOTHING_FACTOR = 0.01;
+var PREDICTION_SMOOTHING_FACTOR = 0.1;
 
 // The smallest quaternion magnitude per frame. If less rotation than this value
 // occurs, we don't do any prediction at all.
@@ -492,7 +492,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
 
       this.outQ.copy(this.lastQ);
       this.outQ.multiply(this.deltaQ);
-      //this.outQ.slerp(currentQ, PREDICTION_SMOOTHING_FACTOR);
+      this.outQ.slerp(currentQ, PREDICTION_SMOOTHING_FACTOR);
 
       // Save the current quaternion for later.
       this.lastQ.copy(currentQ);
