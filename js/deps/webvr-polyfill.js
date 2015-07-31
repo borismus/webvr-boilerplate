@@ -437,6 +437,8 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
   }
 
   var elapsedMs = timestamp - this.lastTimestamp;
+  // Use the known sensor update rate.
+  var elapsedMs = 1/60;
 
   switch (this.mode) {
     case Modes.INTERPOLATE:
