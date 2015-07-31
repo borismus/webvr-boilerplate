@@ -471,7 +471,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       // prediction.
       this.deltaQ.setFromAxisAngle(axis, angle);
 
-      this.outQ.copy(currentQ);
+      this.outQ.copy(this.lastQ);
       this.outQ.multiply(this.deltaQ);
       break;
     case Modes.NONE:
