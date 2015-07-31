@@ -431,9 +431,9 @@ var PREDICTION_TIME_MS = 50;
 // TODO: Clean this up.
 if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
   // More prediction time in iOS.
-  PREDICTION_TIME_MS = 60;
+  PREDICTION_TIME_MS = 40;
   // Less smoothing.
-  PREDICTION_SMOOTHING_FACTOR = 0.2;
+  PREDICTION_SMOOTHING_FACTOR = 0.0001;
 }
 
 var Modes = {
