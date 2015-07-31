@@ -407,7 +407,7 @@ var PREDICTION_SMOOTHING_FACTOR = 0.01;
 
 // The smallest quaternion magnitude per frame. If less rotation than this value
 // occurs, we don't do any prediction at all.
-var PREDICTION_THRESHOLD_DEG = 0.1;
+var PREDICTION_THRESHOLD_DEG = 0.0001;
 
 // How far into the future to predict.
 var PREDICTION_TIME_MS = 50;
@@ -477,7 +477,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
 
       this.outQ.copy(this.lastQ);
       this.outQ.multiply(this.deltaQ);
-      this.outQ.slerp(currentQ, PREDICTION_SMOOTHING_FACTOR);
+      //this.outQ.slerp(currentQ, PREDICTION_SMOOTHING_FACTOR);
 
       // Save the current quaternion for later.
       this.lastQ.copy(currentQ);
