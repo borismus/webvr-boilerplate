@@ -466,10 +466,10 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       var predictAngle = PREDICTION_TIME_MS * angularSpeed;
 
       // Calculate the prediction delta to apply to the original angle.
-      //this.deltaQ.setFromAxisAngle(axis, predictAngle);
+      this.deltaQ.setFromAxisAngle(axis, predictAngle);
       // As a sanity check, use the same axis and angle as before, with no
       // prediction.
-      this.deltaQ.setFromAxisAngle(axis, angle);
+      //this.deltaQ.setFromAxisAngle(axis, angle);
 
       this.outQ.copy(this.lastQ);
       this.outQ.multiply(this.deltaQ);
