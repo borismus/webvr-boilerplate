@@ -431,6 +431,7 @@ var PREDICTION_TIME_MS = 50;
 // Fastest possible angular speed that a human can reasonably produce.
 var MAX_ANGULAR_SPEED_DEG_PER_MS = 1;
 
+/*
 // TODO: Clean this up.
 if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
   // More prediction time in iOS.
@@ -438,6 +439,7 @@ if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
   // Way more smoothing.
   PREDICTION_SMOOTHING_FACTOR = 0.5;
 }
+*/
 
 var Modes = {
   NONE: 0,
