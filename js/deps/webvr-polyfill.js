@@ -418,14 +418,14 @@ module.exports = MouseKeyboardPositionSensorVRDevice;
 // deviceorientation firing frequency (eg. on iOS, it is 20 Hz).  The larger
 // this value (in [0, 1]), the smoother but more delayed the head tracking is.
 var INTERPOLATION_SMOOTHING_FACTOR = 0.01;
-var PREDICTION_SMOOTHING_FACTOR = 0.1;
+var PREDICTION_SMOOTHING_FACTOR = 0.3;
 
 // The smallest quaternion magnitude per frame. If less rotation than this value
 // occurs, we don't do any prediction at all.
 var PREDICTION_THRESHOLD_DEG = 0.0001;
 
 // How far into the future to predict.
-var PREDICTION_TIME_MS = 30;
+var PREDICTION_TIME_MS = 50;
 
 var Modes = {
   NONE: 0,
