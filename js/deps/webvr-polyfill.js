@@ -428,6 +428,9 @@ var PREDICTION_THRESHOLD_DEG = 0.001;
 // How far into the future to predict.
 var PREDICTION_TIME_MS = 50;
 
+// Fastest possible angular speed that a human can reasonably produce.
+var MAX_ANGULAR_SPEED_DEG_PER_MS = 1;
+
 // TODO: Clean this up.
 if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
   // More prediction time in iOS.
@@ -492,6 +495,13 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       // calculate.
       var angularSpeed = angle / elapsedMs;
       var predictAngle = PREDICTION_TIME_MS * angularSpeed;
+
+      // Sanity check angular speed. If it is insane (eg. greater than 1 degree
+      // per millisecond), treat as an outlier and don't predict.
+      if (THREE.Math.radToDeg(angularSpeed) > MAX_ANGULAR_SPEED_DEG_PER_MS) {
+        this.outQ.copy(currentQ);
+        break;
+      }
 
       // Calculate the prediction delta to apply to the original angle.
       this.deltaQ.setFromAxisAngle(axis, predictAngle);
