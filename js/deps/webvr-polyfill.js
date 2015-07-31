@@ -126,13 +126,6 @@ var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
 var THREE = require('./three-math.js');
 var PosePredictor = require('./pose-predictor.js');
 
-// How much to interpolate between the current orientation estimate and the
-// previous estimate position. This is helpful for devices with low
-// deviceorientation firing frequency (eg. on iOS, it is 20 Hz).
-// The larger this value (in [0, 1]), the smoother but more delayed the
-// head tracking is.
-var SMOOTHING_FACTOR = 0.01;
-
 /**
  * The positional sensor, implemented using web DeviceOrientation APIs.
  */
@@ -422,7 +415,7 @@ var PREDICTION_SMOOTHING_FACTOR = 0.3;
 
 // The smallest quaternion magnitude per frame. If less rotation than this value
 // occurs, we don't do any prediction at all.
-var PREDICTION_THRESHOLD_DEG = 0.0001;
+var PREDICTION_THRESHOLD_DEG = 0.001;
 
 // How far into the future to predict.
 var PREDICTION_TIME_MS = 50;
