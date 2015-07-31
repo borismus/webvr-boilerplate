@@ -447,22 +447,27 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       this.deltaQ.copy(this.lastQ);
       this.deltaQ.multiply(currentQ);
 
-      console.log('Angular delta: %s', this.deltaQ.length());
-      if (this.deltaQ.length() < EPSILON) {
-        this.outQ.copy(currentQ);
-        break;
-      }
-
       // Convert from delta quaternion to axis-angle.
       var axis = this.getAxis_(this.deltaQ);
       var angle = this.getAngle_(this.deltaQ);
+
+      // If there wasn't much rotation over the last frame, don't do prediction.
+      if (angle < EPSILON) {
+        this.outQ.copy(currentQ);
+        break;
+      }
 
       // It took `elapsed` ms to travel the angle amount over the axis. Now,
       // we make a new quaternion based how far in the future we want to
       // calculate.
       var angularSpeed = angle / elapsedMs;
       var predictAngle = this.predictionTimeMs * angularSpeed;
-      this.outQ.setFromAxisAngle(axis, predictAngle);
+
+      // Calculate the prediction delta to apply to the original angle.
+      this.deltaQ.setFromAxisAngle(axis, predictAngle);
+
+      this.outQ.copy(currentQ);
+      this.outQ.multiply(this.deltaQ);
       break;
     case Modes.NONE:
     default:
