@@ -402,7 +402,8 @@ module.exports = MouseKeyboardPositionSensorVRDevice;
 // previous estimate position. This is helpful for devices with low
 // deviceorientation firing frequency (eg. on iOS, it is 20 Hz).  The larger
 // this value (in [0, 1]), the smoother but more delayed the head tracking is.
-var SMOOTHING_FACTOR = 0.01;
+var INTERPOLATION_SMOOTHING_FACTOR = 0.01;
+var PREDICTION_SMOOTHING_FACTOR = 0.01;
 
 // The smallest quaternion magnitude per frame. If less rotation than this value
 // occurs, we don't do any prediction at all.
@@ -441,7 +442,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
   switch (this.mode) {
     case Modes.INTERPOLATE:
       this.outQ.copy(currentQ);
-      this.outQ.slerp(this.lastQ, SMOOTHING_FACTOR);
+      this.outQ.slerp(this.lastQ, INTERPOLATION_SMOOTHING_FACTOR);
 
       // Save the current quaternion for later.
       this.lastQ.copy(currentQ);
@@ -466,7 +467,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       // we make a new quaternion based how far in the future we want to
       // calculate.
       var angularSpeed = angle / elapsedMs;
-      var predictAngle = -PREDICTION_TIME_MS * angularSpeed;
+      var predictAngle = PREDICTION_TIME_MS * angularSpeed;
 
       // Calculate the prediction delta to apply to the original angle.
       this.deltaQ.setFromAxisAngle(axis, predictAngle);
@@ -476,6 +477,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
 
       this.outQ.copy(this.lastQ);
       this.outQ.multiply(this.deltaQ);
+      this.outQ.slerp(currentQ, PREDICTION_SMOOTHING_FACTOR);
 
       // Save the current quaternion for later.
       this.lastQ.copy(currentQ);
