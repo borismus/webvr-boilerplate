@@ -428,6 +428,14 @@ var PREDICTION_THRESHOLD_DEG = 0.001;
 // How far into the future to predict.
 var PREDICTION_TIME_MS = 50;
 
+// TODO: Clean this up.
+if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+  // More prediction time in iOS.
+  PREDICTION_TIME_MS = 100;
+  // Less smoothing.
+  PREDICTION_SMOOTHING_FACTOR = 0.01;
+}
+
 var Modes = {
   NONE: 0,
   INTERPOLATE: 1,
