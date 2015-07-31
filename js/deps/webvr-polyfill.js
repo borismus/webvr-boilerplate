@@ -409,7 +409,7 @@ var SMOOTHING_FACTOR = 0.01;
 var PREDICTION_THRESHOLD_DEG = 2;
 
 // How far into the future to predict.
-var PREDICTION_TIME_MS = 80;
+var PREDICTION_TIME_MS = 50;
 
 var Modes = {
   NONE: 0,
@@ -466,7 +466,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       // we make a new quaternion based how far in the future we want to
       // calculate.
       var angularSpeed = angle / elapsedMs;
-      var predictAngle = PREDICTION_TIME_MS * angularSpeed;
+      var predictAngle = -PREDICTION_TIME_MS * angularSpeed;
 
       // Calculate the prediction delta to apply to the original angle.
       this.deltaQ.setFromAxisAngle(axis, predictAngle);
