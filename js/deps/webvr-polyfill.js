@@ -408,6 +408,9 @@ var SMOOTHING_FACTOR = 0.01;
 // occurs, we don't do any prediction at all.
 var EPSILON = 0.00001;
 
+// How far into the future to predict.
+var PREDICTION_TIME_MS = 20;
+
 var Modes = {
   NONE: 0,
   INTERPOLATE: 1,
@@ -422,7 +425,6 @@ function PosePredictor() {
   this.deltaQ = new THREE.Quaternion();
 
   this.mode = Modes.PREDICT;
-  this.predictionTimeMs = 40;
 }
 
 PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
@@ -450,6 +452,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       // Convert from delta quaternion to axis-angle.
       var axis = this.getAxis_(this.deltaQ);
       var angle = this.getAngle_(this.deltaQ);
+      console.log('Rotated by %f deg', THREE.Math.radToDeg(angle));
 
       // If there wasn't much rotation over the last frame, don't do prediction.
       if (angle < EPSILON) {
@@ -461,7 +464,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       // we make a new quaternion based how far in the future we want to
       // calculate.
       var angularSpeed = angle / elapsedMs;
-      var predictAngle = this.predictionTimeMs * angularSpeed;
+      var predictAngle = PREDICTION_TIME_MS * angularSpeed;
 
       // Calculate the prediction delta to apply to the original angle.
       this.deltaQ.setFromAxisAngle(axis, predictAngle);
