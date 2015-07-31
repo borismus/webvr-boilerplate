@@ -409,7 +409,7 @@ var SMOOTHING_FACTOR = 0.01;
 var PREDICTION_THRESHOLD_DEG = 1;
 
 // How far into the future to predict.
-var PREDICTION_TIME_MS = 20;
+var PREDICTION_TIME_MS = 40;
 
 var Modes = {
   NONE: 0,
@@ -467,8 +467,8 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
 
       // Calculate the prediction delta to apply to the original angle.
       this.deltaQ.setFromAxisAngle(axis, predictAngle);
-      // As a sanity check, use the same axis and angle as before, with no
-      // prediction.
+      // As a sanity check, use the same axis and angle as before, which should
+      // cause no prediction to happen.
       //this.deltaQ.setFromAxisAngle(axis, angle);
 
       this.outQ.copy(this.lastQ);
