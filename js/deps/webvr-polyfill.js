@@ -471,6 +471,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
 
   // Save the current quaternion for later.
   this.lastQ.copy(currentQ);
+  this.lastTimestamp = timestamp;
 
   return this.outQ;
 };
@@ -485,6 +486,10 @@ PosePredictor.prototype.getAxis_ = function(quat) {
 
 PosePredictor.prototype.getAngle_ = function(quat) {
   // angle = 2 * acos(qw)
+  // If w is greater than 1, this results in something invalid.
+  if (quat.w > 1) {
+    return 0;
+  }
   return 2 * Math.acos(quat.w);
 };
 
