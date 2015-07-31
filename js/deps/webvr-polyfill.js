@@ -445,8 +445,8 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       break;
     case Modes.PREDICT:
       // Q_delta = Q_last^-1 * Q_curr
-      this.lastQ.inverse();
       this.deltaQ.copy(this.lastQ);
+      this.deltaQ.inverse();
       this.deltaQ.multiply(currentQ);
 
       // Convert from delta quaternion to axis-angle.
