@@ -409,7 +409,7 @@ var SMOOTHING_FACTOR = 0.01;
 var PREDICTION_THRESHOLD_DEG = 2;
 
 // How far into the future to predict.
-var PREDICTION_TIME_MS = 40;
+var PREDICTION_TIME_MS = 80;
 
 var Modes = {
   NONE: 0,
@@ -437,8 +437,6 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
   }
 
   var elapsedMs = timestamp - this.lastTimestamp;
-  // Use the known sensor update rate.
-  var elapsedMs = 1/60;
 
   switch (this.mode) {
     case Modes.INTERPOLATE:
