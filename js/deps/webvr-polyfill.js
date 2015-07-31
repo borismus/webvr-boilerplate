@@ -124,13 +124,14 @@ module.exports = CardboardHMDVRDevice;
  */
 var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
 var THREE = require('./three-math.js');
+var PosePredictor = require('./pose-predictor.js');
 
 // How much to interpolate between the current orientation estimate and the
 // previous estimate position. This is helpful for devices with low
 // deviceorientation firing frequency (eg. on iOS, it is 20 Hz).
 // The larger this value (in [0, 1]), the smoother but more delayed the
 // head tracking is.
-var SMOOTHING_FACTOR = 0.1;
+var SMOOTHING_FACTOR = 0.01;
 
 /**
  * The positional sensor, implemented using web DeviceOrientation APIs.
@@ -145,9 +146,6 @@ function GyroPositionSensorVRDevice() {
   this.deviceOrientation = null;
   this.screenOrientation = window.orientation;
 
-  // The last orientation (for smooth interpolation).
-  this.lastOrientation = new THREE.Quaternion();
-
   // Helper objects for calculating orientation.
   this.finalQuaternion = new THREE.Quaternion();
   this.tmpQuaternion = new THREE.Quaternion();
@@ -155,6 +153,8 @@ function GyroPositionSensorVRDevice() {
   this.screenTransform = new THREE.Quaternion();
   // -PI/2 around the x-axis.
   this.worldTransform = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
+
+  this.posePredictor = new PosePredictor();
 }
 GyroPositionSensorVRDevice.prototype = new PositionSensorVRDevice();
 
@@ -203,22 +203,13 @@ GyroPositionSensorVRDevice.prototype.getOrientation = function() {
   this.finalQuaternion.multiply(this.screenTransform);
   this.finalQuaternion.multiply(this.worldTransform);
 
-  // Get the last orientation ready for use.
-  this.tmpQuaternion.copy(this.lastOrientation);
-
-  // Save this result as the last orientation.
-  this.lastOrientation.copy(this.finalQuaternion);
-
-  // Interpolate between the new estimate and the last quaternion.
-  this.finalQuaternion.slerp(this.tmpQuaternion, SMOOTHING_FACTOR);
-
-  return this.finalQuaternion;
+  return this.posePredictor.getPrediction(this.finalQuaternion, new Date());
 };
 
 
 module.exports = GyroPositionSensorVRDevice;
 
-},{"./base.js":1,"./three-math.js":6}],4:[function(require,module,exports){
+},{"./base.js":1,"./pose-predictor.js":6,"./three-math.js":7}],4:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -237,7 +228,7 @@ var WebVRPolyfill = require('./webvr-polyfill.js');
 
 new WebVRPolyfill();
 
-},{"./webvr-polyfill.js":7}],5:[function(require,module,exports){
+},{"./webvr-polyfill.js":8}],5:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -406,7 +397,95 @@ MouseKeyboardPositionSensorVRDevice.prototype.isPointerLocked_ = function() {
 
 module.exports = MouseKeyboardPositionSensorVRDevice;
 
-},{"./base.js":1,"./three-math.js":6}],6:[function(require,module,exports){
+},{"./base.js":1,"./three-math.js":7}],6:[function(require,module,exports){
+// How much to interpolate between the current orientation estimate and the
+// previous estimate position. This is helpful for devices with low
+// deviceorientation firing frequency (eg. on iOS, it is 20 Hz).  The larger
+// this value (in [0, 1]), the smoother but more delayed the head tracking is.
+var SMOOTHING_FACTOR = 0.01;
+
+var Modes = {
+  NONE: 0,
+  INTERPOLATE: 1,
+  PREDICT: 2
+}
+
+function PosePredictor() {
+  this.lastQ = new THREE.Q();
+  this.lastTimestamp = null;
+
+  this.outQ = new THREE.Q();
+  this.deltaQ = new THREE.Q();
+
+  this.mode = Modes.INTERPOLATE;
+  this.predictionTimeMs = 40;
+}
+
+PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
+  // If there's no previous quaternion, output the current one and save for
+  // later.
+  if (!this.lastTimestamp) {
+    this.lastQ.copy(currentQ);
+    this.lastTimestamp = timestamp;
+    return currentQ;
+  }
+  
+  var elapsedMs = timestamp - this.lastTimestamp;
+
+  switch (this.mode) {
+    case Modes.INTERPOLATE:
+      this.outQ.copy(currentQ);
+      this.outQ.slerp(this.lastQ, SMOOTHING_FACTOR);
+      break;
+    case Modes.PREDICT:
+      // Q_delta = Q_last^-1 * Q_curr
+      this.lastQ.inverse();
+      this.deltaQ.copy(lastQ);
+      this.deltaQ.multiply(currentQ);
+
+      if (this.deltaQ.length() < EPSILON) {
+        this.outQ.copy(currentQ);
+        break;
+      }
+
+      // Convert from delta quaternion to axis-angle.
+      var axis = this.getAxis(this.deltaQ);
+      var angle = this.getAngle(this.deltaQ);
+
+      // It took `elapsed` ms to travel the angle amount over the axis. Now,
+      // we make a new quaternion based how far in the future we want to
+      // calculate.
+      var angularSpeed = angle / elapsedMs;
+      var predictAngle = this.predictionTimeMs * angularSpeed;
+      this.outQ.setFromAxisAngle(axis, predictAngle);
+      break;
+    case Modes.NONE:
+    default:
+      this.outQ.copy(currentQ);
+  }
+
+  // Save the current quaternion for later.
+  this.lastQ.copy(this.currentQ);
+
+  return this.outQ;
+};
+
+PosePredictor.prototype.getAxis_ = function(quat) {
+  // x = qx / sqrt(1-qw*qw)
+  // y = qy / sqrt(1-qw*qw)
+  // z = qz / sqrt(1-qw*qw)
+  var d = Math.sqrt(1 - quat.w * quat.w);
+  return new THREE.Vector3(quat.x / d, quat.y / d, quat.z / d);
+};
+
+PosePredictor.prototype.getAngle_ = function(quat) {
+  // angle = 2 * acos(qw)
+  return 2 * Math.acos(quat.w);
+};
+
+module.exports = PosePredictor;
+
+},{}],7:[function(require,module,exports){
 /*
  * A subset of THREE.js, providing mostly quaternion and euler-related
  * operations, manually lifted from
@@ -2530,7 +2609,7 @@ THREE.Euler.prototype = {
 
 module.exports = THREE;
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");

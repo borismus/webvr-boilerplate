@@ -76,3 +76,10 @@ self-explanatory.
 - Brandon's info on Chrome's WebVR implementation: http://blog.tojicode.com/2014/07/bringing-vr-to-chrome.html
 - Vlad's quick guide to the WebVR API: http://blog.bitops.com/blog/2014/06/26/first-steps-for-vr-on-the-web/
 - The WebVR IDL: https://github.com/vvuk/gecko-dev/blob/oculus/dom/webidl/VRDevice.webidl
+
+# Thanks
+
+- [Dmitry Kovalev][dk] for implementing [lens distortion correction][distortion].
+
+[dk]: https://plus.google.com/+DmitryKovalev1
+[distortion]: https://github.com/borismus/webvr-boilerplate/blob/master/src/cardboard-distorter.js
