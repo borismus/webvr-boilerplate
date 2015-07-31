@@ -404,6 +404,10 @@ module.exports = MouseKeyboardPositionSensorVRDevice;
 // this value (in [0, 1]), the smoother but more delayed the head tracking is.
 var SMOOTHING_FACTOR = 0.01;
 
+// The smallest quaternion magnitude per frame. If less rotation than this value
+// occurs, we don't do any prediction at all.
+var EPSILON = 0.00001;
+
 var Modes = {
   NONE: 0,
   INTERPOLATE: 1,
@@ -443,6 +447,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       this.deltaQ.copy(this.lastQ);
       this.deltaQ.multiply(currentQ);
 
+      console.log('Angular delta: %s', this.deltaQ.length());
       if (this.deltaQ.length() < EPSILON) {
         this.outQ.copy(currentQ);
         break;
