@@ -417,7 +417,7 @@ function PosePredictor() {
   this.outQ = new THREE.Quaternion();
   this.deltaQ = new THREE.Quaternion();
 
-  this.mode = Modes.INTERPOLATE;
+  this.mode = Modes.PREDICT;
   this.predictionTimeMs = 40;
 }
 
