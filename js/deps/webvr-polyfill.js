@@ -440,7 +440,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
     case Modes.PREDICT:
       // Q_delta = Q_last^-1 * Q_curr
       this.lastQ.inverse();
-      this.deltaQ.copy(lastQ);
+      this.deltaQ.copy(this.lastQ);
       this.deltaQ.multiply(currentQ);
 
       if (this.deltaQ.length() < EPSILON) {
