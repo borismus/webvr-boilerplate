@@ -509,7 +509,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       // For debugging, report the abs. difference between actual and predicted
       // angles.
       var angleDelta = THREE.Math.radToDeg(predictAngle - angle);
-      console.log('|Actual-Predicted| = %f deg', angleDelta);
+      console.log('|Actual-Predicted| = ' + angleDelta);
 
       // Save the current quaternion for later.
       this.lastQ.copy(currentQ);
