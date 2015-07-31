@@ -442,6 +442,9 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
     case Modes.INTERPOLATE:
       this.outQ.copy(currentQ);
       this.outQ.slerp(this.lastQ, SMOOTHING_FACTOR);
+
+      // Save the current quaternion for later.
+      this.lastQ.copy(currentQ);
       break;
     case Modes.PREDICT:
       // Q_delta = Q_last^-1 * Q_curr
@@ -473,14 +476,14 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
 
       this.outQ.copy(this.lastQ);
       this.outQ.multiply(this.deltaQ);
+
+      // Save the predicted quaternion for later.
+      this.lastQ.copy(this.outQ);
       break;
     case Modes.NONE:
     default:
       this.outQ.copy(currentQ);
   }
-
-  // Save the current quaternion for later.
-  this.lastQ.copy(currentQ);
   this.lastTimestamp = timestamp;
 
   return this.outQ;
