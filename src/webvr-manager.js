@@ -54,7 +54,7 @@ function WebVRManager(renderer, effect, params) {
   }
 
   // Check if the browser is compatible with WebVR.
-  this.getHMD_().then(function(hmd) {
+  this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
     // If Cardboard debug flag is enabled, force cardboard compat mode.
     hmd = hmd || window.CARDBOARD_DEBUG;
     // Activate either VR or Immersive mode.
@@ -73,7 +73,7 @@ function WebVRManager(renderer, effect, params) {
   }.bind(this));
 
   // Save the input device for later sending timing data.
-  this.getInputDevice_().then(function(input) {
+  this.getDeviceByType_(PositionSensorVRDevice).then(function(input) {
     this.input = input;
   }.bind(this));
 }
@@ -81,14 +81,6 @@ function WebVRManager(renderer, effect, params) {
 /**
  * Promise returns true if there is at least one HMD device available.
  */
-WebVRManager.prototype.getHMD_ = function() {
-  return getDeviceByType_(HMDVRDevice);
-};
-
-WebVRManager.prototype.getInputDevice_ = function() {
-  return getDeviceByType_(PositionSensorVRDevice);
-};
-
 WebVRManager.prototype.getDeviceByType_ = function(type) {
   return new Promise(function(resolve, reject) {
     navigator.getVRDevices().then(function(devices) {
@@ -119,7 +111,9 @@ WebVRManager.prototype.render = function(scene, camera, timestamp) {
   } else {
     this.renderer.render(scene, camera);
   }
-  this.input.setAnimationFrameTime(rafTime);
+  if (this.input && this.input.setAnimationFrameTime) {
+    this.input.setAnimationFrameTime(rafTime);
+  }
 };
 
 /**

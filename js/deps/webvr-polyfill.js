@@ -196,7 +196,8 @@ GyroPositionSensorVRDevice.prototype.getOrientation = function() {
   this.finalQuaternion.multiply(this.screenTransform);
   this.finalQuaternion.multiply(this.worldTransform);
 
-  return this.posePredictor.getPrediction(this.finalQuaternion, window.performance.now());
+  var bestTime = this.rafTime || window.performance.now();
+  return this.posePredictor.getPrediction(this.finalQuaternion, bestTime);
 };
 
 GyroPositionSensorVRDevice.prototype.resetSensor = function() {
