@@ -110,7 +110,7 @@ var skybox = new THREE.Mesh(geometry, material);
 scene.add(skybox);
 
 // Request animation frame loop function
-function animate() {
+function animate(timestamp) {
   // Apply rotation to cube mesh
   cube.rotation.y += 0.01;
 
@@ -118,7 +118,7 @@ function animate() {
   controls.update();
 
   // Render the scene through the manager.
-  manager.render(scene, camera);
+  manager.render(scene, camera, timestamp);
 
   requestAnimationFrame(animate);
 }

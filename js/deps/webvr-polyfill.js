@@ -196,11 +196,15 @@ GyroPositionSensorVRDevice.prototype.getOrientation = function() {
   this.finalQuaternion.multiply(this.screenTransform);
   this.finalQuaternion.multiply(this.worldTransform);
 
-  return this.posePredictor.getPrediction(this.finalQuaternion, new Date());
+  return this.posePredictor.getPrediction(this.finalQuaternion, window.performance.now());
 };
 
 GyroPositionSensorVRDevice.prototype.resetSensor = function() {
   console.error('Not implemented yet.');
+};
+
+GyroPositionSensorVRDevice.setAnimationFrameTime = function(rafTime) {
+  this.rafTime = rafTime;
 };
 
 
@@ -423,13 +427,15 @@ var INTERPOLATION_SMOOTHING_FACTOR = 0.01;
 
 // Angular threshold, if the angular speed (in deg/s) is less than this, do no
 // prediction.
-var PREDICTION_THRESHOLD_DEG_PER_S = 360 / 0.1;
+var PREDICTION_THRESHOLD_DEG_PER_S = 360 / 1.5;
+//var PREDICTION_THRESHOLD_DEG_PER_S = 0;
 
 // How far into the future to predict.
-var PREDICTION_TIME_MS = 50;
+var PREDICTION_TIME_MS = 80;
 
 // Fastest possible angular speed that a human can reasonably produce.
 var MAX_ANGULAR_SPEED_DEG_PER_S = 360 / 0.01;
+//var MAX_ANGULAR_SPEED_DEG_PER_S = Infinity;
 
 var Modes = {
   NONE: 0,
@@ -456,6 +462,8 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
     return currentQ;
   }
 
+  // DEBUG ONLY: Try with a fixed 60 Hz update speed.
+  //var elapsedMs = 1000/60;
   var elapsedMs = timestamp - this.lastTimestamp;
 
   switch (this.mode) {
@@ -483,9 +491,10 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       var predictAngle = PREDICTION_TIME_MS * angularSpeed;
 
       // If we're rotating slowly, don't do prediction.
-      var angularSpeedDegS = THREE.Math.radToDeg(angularSpeed) / 1000;
+      var angularSpeedDegS = THREE.Math.radToDeg(angularSpeed) * 1000;
       if (angularSpeedDegS < PREDICTION_THRESHOLD_DEG_PER_S) {
         this.outQ.copy(currentQ);
+        this.lastQ.copy(currentQ);
         break;
       }
 
@@ -493,6 +502,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       // per millisecond), treat as an outlier and don't predict.
       if (angularSpeedDegS > MAX_ANGULAR_SPEED_DEG_PER_S) {
         this.outQ.copy(currentQ);
+        this.lastQ.copy(currentQ);
         break;
       }
 
@@ -512,7 +522,8 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
         console.log('|Actual-Predicted| = %d deg', angleDelta);
       }
 
-      // Save the current quaternion for later.
+      // Use the predicted quaternion as the new last one.
+      //this.lastQ.copy(this.outQ);
       this.lastQ.copy(currentQ);
       break;
     case Modes.NONE:
