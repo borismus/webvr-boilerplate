@@ -416,20 +416,20 @@ module.exports = MouseKeyboardPositionSensorVRDevice;
 
 // How much to interpolate between the current orientation estimate and the
 // previous estimate position. This is helpful for devices with low
-// deviceorientation firing frequency (eg. on iOS, it is 20 Hz).  The larger
-// this value (in [0, 1]), the smoother but more delayed the head tracking is.
+// deviceorientation firing frequency (eg. on iOS8 and below, it is 20 Hz).  The
+// larger this value (in [0, 1]), the smoother but more delayed the head
+// tracking is.
 var INTERPOLATION_SMOOTHING_FACTOR = 0.01;
-var PREDICTION_SMOOTHING_FACTOR = 0.01;
 
-// The smallest quaternion magnitude per frame. If less rotation than this value
-// occurs, we don't do any prediction at all.
-var PREDICTION_THRESHOLD_DEG = 0.01;
+// Angular threshold, if the angular speed (in deg/s) is less than this, do no
+// prediction.
+var PREDICTION_THRESHOLD_DEG_PER_S = 360 / 0.1;
 
 // How far into the future to predict.
 var PREDICTION_TIME_MS = 50;
 
 // Fastest possible angular speed that a human can reasonably produce.
-var MAX_ANGULAR_SPEED_DEG_PER_MS = 1;
+var MAX_ANGULAR_SPEED_DEG_PER_S = 360 / 0.01;
 
 var Modes = {
   NONE: 0,
@@ -476,39 +476,36 @@ PosePredictor.prototype.getPrediction = function(currentQ, timestamp) {
       var axis = this.getAxis_(this.deltaQ);
       var angle = this.getAngle_(this.deltaQ);
 
-      // If there wasn't much rotation over the last frame, don't do prediction.
-      if (THREE.Math.radToDeg(angle) < PREDICTION_THRESHOLD_DEG) {
-        this.outQ.copy(currentQ);
-        break;
-      }
-
       // It took `elapsed` ms to travel the angle amount over the axis. Now,
       // we make a new quaternion based how far in the future we want to
       // calculate.
       var angularSpeed = angle / elapsedMs;
       var predictAngle = PREDICTION_TIME_MS * angularSpeed;
 
+      // If we're rotating slowly, don't do prediction.
+      var angularSpeedDegS = THREE.Math.radToDeg(angularSpeed) / 1000;
+      if (angularSpeedDegS < PREDICTION_THRESHOLD_DEG_PER_S) {
+        this.outQ.copy(currentQ);
+        break;
+      }
+
       // Sanity check angular speed. If it is insane (eg. greater than 1 degree
       // per millisecond), treat as an outlier and don't predict.
-      if (THREE.Math.radToDeg(angularSpeed) > MAX_ANGULAR_SPEED_DEG_PER_MS) {
+      if (angularSpeedDegS > MAX_ANGULAR_SPEED_DEG_PER_S) {
         this.outQ.copy(currentQ);
         break;
       }
 
       // Calculate the prediction delta to apply to the original angle.
       this.deltaQ.setFromAxisAngle(axis, predictAngle);
-      // As a sanity check, use the same axis and angle as before, which should
-      // cause no prediction to happen.
+      // DEBUG ONLY: As a sanity check, use the same axis and angle as before,
+      // which should cause no prediction to happen.
       //this.deltaQ.setFromAxisAngle(axis, angle);
 
       this.outQ.copy(this.lastQ);
       this.outQ.multiply(this.deltaQ);
 
-      // Interpolate between the current position and the predicted one for more
-      // smoothness. This doesn't actually seem to help.
-      //this.outQ.slerp(currentQ, PREDICTION_SMOOTHING_FACTOR);
-
-      // For debugging, report the abs. difference between actual and predicted
+      // DEBUG ONLY: report the abs. difference between actual and predicted
       // angles.
       var angleDelta = THREE.Math.radToDeg(predictAngle - angle);
       if (angleDelta > 5) {
@@ -562,7 +559,7 @@ module.exports = PosePredictor;
 var THREE = window.THREE || {};
 
 // If some piece of THREE is missing, fill it in here.
-if (!THREE.Quaternion || !THREE.Vector3 || !THREE.Vector2 || !THREE.Euler) {
+if (!THREE.Quaternion || !THREE.Vector3 || !THREE.Vector2 || !THREE.Euler || !THREE.Math) {
 console.log('No THREE.js found.');
 
 
@@ -2670,6 +2667,177 @@ THREE.Euler.prototype = {
 
 };
 /*** END Euler ***/
+/*** START Math ***/
+/**
+ * @author alteredq / http://alteredqualia.com/
+ * @author mrdoob / http://mrdoob.com/
+ */
+
+THREE.Math = {
+
+	generateUUID: function () {
+
+		// http://www.broofa.com/Tools/Math.uuid.htm
+
+		var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split( '' );
+		var uuid = new Array( 36 );
+		var rnd = 0, r;
+
+		return function () {
+
+			for ( var i = 0; i < 36; i ++ ) {
+
+				if ( i == 8 || i == 13 || i == 18 || i == 23 ) {
+
+					uuid[ i ] = '-';
+
+				} else if ( i == 14 ) {
+
+					uuid[ i ] = '4';
+
+				} else {
+
+					if ( rnd <= 0x02 ) rnd = 0x2000000 + ( Math.random() * 0x1000000 ) | 0;
+					r = rnd & 0xf;
+					rnd = rnd >> 4;
+					uuid[ i ] = chars[ ( i == 19 ) ? ( r & 0x3 ) | 0x8 : r ];
+
+				}
+			}
+
+			return uuid.join( '' );
+
+		};
+
+	}(),
+
+	// Clamp value to range <a, b>
+
+	clamp: function ( x, a, b ) {
+
+		return ( x < a ) ? a : ( ( x > b ) ? b : x );
+
+	},
+
+	// Clamp value to range <a, inf)
+
+	clampBottom: function ( x, a ) {
+
+		return x < a ? a : x;
+
+	},
+
+	// Linear mapping from range <a1, a2> to range <b1, b2>
+
+	mapLinear: function ( x, a1, a2, b1, b2 ) {
+
+		return b1 + ( x - a1 ) * ( b2 - b1 ) / ( a2 - a1 );
+
+	},
+
+	// http://en.wikipedia.org/wiki/Smoothstep
+
+	smoothstep: function ( x, min, max ) {
+
+		if ( x <= min ) return 0;
+		if ( x >= max ) return 1;
+
+		x = ( x - min ) / ( max - min );
+
+		return x * x * ( 3 - 2 * x );
+
+	},
+
+	smootherstep: function ( x, min, max ) {
+
+		if ( x <= min ) return 0;
+		if ( x >= max ) return 1;
+
+		x = ( x - min ) / ( max - min );
+
+		return x * x * x * ( x * ( x * 6 - 15 ) + 10 );
+
+	},
+
+	// Random float from <0, 1> with 16 bits of randomness
+	// (standard Math.random() creates repetitive patterns when applied over larger space)
+
+	random16: function () {
+
+		return ( 65280 * Math.random() + 255 * Math.random() ) / 65535;
+
+	},
+
+	// Random integer from <low, high> interval
+
+	randInt: function ( low, high ) {
+
+		return Math.floor( this.randFloat( low, high ) );
+
+	},
+
+	// Random float from <low, high> interval
+
+	randFloat: function ( low, high ) {
+
+		return low + Math.random() * ( high - low );
+
+	},
+
+	// Random float from <-range/2, range/2> interval
+
+	randFloatSpread: function ( range ) {
+
+		return range * ( 0.5 - Math.random() );
+
+	},
+
+	degToRad: function () {
+
+		var degreeToRadiansFactor = Math.PI / 180;
+
+		return function ( degrees ) {
+
+			return degrees * degreeToRadiansFactor;
+
+		};
+
+	}(),
+
+	radToDeg: function () {
+
+		var radianToDegreesFactor = 180 / Math.PI;
+
+		return function ( radians ) {
+
+			return radians * radianToDegreesFactor;
+
+		};
+
+	}(),
+
+	isPowerOfTwo: function ( value ) {
+
+		return ( value & ( value - 1 ) ) === 0 && value !== 0;
+
+	},
+
+	nextPowerOfTwo: function ( value ) {
+
+		value --;
+		value |= value >> 1;
+		value |= value >> 2;
+		value |= value >> 4;
+		value |= value >> 8;
+		value |= value >> 16;
+		value ++;
+
+		return value;
+	}
+
+};
+
+/*** END Math ***/
 
 }
 
