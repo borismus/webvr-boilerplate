@@ -134,6 +134,9 @@ WebVRManager.prototype.activateVR_ = function() {
       this.onFullscreenChange_.bind(this));
   document.addEventListener('mozfullscreenchange',
       this.onFullscreenChange_.bind(this));
+  document.addEventListener('orientationchange',
+      this.onOrientationChange_.bind(this));
+
 
   // Create the necessary elements for wake lock to work.
   this.wakelock = new Wakelock();
@@ -164,6 +167,10 @@ WebVRManager.prototype.onFullscreenChange_ = function(e) {
       document.mozFullScreenElement === null) {
     this.exitVR();
   }
+};
+
+WebVRManager.prototype.onOrientationChange_ = function(e) {
+  this.effect.setSize(window.innerWidth, window.innerHeight);
 };
 
 WebVRManager.prototype.requestPointerLock_ = function() {
