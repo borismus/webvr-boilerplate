@@ -109,10 +109,15 @@ WebVRManager.prototype.render = function(scene, camera, timestamp) {
     this.effect.render(scene, camera);
     this.distorter.postRender();
   } else {
-    this.renderer.render(scene, camera);
+    // Scene may be an array of two scenes, one for each eye.
+    if (scene instanceof Array) {
+      this.renderer.render(scene[0], camera);
+    } else {
+      this.renderer.render(scene, camera);
+    }
   }
   if (this.input && this.input.setAnimationFrameTime) {
-    this.input.setAnimationFrameTime(rafTime);
+    this.input.setAnimationFrameTime(timestamp);
   }
 };
 
