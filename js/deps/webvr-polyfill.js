@@ -455,7 +455,7 @@ var PREDICTION_THRESHOLD_DEG_PER_S = 0.01;
 //var PREDICTION_THRESHOLD_DEG_PER_S = 0;
 
 // How far into the future to predict.
-var PREDICTION_TIME_MS = 100;
+var PREDICTION_TIME_MS = 120;
 
 // Fastest possible angular speed that a human can reasonably produce.
 //var MAX_ANGULAR_SPEED_DEG_PER_S = 360 / 0.01;
