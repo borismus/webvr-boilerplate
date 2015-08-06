@@ -49,11 +49,18 @@ body {
 <script src="build/webvr-manager.js"></script>
 
 <script>
-// Debug parameters.
+/*
+ * Debug parameters.
+ */
+
+// Enable distortion everywhere.
 //WEBVR_FORCE_DISTORTION = true;
-WEBVR_PREDICTION_MODE = 0;
-//WEBVR_PREDICTION_TIME_MS = 200;
-WEBVR_BACKGROUND_COLOR = new THREE.Vector4(1, 0, 0, 1);
+// Override the distortion background color.
+//WEBVR_BACKGROUND_COLOR = new THREE.Vector4(1, 0, 0, 1);
+// Change the tracking prediction mode.
+//WEBVR_PREDICTION_MODE = 2;
+// In prediction mode, change how far into the future to predict.
+//WEBVR_PREDICTION_TIME_MS = 100;
 </script>
 
 <script>

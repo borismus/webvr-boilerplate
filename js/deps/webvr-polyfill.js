@@ -203,7 +203,8 @@ GyroPositionSensorVRDevice.prototype.getOrientation = function() {
   this.finalQuaternion.multiply(this.worldTransform);
 
   // DEBUG ONLY: Log rotation rate if it's large enough.
-  if (false && this.deviceMotion) {
+  /*
+  if (this.deviceMotion) {
     var rotRate = this.deviceMotion.rotationRate;
     if (Math.abs(rotRate.alpha) > 5) {
       console.log('Rotation around Z: %f deg', rotRate.alpha);
@@ -215,12 +216,14 @@ GyroPositionSensorVRDevice.prototype.getOrientation = function() {
       console.log('Rotation around Y: %f deg', rotRate.gamma);
     }
   }
+  */
 
   //var bestTime = this.rafTime || window.performance.now();
   //var bestTime = window.performance.now();
   var bestTime = this.deviceOrientation.timeStamp;
+  var rotRate = this.deviceMotion && this.deviceMotion.rotationRate;
   return this.posePredictor.getPrediction(
-      this.finalQuaternion, this.deviceMotion.rotationRate, bestTime);
+      this.finalQuaternion, rotRate, bestTime);
 };
 
 GyroPositionSensorVRDevice.prototype.resetSensor = function() {
@@ -500,7 +503,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, rotationRate, timesta
       if (rotationRate) {
         axisAngle = this.getAxisAngularSpeedFromRotationRate_(rotationRate);
       } else {
-        axisAngle = this.getAxisAngularSpeedFromGyroDelta_(elapsedMs);
+        axisAngle = this.getAxisAngularSpeedFromGyroDelta_(currentQ, elapsedMs);
       }
 
       // If there is no predicted axis/angle, don't do prediction.
@@ -592,7 +595,7 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
   }
 };
 
-PosePredictor.prototype.getAxisAngularSpeedFromGyroDelta_ = function(elapsedMs) {
+PosePredictor.prototype.getAxisAngularSpeedFromGyroDelta_ = function(currentQ, elapsedMs) {
   // Sometimes we use the same sensor timestamp, in which case prediction
   // won't work.
   if (elapsedMs == 0) {
