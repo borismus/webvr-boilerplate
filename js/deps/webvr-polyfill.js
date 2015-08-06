@@ -656,22 +656,22 @@ PosePredictor.prototype.getScreenAdjustedRotationRateIOS_ = function(rotationRat
   };
   switch (this.screenOrientation) {
     case 90:
-      screenRotationRate.beta  =   rotationRate.beta;
-      screenRotationRate.gamma =   rotationRate.gamma;
+      screenRotationRate.beta  = -rotationRate.beta;
+      screenRotationRate.gamma =  rotationRate.gamma;
       break;
     case 180:
-      screenRotationRate.beta  = - rotationRate.beta;
-      screenRotationRate.gamma = - rotationRate.gamma;
+      screenRotationRate.beta  = -rotationRate.beta;
+      screenRotationRate.gamma = -rotationRate.gamma;
       break;
     case 270:
     case -90:
-      screenRotationRate.beta  =   rotationRate.gamma;
-      screenRotationRate.gamma = - rotationRate.beta;
+      screenRotationRate.beta  =  rotationRate.beta;
+      screenRotationRate.gamma =  rotationRate.gamma;
       break;
     default: // SCREEN_ROTATION_0
-      screenRotationRate.alpha =   rotationRate.beta;
-      screenRotationRate.beta  =   rotationRate.alpha;
-      screenRotationRate.gamma =   rotationRate.gamma;
+      screenRotationRate.alpha =  rotationRate.beta;
+      screenRotationRate.beta  =  rotationRate.alpha;
+      screenRotationRate.gamma =  rotationRate.gamma;
       break;
   }
   return screenRotationRate;
