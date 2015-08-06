@@ -588,7 +588,7 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
   var screenRotationRate;
   if (/iPad|iPhone|iPod/.test(navigator.platform)) {
     // iOS: angular speed in deg/s.
-    var screenRotationRate = this.getScreenAdjustedRotationRate_(rotationRate);
+    var screenRotationRate = this.getScreenAdjustedRotationRateIOS_(rotationRate);
   } else {
     // Android: angular speed in rad/s, so need to convert.
     rotationRate.alpha = THREE.Math.radToDeg(rotationRate.alpha);
@@ -669,6 +669,7 @@ PosePredictor.prototype.getScreenAdjustedRotationRateIOS_ = function(rotationRat
       screenRotationRate.gamma = - rotationRate.beta;
       break;
     default: // SCREEN_ROTATION_0
+      screenRotationRate.alpha =   rotationRate.alpha;
       screenRotationRate.beta  =   rotationRate.beta;
       screenRotationRate.gamma =   rotationRate.gamma;
       break;
