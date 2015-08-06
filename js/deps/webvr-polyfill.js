@@ -654,6 +654,7 @@ PosePredictor.prototype.getScreenAdjustedRotationRateIOS_ = function(rotationRat
     beta: rotationRate.beta,
     gamma: rotationRate.gamma
   };
+  // Values empirically derived.
   switch (this.screenOrientation) {
     case 90:
       screenRotationRate.beta  = -rotationRate.beta;
