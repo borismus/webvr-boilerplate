@@ -593,7 +593,8 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
   // Angular speed in deg/s.
   var angularSpeedDegS = vec.length();
   if (/iPad|iPhone|iPod/.test(navigator.platform)) {
-    // TODO: iOS reports speeds in some other units. What gives?
+    // TODO: iOS is somehow different. But how?
+    vec.z = -vec.z;
   }
   var axis = vec.normalize();
   return {
