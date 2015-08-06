@@ -465,7 +465,7 @@ var PREDICTION_THRESHOLD_DEG_PER_S = 0.01;
 //var PREDICTION_THRESHOLD_DEG_PER_S = 0;
 
 // How far into the future to predict.
-WEBVR_PREDICTION_TIME_MS = 100;
+WEBVR_PREDICTION_TIME_MS = 80;
 
 // Whether to predict or what.
 WEBVR_PREDICTION_MODE = PredictionMode.PREDICT;

@@ -476,11 +476,11 @@ var Util = require('./util.js');
  * Thanks to dkovalev@.
  */
 function AndroidWakeLock() {
+  // TODO: Enable the wake lock when performance issues are sorted out.
+  return;
   var video = document.createElement('video');
-  video.loop = true;
 
   video.addEventListener('ended', function() {
-    console.log('Video ended, playing again');
     video.play();
   });
 
