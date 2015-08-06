@@ -849,7 +849,8 @@ WebVRManager.prototype.enterVR = function() {
   this.effect.setFullScreen(true);
   // Lock down orientation and wakelock.
   this.requestOrientationLock_();
-  this.wakelock.request();
+  // TODO: Make wakelock efficient!
+  //this.wakelock.request();
 
   this.mode = Modes.VR;
   // Set style on button.

@@ -585,8 +585,17 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
   if (!rotationRate) {
     return null;
   }
-  // Get axis and angular speed from rotation rate.
-  var screenRotationRate = this.getScreenAdjustedRotationRate_(rotationRate);
+  var screenRotationRate;
+  if (/iPad|iPhone|iPod/.test(navigator.platform)) {
+    // iOS: angular speed in deg/s.
+    var screenRotationRate = this.getScreenAdjustedRotationRate_(rotationRate);
+  } else {
+    // Android: angular speed in rad/s, so need to convert.
+    rotationRate.alpha = THREE.Math.radToDeg(rotationRate.alpha);
+    rotationRate.beta = THREE.Math.radToDeg(rotationRate.beta);
+    rotationRate.gamma = THREE.Math.radToDeg(rotationRate.gamma);
+    var screenRotationRate = this.getScreenAdjustedRotationRate_(rotationRate);
+  }
   var vec = new THREE.Vector3(
       screenRotationRate.beta, screenRotationRate.alpha, screenRotationRate.gamma);
 
@@ -614,6 +623,34 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
 PosePredictor.prototype.getScreenAdjustedRotationRate_ = function(rotationRate) {
   var screenRotationRate = {
     alpha: -rotationRate.alpha,
+    beta: rotationRate.beta,
+    gamma: rotationRate.gamma
+  };
+  switch (this.screenOrientation) {
+    case 90:
+      screenRotationRate.beta  = - rotationRate.gamma;
+      screenRotationRate.gamma =   rotationRate.beta;
+      break;
+    case 180:
+      screenRotationRate.beta  = - rotationRate.beta;
+      screenRotationRate.gamma = - rotationRate.gamma;
+      break;
+    case 270:
+    case -90:
+      screenRotationRate.beta  =   rotationRate.gamma;
+      screenRotationRate.gamma = - rotationRate.beta;
+      break;
+    default: // SCREEN_ROTATION_0
+      screenRotationRate.beta  =   rotationRate.beta;
+      screenRotationRate.gamma =   rotationRate.gamma;
+      break;
+  }
+  return screenRotationRate;
+};
+
+PosePredictor.prototype.getScreenAdjustedRotationRateIOS_ = function(rotationRate) {
+  var screenRotationRate = {
+    alpha: rotationRate.alpha,
     beta: rotationRate.beta,
     gamma: rotationRate.gamma
   };
