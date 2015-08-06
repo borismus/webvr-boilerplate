@@ -613,7 +613,7 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
 
 PosePredictor.prototype.getScreenAdjustedRotationRate_ = function(rotationRate) {
   var screenRotationRate = {
-    alpha: rotationRate.alpha,
+    alpha: -rotationRate.alpha,
     beta: rotationRate.beta,
     gamma: rotationRate.gamma
   };
