@@ -17,7 +17,7 @@ body {
   color: #fff;
   margin: 0px;
   padding: 0;
-  overflow: auto;
+  overflow: hidden;
 }
 </style>
 </head>
@@ -152,11 +152,6 @@ function onWindowResize() {
   camera.updateProjectionMatrix();
 
   effect.setSize(window.innerWidth, window.innerHeight);
-
-  // iOS resize hack.
-  if (/iPad|iPhone|iPod/.test(navigator.platform)) {
-    this.setTimeout(onWindowResize, 1);
-  }
 }
 
 window.addEventListener('resize', onWindowResize, false);
