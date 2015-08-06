@@ -216,7 +216,7 @@ WebVRManager.prototype.enterVR = function() {
   // Lock down orientation and wakelock.
   this.requestOrientationLock_();
   // TODO: Make wakelock efficient!
-  //this.wakelock.request();
+  this.wakelock.request();
 
   this.mode = Modes.VR;
   // Set style on button.

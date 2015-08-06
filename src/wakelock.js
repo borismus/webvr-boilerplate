@@ -22,8 +22,10 @@ var Util = require('./util.js');
  */
 function AndroidWakeLock() {
   var video = document.createElement('video');
+  video.loop = true;
 
   video.addEventListener('ended', function() {
+    console.log('Video ended, playing again');
     video.play();
   });
 
