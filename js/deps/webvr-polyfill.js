@@ -589,7 +589,7 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
     return null;
   }
   // Get axis and angular speed from rotation rate.
-  var vec = new THREE.Vector3(rotationRate.beta, -rotationRate.alpha, rotationRate.gamma);
+  var vec = new THREE.Vector3(rotationRate.beta, -rotationRate.alpha, -rotationRate.gamma);
   // Angular speed in deg/s.
   var angularSpeedDegS = vec.length();
   if (/iPad|iPhone|iPod/.test(navigator.platform)) {
