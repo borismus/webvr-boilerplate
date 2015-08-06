@@ -665,7 +665,7 @@ PosePredictor.prototype.getScreenAdjustedRotationRateIOS_ = function(rotationRat
       break;
     case 270:
     case -90:
-      screenRotationRate.alpha =  rotationRate.alpha;
+      screenRotationRate.alpha = -rotationRate.alpha;
       screenRotationRate.beta  =  rotationRate.beta;
       screenRotationRate.gamma =  rotationRate.gamma;
       break;
