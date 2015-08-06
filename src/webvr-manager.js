@@ -233,8 +233,6 @@ WebVRManager.prototype.exitVR = function() {
   this.releaseOrientationLock_();
   this.releasePointerLock_();
   this.wakelock.release();
-  // Also, work around a problem in VREffect and resize the window.
-  this.effect.setSize(window.innerWidth, window.innerHeight);
 
   this.mode = this.defaultMode;
   // Go back to the default mode.
