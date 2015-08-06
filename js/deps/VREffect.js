@@ -70,7 +70,7 @@ THREE.VREffect = function ( renderer, onError ) {
 
 	this.setSize = function( width, height ) {
 
-		renderer.setSize( width, height, true );
+		renderer.setSize( width, height );
 
 	};
 
