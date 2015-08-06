@@ -594,7 +594,7 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
   var angularSpeedDegS = vec.length();
   if (/iPad|iPhone|iPod/.test(navigator.platform)) {
     // TODO: iOS is somehow different. But how?
-    vec.z = -vec.z;
+    vec.y = -vec.y;
   }
   var axis = vec.normalize();
   return {
