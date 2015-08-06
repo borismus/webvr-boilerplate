@@ -217,7 +217,7 @@ GyroPositionSensorVRDevice.prototype.getOrientation = function() {
     }
   }
   */
-  this.posePredictor.setScreenTransform(this.screenTransform);
+  this.posePredictor.setScreenOrientation(this.screenOrientation);
 
   //var bestTime = this.rafTime || window.performance.now();
   //var bestTime = window.performance.now();
@@ -476,8 +476,6 @@ function PosePredictor() {
 
   this.outQ = new THREE.Quaternion();
   this.deltaQ = new THREE.Quaternion();
-
-  this.screenTransform = new THREE.Quaternion();
 }
 
 PosePredictor.prototype.getPrediction = function(currentQ, rotationRate, timestamp) {
@@ -557,8 +555,8 @@ PosePredictor.prototype.getPrediction = function(currentQ, rotationRate, timesta
   return this.outQ;
 };
 
-PosePredictor.prototype.setScreenTransform = function(screenTransform) {
-  this.screenTransform = screenTransform;
+PosePredictor.prototype.setScreenOrientation = function(screenOrientation) {
+  this.screenOrientation = screenOrientation;
 };
 
 PosePredictor.prototype.getAxis_ = function(quat) {
@@ -588,8 +586,12 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
     return null;
   }
   // Get axis and angular speed from rotation rate.
-  var vec;
+  var screenRotationRate = this.getScreenAdjustedRotationRate_(rotationRate);
+  var vec = new THREE.Vector3(
+      screenRotationRate.beta, screenRotationRate.alpha, screenRotationRate.gamma);
 
+  /*
+  var vec;
   if (/iPad|iPhone|iPod/.test(navigator.platform)) {
     vec = new THREE.Vector3(rotationRate.gamma, rotationRate.alpha, rotationRate.beta);
   } else {
@@ -597,6 +599,7 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
   }
   // Take into account the screen orientation too!
   vec.applyQuaternion(this.screenTransform);
+  */
 
   // Angular speed in deg/s.
   var angularSpeedDegS = vec.length();
@@ -606,6 +609,34 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
     speed: angularSpeedDegS,
     axis: axis
   }
+};
+
+PosePredictor.prototype.getScreenAdjustedRotationRate_ = function(rotationRate) {
+  var screenRotationRate = {
+    alpha: rotationRate.alpha,
+    beta: rotationRate.beta,
+    gamma: rotationRate.gamma
+  };
+  switch (this.screenOrientation) {
+    case 90:
+      screenRotationRate.beta  = - rotationRate.gamma;
+      screenRotationRate.gamma =   rotationRate.beta;
+      break;
+    case 180:
+      screenRotationRate.beta  = - rotationRate.beta;
+      screenRotationRate.gamma = - rotationRate.gamma;
+      break;
+    case 270:
+    case -90:
+      screenRotationRate.beta  =   rotationRate.gamma;
+      screenRotationRate.gamma = - rotationRate.beta;
+      break;
+    default: // SCREEN_ROTATION_0
+      screenRotationRate.beta  =   rotationRate.beta;
+      screenRotationRate.gamma =   rotationRate.gamma;
+      break;
+  }
+  return screenRotationRate;
 };
 
 PosePredictor.prototype.getAxisAngularSpeedFromGyroDelta_ = function(currentQ, elapsedMs) {
