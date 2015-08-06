@@ -669,8 +669,8 @@ PosePredictor.prototype.getScreenAdjustedRotationRateIOS_ = function(rotationRat
       screenRotationRate.gamma = - rotationRate.beta;
       break;
     default: // SCREEN_ROTATION_0
-      screenRotationRate.alpha =   rotationRate.alpha;
-      screenRotationRate.beta  =   rotationRate.beta;
+      screenRotationRate.alpha =   rotationRate.beta;
+      screenRotationRate.beta  =   rotationRate.alpha;
       screenRotationRate.gamma =   rotationRate.gamma;
       break;
   }
