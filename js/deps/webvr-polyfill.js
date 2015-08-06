@@ -217,6 +217,7 @@ GyroPositionSensorVRDevice.prototype.getOrientation = function() {
     }
   }
   */
+  this.posePredictor.setScreenTransform(this.screenTransform);
 
   //var bestTime = this.rafTime || window.performance.now();
   //var bestTime = window.performance.now();
@@ -475,6 +476,8 @@ function PosePredictor() {
 
   this.outQ = new THREE.Quaternion();
   this.deltaQ = new THREE.Quaternion();
+
+  this.screenTransform = new THREE.Quaternion();
 }
 
 PosePredictor.prototype.getPrediction = function(currentQ, rotationRate, timestamp) {
@@ -554,6 +557,10 @@ PosePredictor.prototype.getPrediction = function(currentQ, rotationRate, timesta
   return this.outQ;
 };
 
+PosePredictor.prototype.setScreenTransform = function(screenTransform) {
+  this.screenTransform = screenTransform;
+};
+
 PosePredictor.prototype.getAxis_ = function(quat) {
   // x = qx / sqrt(1-qw*qw)
   // y = qy / sqrt(1-qw*qw)
@@ -581,7 +588,10 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
     return null;
   }
   // Get axis and angular speed from rotation rate.
-  var vec = new THREE.Vector3(-rotationRate.beta, -rotationRate.alpha, rotationRate.gamma);
+  // TODO: Take into account the screen orientation too!
+  var vec = new THREE.Vector3(rotationRate.beta, rotationRate.alpha, rotationRate.gamma);
+  vec.applyQuaternion(this.screenTransform);
+
   // Angular speed in deg/s.
   var angularSpeedDegS = vec.length();
   if (/iPad|iPhone|iPod/.test(navigator.platform)) {

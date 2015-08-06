@@ -691,7 +691,7 @@ function WebVRManager(renderer, effect, params) {
   // Check if the browser is compatible with WebVR.
   this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
     // Activate either VR or Immersive mode.
-    if (WEBVR_FORCE_DISTORTION) {
+    if (window.WEBVR_FORCE_DISTORTION) {
       this.activateVR_();
       this.distorter.setActive(true);
     } else if (hmd) {
