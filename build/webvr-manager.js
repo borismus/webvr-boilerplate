@@ -576,8 +576,8 @@ WebVRButton.prototype.createButton = function() {
   s.right = 0;
   s.marginLeft = 'auto';
   s.marginRight = 'auto';
-  s.width = '48px'
-  s.height = '48px';
+  s.width = '56px'
+  s.height = '56px';
   s.backgroundSize = 'cover';
   s.backgroundColor = 'transparent';
   s.border = 0;
@@ -769,8 +769,6 @@ WebVRManager.prototype.activateVR_ = function() {
       this.onFullscreenChange_.bind(this));
   document.addEventListener('mozfullscreenchange',
       this.onFullscreenChange_.bind(this));
-  document.addEventListener('orientationchange',
-      this.onOrientationChange_.bind(this));
 
 
   // Create the necessary elements for wake lock to work.
@@ -802,10 +800,6 @@ WebVRManager.prototype.onFullscreenChange_ = function(e) {
       document.mozFullScreenElement === null) {
     this.exitVR();
   }
-};
-
-WebVRManager.prototype.onOrientationChange_ = function(e) {
-  this.effect.setSize(window.innerWidth, window.innerHeight);
 };
 
 WebVRManager.prototype.requestPointerLock_ = function() {
