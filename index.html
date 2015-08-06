@@ -154,7 +154,7 @@ function onWindowResize() {
   effect.setSize(window.innerWidth, window.innerHeight);
 
   // iOS resize hack.
-  if (Util.isIOS()) {
+  if (/iPad|iPhone|iPod/.test(navigator.platform)) {
     this.setTimeout(onWindowResize, 1);
   }
 }
