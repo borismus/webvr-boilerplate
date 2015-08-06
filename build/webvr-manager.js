@@ -70,12 +70,6 @@ var BarrelDistortion = {
   ].join('\n')
 };
 
-// Show a red background if Cardboard is in debug mode.
-if (window.CARDBOARD_DEBUG) {
-  BarrelDistortion.uniforms.background =
-      {type: 'v4', value: new THREE.Vector4(1.00, 0.00, 0.00, 1.0)};
-}
-
 
 var ShaderPass = function(shader) {
   this.uniforms = THREE.UniformsUtils.clone(shader.uniforms);
@@ -119,12 +113,18 @@ function CardboardDistorter(renderer) {
   BarrelDistortion.leftCenter = {type: 'v2', value: new THREE.Vector2(left.x, left.y)};
   BarrelDistortion.rightCenter = {type: 'v2', value: new THREE.Vector2(right.x, right.y)};
 
+  // Allow custom background colors if this global is set.
+  if (window.WEBVR_BACKGROUND_COLOR) {
+    BarrelDistortion.uniforms.background =
+      {type: 'v4', value: window.WEBVR_BACKGROUND_COLOR};
+  }
+
   var shaderPass = new ShaderPass(BarrelDistortion);
 
   var textureTarget = null;
   var genuineRender = renderer.render;
   var genuineSetSize = renderer.setSize;
-  var isActive = false || window.CARDBOARD_DEBUG;
+  var isActive = false;
 
   this.patch = function() {
     if (!isActive) {
@@ -690,8 +690,6 @@ function WebVRManager(renderer, effect, params) {
 
   // Check if the browser is compatible with WebVR.
   this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
-    // If Cardboard debug flag is enabled, force cardboard compat mode.
-    hmd = hmd || window.CARDBOARD_DEBUG;
     // Activate either VR or Immersive mode.
     if (hmd) {
       this.activateVR_();
@@ -699,6 +697,9 @@ function WebVRManager(renderer, effect, params) {
       if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && Util.isIOS()) {
         this.distorter.setActive(true);
       }
+    } else if (WEBVR_FORCE_DISTORTION) {
+      this.activateVR_();
+      this.distorter.setActive(true);
     } else {
       this.activateImmersive_();
     }

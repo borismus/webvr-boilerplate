@@ -55,8 +55,6 @@ function WebVRManager(renderer, effect, params) {
 
   // Check if the browser is compatible with WebVR.
   this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
-    // If Cardboard debug flag is enabled, force cardboard compat mode.
-    hmd = hmd || window.CARDBOARD_DEBUG;
     // Activate either VR or Immersive mode.
     if (hmd) {
       this.activateVR_();
@@ -64,6 +62,9 @@ function WebVRManager(renderer, effect, params) {
       if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && Util.isIOS()) {
         this.distorter.setActive(true);
       }
+    } else if (WEBVR_FORCE_DISTORTION) {
+      this.activateVR_();
+      this.distorter.setActive(true);
     } else {
       this.activateImmersive_();
     }

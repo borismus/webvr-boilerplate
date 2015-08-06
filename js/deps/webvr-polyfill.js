@@ -442,6 +442,12 @@ module.exports = MouseKeyboardPositionSensorVRDevice;
  * limitations under the License.
  */
 
+var PredictionMode = {
+  NONE: 0,
+  INTERPOLATE: 1,
+  PREDICT: 2
+}
+
 // How much to interpolate between the current orientation estimate and the
 // previous estimate position. This is helpful for devices with low
 // deviceorientation firing frequency (eg. on iOS8 and below, it is 20 Hz).  The
@@ -455,17 +461,10 @@ var PREDICTION_THRESHOLD_DEG_PER_S = 0.01;
 //var PREDICTION_THRESHOLD_DEG_PER_S = 0;
 
 // How far into the future to predict.
-var PREDICTION_TIME_MS = 100;
+WEBVR_PREDICTION_TIME_MS = 100;
 
-// Fastest possible angular speed that a human can reasonably produce.
-//var MAX_ANGULAR_SPEED_DEG_PER_S = 360 / 0.01;
-var MAX_ANGULAR_SPEED_DEG_PER_S = Infinity;
-
-var Modes = {
-  NONE: 0,
-  INTERPOLATE: 1,
-  PREDICT: 2
-}
+// Whether to predict or what.
+WEBVR_PREDICTION_MODE = PredictionMode.PREDICT;
 
 function PosePredictor() {
   this.lastQ = new THREE.Quaternion();
@@ -473,8 +472,6 @@ function PosePredictor() {
 
   this.outQ = new THREE.Quaternion();
   this.deltaQ = new THREE.Quaternion();
-
-  this.mode = Modes.PREDICT;
 }
 
 PosePredictor.prototype.getPrediction = function(currentQ, rotationRate, timestamp) {
@@ -490,15 +487,15 @@ PosePredictor.prototype.getPrediction = function(currentQ, rotationRate, timesta
   //var elapsedMs = 1000/60;
   var elapsedMs = timestamp - this.lastTimestamp;
 
-  switch (this.mode) {
-    case Modes.INTERPOLATE:
+  switch (WEBVR_PREDICTION_MODE) {
+    case PredictionMode.INTERPOLATE:
       this.outQ.copy(currentQ);
       this.outQ.slerp(this.lastQ, INTERPOLATION_SMOOTHING_FACTOR);
 
       // Save the current quaternion for later.
       this.lastQ.copy(currentQ);
       break;
-    case Modes.PREDICT:
+    case PredictionMode.PREDICT:
       var axisAngle;
       if (rotationRate) {
         axisAngle = this.getAxisAngularSpeedFromRotationRate_(rotationRate);
@@ -514,18 +511,10 @@ PosePredictor.prototype.getPrediction = function(currentQ, rotationRate, timesta
       }
       var angularSpeedDegS = axisAngle.speed;
       var axis = axisAngle.axis;
-      var predictAngleDeg = (PREDICTION_TIME_MS / 1000) * angularSpeedDegS;
+      var predictAngleDeg = (WEBVR_PREDICTION_TIME_MS / 1000) * angularSpeedDegS;
 
       // If we're rotating slowly, don't do prediction.
       if (angularSpeedDegS < PREDICTION_THRESHOLD_DEG_PER_S) {
-        this.outQ.copy(currentQ);
-        this.lastQ.copy(currentQ);
-        break;
-      }
-
-      // Sanity check angular speed. If it is insane (eg. greater than 1 degree
-      // per millisecond), treat as an outlier and don't predict.
-      if (angularSpeedDegS > MAX_ANGULAR_SPEED_DEG_PER_S) {
         this.outQ.copy(currentQ);
         this.lastQ.copy(currentQ);
         break;
@@ -553,7 +542,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, rotationRate, timesta
       //this.lastQ.copy(this.outQ);
       this.lastQ.copy(currentQ);
       break;
-    case Modes.NONE:
+    case PredictionMode.NONE:
     default:
       this.outQ.copy(currentQ);
   }

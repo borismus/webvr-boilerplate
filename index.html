@@ -23,13 +23,6 @@ body {
 
 </body>
 
-<script>
-// Set this to true to enable the polyfill and split screen rendering
-// even if the device is incompatible with Cardboard (eg. desktop).
-// NOTE: This should never be checked in as true.
-CARDBOARD_DEBUG = false;
-</script>
-
 <!--
   three.js 3d library
   -->
@@ -54,6 +47,14 @@ CARDBOARD_DEBUG = false;
   Helps enter and exit VR mode, provides best practices while in VR.
   -->
 <script src="build/webvr-manager.js"></script>
+
+<script>
+// Debug parameters.
+//WEBVR_FORCE_DISTORTION = true;
+WEBVR_PREDICTION_MODE = 0;
+//WEBVR_PREDICTION_TIME_MS = 200;
+WEBVR_BACKGROUND_COLOR = new THREE.Vector4(1, 0, 0, 1);
+</script>
 
 <script>
 //Setup three.js WebGL renderer
