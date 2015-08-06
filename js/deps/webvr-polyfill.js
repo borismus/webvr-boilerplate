@@ -591,7 +591,7 @@ PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotation
   var vec;
 
   if (/iPad|iPhone|iPod/.test(navigator.platform)) {
-    vec = new THREE.Vector3(rotationRate.alpha, rotationRate.beta, rotationRate.gamma);
+    vec = new THREE.Vector3(rotationRate.gamma, rotationRate.alpha, rotationRate.beta);
   } else {
     vec = new THREE.Vector3(rotationRate.beta, rotationRate.alpha, rotationRate.gamma);
   }
