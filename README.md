@@ -1,11 +1,11 @@
 # WebVR Boilerplate
 
-A sane [THREE.js][three]-based starting point for VR experiences that work well
-in both Google Cardboard and other VR displays. Also provides a fallback for
+A [THREE.js][three]-based starting point for VR experiences that work well in
+both Google Cardboard and other VR headsets. Also provides a fallback for
 experiencing the same content without requiring a VR device.
 
 This project relies heavily on the [webvr-polyfill][polyfill] to provide VR
-support even if no VR device is available.
+support even if the WebVR spec is not implemented.
 
 [three]: http://threejs.org/
 [polyfill]: https://github.com/borismus/webvr-polyfill
