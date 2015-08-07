@@ -13,11 +13,8 @@ support even if no VR device is available.
 # Projects that use the boilerplate
 
 [![WebVR Boilerplate](content_images/boilerplate.png)][wb]
-
 [![Moving Music](content_images/moving-music.png)][mm]
-
 [![EmbedVR](content_images/photosphere.png)][evr]
-
 [![Sechelt](content_images/sechelt.png)][s]
 
 [wb]: http://borismus.github.io/webvr-boilerplate/
