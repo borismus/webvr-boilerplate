@@ -1,0 +1,16 @@
+{
+  "name": "dat.gui",
+  "version": "0.5",
+  "authors": [
+    "Data Arts Team, Google Creative Lab"
+  ],
+  "description": "A lightweight graphical user interface for changing variables in JavaScript.",
+  "main": "./dat.gui.js",
+  "keywords": [
+    "gui",
+    "controller",
+    "experiment"
+  ],
+  "license": "Apache 2.0",
+  "homepage": "https://code.google.com/p/dat-gui/"
+}

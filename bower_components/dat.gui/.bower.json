@@ -1,0 +1,25 @@
+{
+  "name": "dat.gui",
+  "authors": [
+    "Data Arts Team, Google Creative Lab"
+  ],
+  "description": "A lightweight graphical user interface for changing variables in JavaScript.",
+  "main": "./dat.gui.js",
+  "keywords": [
+    "gui",
+    "controller",
+    "experiment"
+  ],
+  "license": "Apache 2.0",
+  "homepage": "https://code.google.com/p/dat-gui/",
+  "_release": "6863419d22",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "6863419d225506c822d87b01c35706133002c40d"
+  },
+  "_source": "git://github.com/xinming/bower-dat-gui.git",
+  "_target": "*",
+  "_originalSource": "dat.gui",
+  "_direct": true
+}
