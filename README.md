@@ -60,7 +60,7 @@ mode.
 - [Brandon Jones][bj] and [Vladimir Vukicevic][vv] for their work on the [WebVR
   spec][spec]
 - [Diego Marcos][dm] for VREffect and VRControls.
-- [mrdoob][doob] for THREE.js.
+- [Ricardo Cabello][doob] for THREE.js.
 
 [dk]: https://plus.google.com/+DmitryKovalev1
 [distortion]: https://github.com/borismus/webvr-boilerplate/blob/master/src/cardboard-distorter.js
