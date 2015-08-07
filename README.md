@@ -46,13 +46,26 @@ The manager handles going in and out of VR mode. Instead of calling
 renders in monocular view by default, or side-by-side binocular view when in VR
 mode.
 
-# Features
+# Features and known issues
 
-- Enter and exit VR mode (in WebVR and WebVR-polyfill compatible environments).
+Features:
+
+- Enter and exit VR mode (in WebVR and WebVR polyfill compatible environments).
 - Immersive fullscreen, orientation locking and sleep prevention.
-- Distortion correction, enabled in iOS only since it's hard to determine DPI or
-  physical size on Android devices.
+- Distortion correction, enabled in iOS only. 
+- High quality head tracking with motion prediction thanks to the WebVR polyfill.
 
+Bugs and known issues:
+
+- Proper distortion correction for Android. This requires knowing physical
+  locations of lenses, which requires knowing device's DPI, which is hard in
+  general. It's easier in iOS because there are relatively few iPhone models.
+- Drift in Chrome for Android. Please star the bug and indicate that you really
+  care about high quality head tracking for VR: <http://crbug.com/397824>.
+- Wake lock for Android currently relies on a hack in which a hidden video is
+  played on repeat in the background. This causes big WebGL performance issues,
+  so has been disabled. This will be resolved when the official wakelock API
+  lands: <http://crbug.com/257511>
 
 # Thanks / credits!
 
