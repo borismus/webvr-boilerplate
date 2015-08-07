@@ -81,12 +81,6 @@ var canvas = document.createElement('canvas');
 canvas.width = 64;
 canvas.height = 64;
 var ctx = canvas.getContext('2d');
-ctx.fillStyle = 'white';
-ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-//ctx.font = '64px Helvetica';
-//ctx.fillStyle = 'black';
-//ctx.fillText('Test test', 0, 320);
 
 // Turn canvas into texture.
 var texture = new THREE.Texture(canvas);
@@ -161,6 +155,15 @@ function getAngle(quat) {
   }
   return angle;
 }
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+
+  effect.setSize(window.innerWidth, window.innerHeight);
+}
+
+window.addEventListener('resize', onWindowResize, false);
 
 
 // Kick off animation loop
