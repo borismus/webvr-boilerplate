@@ -104,7 +104,7 @@ manager.getDeviceByType_(PositionSensorVRDevice).then(function(dev) {
 
 var last = new THREE.Quaternion();
 var delta = new THREE.Quaternion();
-var MAX_ANGULAR_SPEED = 1;
+var MAX_ANGULAR_SPEED = 0.3;
 function animate(timestamp) {
   // Update VR headset position and apply to camera.
   controls.update();
