@@ -1,6 +1,6 @@
 {
   "name": "webvr-boilerplate",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "homepage": "https://github.com/borismus/webvr-boilerplate",
   "authors": [
     "Boris Smus <boris@smus.com>"
@@ -9,6 +9,7 @@
   "main": "build/webvr-manager.js",
   "keywords": [
     "vr",
+    "webvr",
     "webgl",
     "three.js"
   ],
