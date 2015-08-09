@@ -534,15 +534,6 @@ PosePredictor.prototype.getPrediction = function(currentQ, rotationRate, timesta
       this.outQ.copy(this.lastQ);
       this.outQ.multiply(this.deltaQ);
 
-      // DEBUG ONLY: report the abs. difference between actual and predicted
-      // angles.
-      /*
-      var angleDelta = predictAngleDeg - THREE.Math.radToDeg(angleRad);
-      if (Math.abs(angleDelta) > 5) {
-        console.log('|Actual-Predicted| = %f deg', angleDelta);
-      }
-      */
-
       // Use the predicted quaternion as the new last one.
       //this.lastQ.copy(this.outQ);
       this.lastQ.copy(currentQ);
