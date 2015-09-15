@@ -11,7 +11,7 @@
     "vr",
     "webvr",
     "webgl",
-    "three.js"
+    "threejs"
   ],
   "license": "Apache2",
   "ignore": [
@@ -23,6 +23,7 @@
   ],
   "dependencies": {
     "threejs": "*",
-    "dat.gui": "*"
+    "dat.gui": "*",
+    "webvr-polyfill": "*"
   }
 }
