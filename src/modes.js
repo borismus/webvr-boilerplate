@@ -15,11 +15,11 @@
 
 var Modes = {
   UNKNOWN: 0,
-  // Incompatible with WebVR.
-  INCOMPATIBLE: 1,
-  // Compatible with WebVR.
-  COMPATIBLE: 2,
-  // In virtual reality via WebVR.
+  // Not fullscreen, just tracking.
+  NORMAL: 1,
+  // Magic window immersive mode.
+  MAGIC_WINDOW: 2,
+  // Full screen split screen VR mode.
   VR: 3,
 };
 

@@ -15,9 +15,10 @@
 
 var Wakelock = require('./wakelock.js');
 var CardboardDistorter = require('./cardboard-distorter.js');
-var WebVRButton = require('./webvr-button.js');
 var Modes = require('./modes.js');
+var RotateInstructions = require('./rotate-instructions.js');
 var Util = require('./util.js');
+var ButtonManager = require('./button-manager.js');
 
 /**
  * Helper for getting in and out of VR mode.
@@ -47,8 +48,12 @@ function WebVRManager(renderer, effect, params) {
   this.renderer = renderer;
   this.effect = effect;
   this.distorter = new CardboardDistorter(renderer);
+  this.button = new ButtonManager();
+  this.rotateInstructions = new RotateInstructions();
 
-  this.button = new WebVRButton();
+  this.isVRCompatible = false;
+  this.isFullscreenDisabled = !!Util.getQueryParameter('no_fullscreen');
+
   if (hideButton) {
     this.button.setVisibility(false);
   }
@@ -57,26 +62,42 @@ function WebVRManager(renderer, effect, params) {
   this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
     // Activate either VR or Immersive mode.
     if (window.WEBVR_FORCE_DISTORTION) {
-      this.activateVR_();
       this.distorter.setActive(true);
+      this.isVRCompatible = true;
     } else if (hmd) {
-      this.activateVR_();
+      this.isVRCompatible = true;
       // Only enable distortion if we are dealing using the polyfill and this is iOS.
       if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && Util.isIOS()) {
         this.distorter.setActive(true);
       }
-    } else {
-      this.activateImmersive_();
     }
     // Set the right mode.
-    this.defaultMode = hmd ? Modes.COMPATIBLE : Modes.INCOMPATIBLE;
-    this.button.setMode(this.defaultMode);
+    if (this.isFullscreenDisabled) {
+      this.normalToMagicWindow();
+      this.setMode_(Modes.MAGIC_WINDOW);
+    } else {
+      this.setMode_(Modes.NORMAL);
+    }
+    this.button.on('fs', this.onFSClick_.bind(this));
+    this.button.on('vr', this.onVRClick_.bind(this));
+    this.button.on('back', this.onBackClick_.bind(this));
   }.bind(this));
 
   // Save the input device for later sending timing data.
   this.getDeviceByType_(PositionSensorVRDevice).then(function(input) {
     this.input = input;
   }.bind(this));
+
+  // Whenever we enter fullscreen, we are entering VR or immersive mode.
+  document.addEventListener('webkitfullscreenchange',
+      this.onFullscreenChange_.bind(this));
+  document.addEventListener('mozfullscreenchange',
+      this.onFullscreenChange_.bind(this));
+  window.addEventListener('orientationchange',
+      this.onOrientationChange_.bind(this));
+
+  // Create the necessary elements for wake lock to work.
+  this.wakelock = new Wakelock();
 }
 
 /**
@@ -105,6 +126,8 @@ WebVRManager.prototype.isVRMode = function() {
 };
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
+  this.resizeIfNeeded_(camera);
+
   if (this.isVRMode()) {
     this.distorter.preRender();
     this.effect.render(scene, camera);
@@ -122,48 +145,151 @@ WebVRManager.prototype.render = function(scene, camera, timestamp) {
   }
 };
 
-/**
- * Makes it possible to go into VR mode.
- */
-WebVRManager.prototype.activateVR_ = function() {
-  // Or via clicking on the VR button.
-  this.button.on('click', this.toggleVRMode.bind(this));
 
-  // Whenever we enter fullscreen, we are entering VR or immersive mode.
-  document.addEventListener('webkitfullscreenchange',
-      this.onFullscreenChange_.bind(this));
-  document.addEventListener('mozfullscreenchange',
-      this.onFullscreenChange_.bind(this));
+WebVRManager.prototype.setMode_ = function(mode) {
+  console.log('Mode change: %s => %s', this.mode, mode);
+  this.mode = mode;
+  this.button.setMode(mode, this.isVRCompatible);
 
-
-  // Create the necessary elements for wake lock to work.
-  this.wakelock = new Wakelock();
-};
-
-WebVRManager.prototype.activateImmersive_ = function() {
-  // Next time a user does anything with their mouse, we trigger immersive mode.
-  this.button.on('click', this.enterImmersive.bind(this));
-};
-
-WebVRManager.prototype.enterImmersive = function() {
-  this.requestPointerLock_();
-  this.requestFullscreen_();
-};
-
-WebVRManager.prototype.toggleVRMode = function() {
-  if (!this.isVRMode()) {
-    // Enter VR mode.
-    this.enterVR();
+  if (this.mode == Modes.VR && Util.isLandscapeMode()) {
+    // In landscape mode, temporarily show the "put into Cardboard"
+    // interstitial. Otherwise, do the default thing.
+    this.rotateInstructions.showTemporarily(3000);
   } else {
-    this.exitVR();
+    this.updateRotateInstructions_();
+  }
+};
+
+/**
+ * Main button was clicked.
+ */
+WebVRManager.prototype.onFSClick_ = function() {
+  switch (this.mode) {
+    case Modes.NORMAL:
+      // TODO: Remove this hack when iOS has fullscreen mode.
+      // If this is an iframe on iOS, break out and open in no_fullscreen mode.
+      if (Util.isIOS() && Util.isIFrame()) {
+        var url = Util.appendQueryParameter('no_fullscreen', 'true');
+        top.location.href = url;
+        return;
+      }
+      this.normalToMagicWindow();
+      this.setMode_(Modes.MAGIC_WINDOW);
+      break;
+    case Modes.MAGIC_WINDOW:
+      if (this.isFullscreenDisabled) {
+        window.history.back();
+      } else {
+        this.anyModeToNormal();
+        this.setMode_(Modes.NORMAL);
+      }
+      break;
+  }
+};
+
+/**
+ *
+ */
+WebVRManager.prototype.onVRClick_ = function() {
+  this.anyModeToVR();
+  this.setMode_(Modes.VR);
+};
+
+/**
+ * Back button was clicked.
+ */
+WebVRManager.prototype.onBackClick_ = function() {
+  switch (this.mode) {
+    case Modes.MAGIC_WINDOW:
+      if (this.isFullscreenDisabled) {
+        window.history.back();
+      } else {
+        this.anyModeToNormal();
+        this.setMode_(Modes.NORMAL);
+      }
+      break;
+    case Modes.VR:
+      this.vrToMagicWindow();
+      this.setMode_(Modes.MAGIC_WINDOW);
+      break;
+  }
+};
+
+/**
+ *
+ * Methods to go between modes.
+ *
+ */
+WebVRManager.prototype.normalToMagicWindow = function() {
+  // TODO: Re-enable pointer lock after debugging.
+  //this.requestPointerLock_();
+  this.requestFullscreen_();
+  this.wakelock.request();
+};
+
+WebVRManager.prototype.anyModeToVR = function() {
+  // Don't do orientation locking for consistency.
+  //this.requestOrientationLock_();
+  this.requestFullscreen_();
+  //this.effect.setFullScreen(true);
+  this.wakelock.request();
+  this.distorter.patch();
+};
+
+WebVRManager.prototype.vrToMagicWindow = function() {
+  //this.releaseOrientationLock_();
+  this.distorter.unpatch();
+
+  // Android bug: when returning from VR, resize the effect.
+  this.resize_();
+}
+
+WebVRManager.prototype.anyModeToNormal = function() {
+  //this.effect.setFullScreen(false);
+  this.exitFullscreen_();
+  //this.releaseOrientationLock_();
+  this.releasePointerLock_();
+  this.wakelock.release();
+  this.distorter.unpatch();
+
+  // Android bug: when returning from VR, resize the effect.
+  this.resize_();
+};
+
+WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
+  // Only resize the canvas if it needs to be resized.
+  var size = this.renderer.getSize();
+  if (size.width != window.innerWidth || size.height != window.innerHeight) {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    this.resize_()
+  }
+};
+
+WebVRManager.prototype.resize_ = function() {
+  this.effect.setSize(window.innerWidth, window.innerHeight);
+};
+
+WebVRManager.prototype.onOrientationChange_ = function(e) {
+  this.updateRotateInstructions_();
+};
+
+WebVRManager.prototype.updateRotateInstructions_ = function() {
+  this.rotateInstructions.disableShowTemporarily();
+  // In portrait VR mode, tell the user to rotate to landscape.
+  if (this.mode == Modes.VR && !Util.isLandscapeMode()) {
+    this.rotateInstructions.show();
+  } else {
+    this.rotateInstructions.hide();
   }
 };
 
 WebVRManager.prototype.onFullscreenChange_ = function(e) {
-  // If we leave full-screen, also exit VR mode.
+  // If we leave full-screen, go back to normal mode.
   if (document.webkitFullscreenElement === null ||
       document.mozFullScreenElement === null) {
-    this.exitVR();
+    this.anyModeToNormal();
+    this.setMode_(Modes.NORMAL);
   }
 };
 
@@ -201,44 +327,25 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 };
 
 WebVRManager.prototype.requestFullscreen_ = function() {
-  var canvas = this.renderer.domElement;
-  if (canvas.mozRequestFullScreen) {
+  var canvas = document.body;
+  //var canvas = this.renderer.domElement;
+  if (canvas.requestFullscreen) {
+    canvas.requestFullscreen();
+  } else if (canvas.mozRequestFullScreen) {
     canvas.mozRequestFullScreen();
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen();
   }
 };
 
-WebVRManager.prototype.enterVR = function() {
-  console.log('Entering VR.');
-  // Enter fullscreen mode (note: this doesn't work in iOS).
-  this.effect.setFullScreen(true);
-  // Lock down orientation and wakelock.
-  this.requestOrientationLock_();
-  // TODO: Make wakelock efficient!
-  this.wakelock.request();
-
-  this.mode = Modes.VR;
-  // Set style on button.
-  this.button.setMode(this.mode);
-
-  this.distorter.patch();
-};
-
-WebVRManager.prototype.exitVR = function() {
-  console.log('Exiting VR.');
-  // Leave fullscreen mode (note: this doesn't work in iOS).
-  this.effect.setFullScreen(false);
-  // Release all locks.
-  this.releaseOrientationLock_();
-  this.releasePointerLock_();
-  this.wakelock.release();
-
-  this.mode = this.defaultMode;
-  // Go back to the default mode.
-  this.button.setMode(this.mode);
-
-  this.distorter.unpatch();
+WebVRManager.prototype.exitFullscreen_ = function() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.mozCancelFullScreen) {
+    document.mozCancelFullScreen();
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
+  }
 };
 
 module.exports = WebVRManager;
