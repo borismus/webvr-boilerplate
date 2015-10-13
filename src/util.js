@@ -29,4 +29,33 @@ Util.isIOS = function() {
   return /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
 };
 
+Util.isIFrame = function() {
+  try {
+    return window.self !== window.top;
+  } catch (e) {
+    return true;
+  }
+};
+
+Util.appendQueryParameter = function(key, value) {
+  var url = window.location.href;
+  // Determine delimiter based on if the URL already GET parameters in it.
+  var delimiter = (url.indexOf('?') < 0 ? '?' : '&');
+  url += delimiter + key + '=' + value;
+  return url;
+};
+
+// From http://goo.gl/4WX3tg
+Util.getQueryParameter = function(name) {
+  name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+  var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+      results = regex.exec(location.search);
+  return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+};
+
+Util.isLandscapeMode = function() {
+  return (window.orientation == 90 || window.orientation == -90);
+};
+
+
 module.exports = Util;
