@@ -123,8 +123,9 @@ module.exports = CardboardHMDVRDevice;
  * limitations under the License.
  */
 var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
-var THREE = require('./three-math.js');
 var PosePredictor = require('./pose-predictor.js');
+var THREE = require('./three-math.js');
+var TouchPanner = require('./touch-panner.js');
 
 /**
  * The positional sensor, implemented using web DeviceOrientation APIs.
@@ -134,9 +135,10 @@ function GyroPositionSensorVRDevice() {
   this.deviceName = 'VR Position Device (webvr-polyfill:gyro)';
 
   // Subscribe to deviceorientation events.
-  window.addEventListener('deviceorientation', this.onDeviceOrientationChange.bind(this));
-  window.addEventListener('devicemotion', this.onDeviceMotionChange.bind(this));
-  window.addEventListener('orientationchange', this.onScreenOrientationChange.bind(this));
+  window.addEventListener('deviceorientation', this.onDeviceOrientationChange_.bind(this));
+  window.addEventListener('devicemotion', this.onDeviceMotionChange_.bind(this));
+  window.addEventListener('orientationchange', this.onScreenOrientationChange_.bind(this));
+
   this.deviceOrientation = null;
   this.screenOrientation = window.orientation;
 
@@ -148,6 +150,10 @@ function GyroPositionSensorVRDevice() {
   // -PI/2 around the x-axis.
   this.worldTransform = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
 
+  // The quaternion for taking into account the reset position.
+  this.resetTransform = new THREE.Quaternion();
+
+  this.touchPanner = new TouchPanner();
   this.posePredictor = new PosePredictor();
 }
 GyroPositionSensorVRDevice.prototype = new PositionSensorVRDevice();
@@ -165,17 +171,17 @@ GyroPositionSensorVRDevice.prototype.getState = function() {
   }
 };
 
-GyroPositionSensorVRDevice.prototype.onDeviceOrientationChange =
+GyroPositionSensorVRDevice.prototype.onDeviceOrientationChange_ =
     function(deviceOrientation) {
   this.deviceOrientation = deviceOrientation;
 };
 
-GyroPositionSensorVRDevice.prototype.onDeviceMotionChange =
+GyroPositionSensorVRDevice.prototype.onDeviceMotionChange_ =
     function(deviceMotion) {
   this.deviceMotion = deviceMotion;
 };
 
-GyroPositionSensorVRDevice.prototype.onScreenOrientationChange =
+GyroPositionSensorVRDevice.prototype.onScreenOrientationChange_ =
     function(screenOrientation) {
   this.screenOrientation = window.orientation;
 };
@@ -196,9 +202,14 @@ GyroPositionSensorVRDevice.prototype.getOrientation = function() {
   // Use three.js to convert to quaternion. Lifted from
   // https://github.com/richtr/threeVR/blob/master/js/DeviceOrientationController.js
   this.deviceEuler.set(beta, alpha, -gamma, 'YXZ');
-  this.finalQuaternion.setFromEuler(this.deviceEuler);
+  this.tmpQuaternion.setFromEuler(this.deviceEuler);
   this.minusHalfAngle = -orient / 2;
   this.screenTransform.set(0, Math.sin(this.minusHalfAngle), 0, Math.cos(this.minusHalfAngle));
+  // Take into account the reset transformation.
+  this.finalQuaternion.copy(this.resetTransform);
+  // And any rotations done via touch events.
+  this.finalQuaternion.multiply(this.touchPanner.getOrientation());
+  this.finalQuaternion.multiply(this.tmpQuaternion);
   this.finalQuaternion.multiply(this.screenTransform);
   this.finalQuaternion.multiply(this.worldTransform);
 
@@ -228,17 +239,14 @@ GyroPositionSensorVRDevice.prototype.getOrientation = function() {
 };
 
 GyroPositionSensorVRDevice.prototype.resetSensor = function() {
-  console.error('Not implemented yet.');
+  var angle = THREE.Math.degToRad(this.deviceOrientation.alpha);
+  console.log('Normalizing yaw to %f', angle);
+  this.resetTransform.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -angle);
 };
-
-GyroPositionSensorVRDevice.prototype.setAnimationFrameTime = function(rafTime) {
-  this.rafTime = rafTime;
-};
-
 
 module.exports = GyroPositionSensorVRDevice;
 
-},{"./base.js":1,"./pose-predictor.js":6,"./three-math.js":7}],4:[function(require,module,exports){
+},{"./base.js":1,"./pose-predictor.js":6,"./three-math.js":7,"./touch-panner.js":8}],4:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -257,7 +265,7 @@ var WebVRPolyfill = require('./webvr-polyfill.js');
 
 new WebVRPolyfill();
 
-},{"./webvr-polyfill.js":8}],5:[function(require,module,exports){
+},{"./webvr-polyfill.js":10}],5:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -274,6 +282,7 @@ new WebVRPolyfill();
  */
 var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
 var THREE = require('./three-math.js');
+var Util = require('./util.js');
 
 // How much to rotate per key stroke.
 var KEY_SPEED = 0.15;
@@ -333,13 +342,13 @@ MouseKeyboardPositionSensorVRDevice.prototype.getState = function() {
 
 MouseKeyboardPositionSensorVRDevice.prototype.onKeyDown_ = function(e) {
   // Track WASD and arrow keys.
-  if (e.keyCode == 38 || e.keyCode == 87) { // W or Up key.
+  if (e.keyCode == 38) { // Up key.
     this.animatePhi_(this.phi + KEY_SPEED);
-  } else if (e.keyCode == 39 || e.keyCode == 68) { // D or Right key.
+  } else if (e.keyCode == 39) { // Right key.
     this.animateTheta_(this.theta - KEY_SPEED);
-  } else if (e.keyCode == 40 || e.keyCode == 83) { // S or Down key.
+  } else if (e.keyCode == 40) { // Down key.
     this.animatePhi_(this.phi - KEY_SPEED);
-  } else if (e.keyCode == 37 || e.keyCode == 65) { // A or Left key.
+  } else if (e.keyCode == 37) { // Left key.
     this.animateTheta_(this.theta + KEY_SPEED);
   }
 };
@@ -350,7 +359,7 @@ MouseKeyboardPositionSensorVRDevice.prototype.animateTheta_ = function(targetAng
 
 MouseKeyboardPositionSensorVRDevice.prototype.animatePhi_ = function(targetAngle) {
   // Prevent looking too far up or down.
-  targetAngle = this.clamp_(targetAngle, -Math.PI/2, Math.PI/2);
+  targetAngle = Util.clamp(targetAngle, -Math.PI/2, Math.PI/2);
   this.animateKeyTransitions_('phi', targetAngle);
 };
 
@@ -391,8 +400,8 @@ MouseKeyboardPositionSensorVRDevice.prototype.onMouseMove_ = function(e) {
   }
   // Support pointer lock API.
   if (this.isPointerLocked_()) {
-    var movementX = e.movementX || e.mozMovementX || e.webkitMovementX || 0;
-    var movementY = e.movementY || e.mozMovementY || e.webkitMovementY || 0;
+    var movementX = e.movementX || e.mozMovementX || 0;
+    var movementY = e.movementY || e.mozMovementY || 0;
     this.rotateEnd.set(this.rotateStart.x - movementX, this.rotateStart.y - movementY);
   } else {
     this.rotateEnd.set(e.clientX, e.clientY);
@@ -407,15 +416,11 @@ MouseKeyboardPositionSensorVRDevice.prototype.onMouseMove_ = function(e) {
   this.theta += 2 * Math.PI * this.rotateDelta.x / element.clientWidth * MOUSE_SPEED_X;
 
   // Prevent looking too far up or down.
-  this.phi = this.clamp_(this.phi, -Math.PI/2, Math.PI/2);
+  this.phi = Util.clamp(this.phi, -Math.PI/2, Math.PI/2);
 };
 
 MouseKeyboardPositionSensorVRDevice.prototype.onMouseUp_ = function(e) {
   this.isDragging = false;
-};
-
-MouseKeyboardPositionSensorVRDevice.prototype.clamp_ = function(value, min, max) {
-  return Math.min(Math.max(min, value), max);
 };
 
 MouseKeyboardPositionSensorVRDevice.prototype.isPointerLocked_ = function() {
@@ -430,7 +435,7 @@ MouseKeyboardPositionSensorVRDevice.prototype.resetSensor = function() {
 
 module.exports = MouseKeyboardPositionSensorVRDevice;
 
-},{"./base.js":1,"./three-math.js":7}],6:[function(require,module,exports){
+},{"./base.js":1,"./three-math.js":7,"./util.js":9}],6:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -2994,6 +2999,99 @@ THREE.Math = {
 module.exports = THREE;
 
 },{}],8:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var THREE = require('./three-math.js');
+
+var ROTATE_SPEED = -0.5;
+/**
+ * Provides a quaternion responsible for pre-panning the scene before further
+ * transformations due to device sensors.
+ */
+function TouchPanner() {
+  window.addEventListener('touchstart', this.onTouchStart_.bind(this));
+  window.addEventListener('touchmove', this.onTouchMove_.bind(this));
+  window.addEventListener('touchend', this.onTouchEnd_.bind(this));
+
+  this.isTouching = false;
+  this.rotateStart = new THREE.Vector2();
+  this.rotateEnd = new THREE.Vector2();
+  this.rotateDelta = new THREE.Vector2();
+
+  this.theta = 0;
+  this.orientation = new THREE.Quaternion();
+  this.euler = new THREE.Euler();
+}
+
+TouchPanner.prototype.getOrientation = function() {
+  this.euler.set(0, this.theta, 0, 'YXZ');
+  this.orientation.setFromEuler(this.euler);
+  return this.orientation;
+};
+
+TouchPanner.prototype.onTouchStart_ = function(e) {
+  // Only respond if there is exactly one touch.
+  if (e.touches.length != 1) {
+    return;
+  }
+  this.rotateStart.set(e.touches[0].pageX, e.touches[0].pageY);
+  this.isTouching = true;
+};
+
+TouchPanner.prototype.onTouchMove_ = function(e) {
+  if (!this.isTouching) {
+    return;
+  }
+  this.rotateEnd.set(e.touches[0].pageX, e.touches[0].pageY);
+  this.rotateDelta.subVectors(this.rotateEnd, this.rotateStart);
+  this.rotateStart.copy(this.rotateEnd);
+
+  var element = document.body;
+  this.theta += 2 * Math.PI * this.rotateDelta.x / element.clientWidth * ROTATE_SPEED;
+};
+
+TouchPanner.prototype.onTouchEnd_ = function(e) {
+  this.isTouching = false;
+};
+
+module.exports = TouchPanner;
+
+},{"./three-math.js":7}],9:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var Util = window.Util || {};
+
+Util.clamp = function(value, min, max) {
+  return Math.min(Math.max(min, value), max);
+};
+
+module.exports = Util;
+
+},{}],10:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");

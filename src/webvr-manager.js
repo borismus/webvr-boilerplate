@@ -140,9 +140,6 @@ WebVRManager.prototype.render = function(scene, camera, timestamp) {
       this.renderer.render(scene, camera);
     }
   }
-  if (this.input && this.input.setAnimationFrameTime) {
-    this.input.setAnimationFrameTime(timestamp);
-  }
 };
 
 
