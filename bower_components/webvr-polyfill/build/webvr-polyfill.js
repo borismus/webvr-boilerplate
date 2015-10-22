@@ -122,47 +122,213 @@ module.exports = CardboardHMDVRDevice;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * TODO: Fix up all "new THREE" instantiations to improve performance.
+ */
+var SensorSample = require('./sensor-sample.js');
+var THREE = require('./three-math.js');
+var Util = require('./util.js');
+
+var DEBUG = false;
+
+/**
+ * An implementation of a simple complementary filter, which fuses gyroscope and
+ * accelerometer data from the 'devicemotion' event.
+ *
+ * Accelerometer data is very noisy, but stable over the long term.
+ * Gyroscope data is smooth, but tends to drift over the long term.
+ *
+ * This fusion is relatively simple:
+ * 1. Get orientation estimates from accelerometer by applying a low-pass filter
+ *    on that data.
+ * 2. Get orientation estimates from gyroscope by integrating over time.
+ * 3. Combine the two estimates, weighing (1) in the long term, but (2) for the
+ *    short term.
+ */
+function ComplementaryFilter(kFilter) {
+  this.kFilter = kFilter;
+
+  // Raw sensor measurements.
+  this.currentAccelMeasurement = new SensorSample();
+  this.currentGyroMeasurement = new SensorSample();
+  this.previousGyroMeasurement = new SensorSample();
+
+  // Current filter orientation
+  this.filterQ = new THREE.Quaternion();
+  this.previousFilterQ = new THREE.Quaternion();
+
+  // Orientation based on the accelerometer.
+  this.accelQ = new THREE.Quaternion();
+  // Whether or not the orientation has been initialized.
+  this.isOrientationInitialized = false;
+  // Running estimate of gravity based on the current orientation.
+  this.estimatedGravity = new THREE.Vector3();
+  // Measured gravity based on accelerometer.
+  this.measuredGravity = new THREE.Vector3();
+
+  // Debug only quaternion of gyro-based orientation.
+  this.gyroIntegralQ = new THREE.Quaternion();
+}
+
+ComplementaryFilter.prototype.addAccelMeasurement = function(vector, timestampS) {
+  this.currentAccelMeasurement.set(vector, timestampS);
+};
+
+ComplementaryFilter.prototype.addGyroMeasurement = function(vector, timestampS) {
+  this.currentGyroMeasurement.set(vector, timestampS);
+
+  var deltaT = timestampS - this.previousGyroMeasurement.timestampS;
+  if (Util.isTimestampDeltaValid(deltaT)) {
+    this.run_();
+  }
+  
+  this.previousGyroMeasurement.copy(this.currentGyroMeasurement);
+};
+
+ComplementaryFilter.prototype.run_ = function() {
+  this.accelQ = this.accelToQuaternion_(this.currentAccelMeasurement.sample);
+
+  if (!this.isOrientationInitialized) {
+    this.previousFilterQ.copy(this.accelQ);
+    this.isOrientationInitialized = true;
+    return;
+  }
+
+  var deltaT = this.currentGyroMeasurement.timestampS -
+      this.previousGyroMeasurement.timestampS;
+
+  // Convert gyro rotation vector to a quaternion delta.
+  var gyroDeltaQ = this.gyroToQuaternionDelta_(this.currentGyroMeasurement.sample, deltaT);
+  this.gyroIntegralQ.multiply(gyroDeltaQ);
+
+  // filter_1 = K * (filter_0 + gyro * dT) + (1 - K) * accel.
+  this.filterQ.copy(this.previousFilterQ);
+  this.filterQ.multiply(gyroDeltaQ);
+
+  // Calculate the delta between the current estimated gravity and the real
+  // gravity vector from accelerometer.
+  var invFilterQ = new THREE.Quaternion();
+  invFilterQ.copy(this.filterQ);
+  invFilterQ.inverse();
+
+  this.estimatedGravity.set(0, 0, -1);
+  this.estimatedGravity.applyQuaternion(invFilterQ);
+  this.estimatedGravity.normalize();
+
+  this.measuredGravity.copy(this.currentAccelMeasurement.sample);
+  this.measuredGravity.normalize();
+
+  // Compare estimated gravity with measured gravity, get the delta quaternion
+  // between the two.
+  var deltaQ = new THREE.Quaternion();
+  deltaQ.setFromUnitVectors(this.estimatedGravity, this.measuredGravity);
+  deltaQ.inverse();
+
+  if (DEBUG) {
+    console.log('Delta: %d deg, G_est: (%s, %s, %s), G_meas: (%s, %s, %s)',
+                THREE.Math.radToDeg(Util.getQuaternionAngle(deltaQ)),
+                (this.estimatedGravity.x).toFixed(1),
+                (this.estimatedGravity.y).toFixed(1),
+                (this.estimatedGravity.z).toFixed(1),
+                (this.measuredGravity.x).toFixed(1),
+                (this.measuredGravity.y).toFixed(1),
+                (this.measuredGravity.z).toFixed(1));
+  }
+
+  // Calculate the SLERP target: current orientation plus the measured-estimated
+  // quaternion delta.
+  var targetQ = new THREE.Quaternion();
+  targetQ.copy(this.filterQ);
+  targetQ.multiply(deltaQ);
+
+  // SLERP factor: 0 is pure gyro, 1 is pure accel.
+  this.filterQ.slerp(targetQ, 1 - this.kFilter);
+
+  this.previousFilterQ.copy(this.filterQ);
+};
+
+ComplementaryFilter.prototype.getOrientation = function() {
+  return this.filterQ;
+};
+
+ComplementaryFilter.prototype.accelToQuaternion_ = function(accel) {
+  var normAccel = new THREE.Vector3();
+  normAccel.copy(accel);
+  normAccel.normalize();
+  var quat = new THREE.Quaternion();
+  quat.setFromUnitVectors(new THREE.Vector3(0, 0, -1), normAccel);
+  return quat;
+};
+
+ComplementaryFilter.prototype.gyroToQuaternionDelta_ = function(gyro, dt) {
+  // Extract axis and angle from the gyroscope data.
+  var quat = new THREE.Quaternion();
+  var axis = new THREE.Vector3();
+  axis.copy(gyro);
+  axis.normalize();
+  quat.setFromAxisAngle(axis, gyro.length() * dt);
+  return quat;
+};
+
+
+module.exports = ComplementaryFilter;
+
+},{"./sensor-sample.js":8,"./three-math.js":9,"./util.js":10}],4:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
+var ComplementaryFilter = require('./complementary-filter.js');
 var PosePredictor = require('./pose-predictor.js');
 var THREE = require('./three-math.js');
-var TouchPanner = require('./touch-panner.js');
+var Util = require('./util.js');
 
 /**
  * The positional sensor, implemented using web DeviceOrientation APIs.
  */
-function GyroPositionSensorVRDevice() {
-  this.deviceId = 'webvr-polyfill:gyro';
-  this.deviceName = 'VR Position Device (webvr-polyfill:gyro)';
+function FusionPositionSensorVRDevice() {
+  this.deviceId = 'webvr-polyfill:fused';
+  this.deviceName = 'VR Position Device (webvr-polyfill:fused)';
 
-  // Subscribe to deviceorientation events.
-  window.addEventListener('deviceorientation', this.onDeviceOrientationChange_.bind(this));
+  this.accelerometer = new THREE.Vector3();
+  this.gyroscope = new THREE.Vector3();
+
   window.addEventListener('devicemotion', this.onDeviceMotionChange_.bind(this));
   window.addEventListener('orientationchange', this.onScreenOrientationChange_.bind(this));
 
-  this.deviceOrientation = null;
-  this.screenOrientation = window.orientation;
+  this.filter = new ComplementaryFilter(0.98);
+  this.posePredictor = new PosePredictor(0.050);
 
-  // Helper objects for calculating orientation.
-  this.finalQuaternion = new THREE.Quaternion();
-  this.tmpQuaternion = new THREE.Quaternion();
-  this.deviceEuler = new THREE.Euler();
-  this.screenTransform = new THREE.Quaternion();
-  // -PI/2 around the x-axis.
-  this.worldTransform = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
+  this.filterToWorldQ = new THREE.Quaternion();
 
-  // The quaternion for taking into account the reset position.
-  this.resetTransform = new THREE.Quaternion();
+  // Set the filter to world transform, but only for Android.
+  if (!Util.isIOS()) {
+    this.filterToWorldQ.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI/2);
+  }
 
-  this.touchPanner = new TouchPanner();
-  this.posePredictor = new PosePredictor();
+  this.worldToScreenQ = new THREE.Quaternion();
+  this.setScreenTransform_();
+
 }
-GyroPositionSensorVRDevice.prototype = new PositionSensorVRDevice();
+FusionPositionSensorVRDevice.prototype = new PositionSensorVRDevice();
 
 /**
  * Returns {orientation: {x,y,z,w}, position: null}.
  * Position is not supported since we can't do 6DOF.
  */
-GyroPositionSensorVRDevice.prototype.getState = function() {
+FusionPositionSensorVRDevice.prototype.getState = function() {
   return {
     hasOrientation: true,
     orientation: this.getOrientation(),
@@ -171,82 +337,79 @@ GyroPositionSensorVRDevice.prototype.getState = function() {
   }
 };
 
-GyroPositionSensorVRDevice.prototype.onDeviceOrientationChange_ =
-    function(deviceOrientation) {
-  this.deviceOrientation = deviceOrientation;
+FusionPositionSensorVRDevice.prototype.getOrientation = function() {
+  // Convert from filter space to the the same system used by the
+  // deviceorientation event.
+  var orientation = this.filter.getOrientation();
+
+  // Predict orientation.
+  this.predictedQ = this.posePredictor.getPrediction(orientation, this.gyroscope, this.previousTimestampS);
+
+  // Convert to THREE coordinate system: -Z forward, Y up, X right.
+  var out = new THREE.Quaternion();
+  out.copy(this.filterToWorldQ);
+  out.multiply(this.predictedQ);
+  out.multiply(this.worldToScreenQ);
+  return out;
 };
 
-GyroPositionSensorVRDevice.prototype.onDeviceMotionChange_ =
-    function(deviceMotion) {
-  this.deviceMotion = deviceMotion;
+FusionPositionSensorVRDevice.prototype.resetSensor = function() {
+  console.log('Not implemented');
 };
 
-GyroPositionSensorVRDevice.prototype.onScreenOrientationChange_ =
+FusionPositionSensorVRDevice.prototype.onDeviceMotionChange_ = function(deviceMotion) {
+  var accGravity = deviceMotion.accelerationIncludingGravity;
+  var rotRate = deviceMotion.rotationRate;
+  var timestampS = deviceMotion.timeStamp / 1000;
+
+  var deltaS = timestampS - this.previousTimestampS;
+  if (deltaS <= Util.MIN_TIMESTEP || deltaS > Util.MAX_TIMESTEP) {
+    console.warn('Invalid timestamps detected. Time step between successive ' +
+                 'gyroscope sensor samples is very small or not monotonic');
+    this.previousTimestampS = timestampS;
+    return;
+  }
+  this.accelerometer.set(-accGravity.x, -accGravity.y, -accGravity.z);
+  this.gyroscope.set(rotRate.alpha, rotRate.beta, rotRate.gamma);
+
+  // In iOS, rotationRate is reported in degrees, so we first convert to
+  // radians.
+  if (Util.isIOS()) {
+    this.gyroscope.multiplyScalar(Math.PI / 180);
+  }
+
+  this.filter.addAccelMeasurement(this.accelerometer, timestampS);
+  this.filter.addGyroMeasurement(this.gyroscope, timestampS);
+
+  this.previousTimestampS = timestampS;
+};
+
+FusionPositionSensorVRDevice.prototype.onScreenOrientationChange_ =
     function(screenOrientation) {
-  this.screenOrientation = window.orientation;
+  this.setScreenTransform_();
 };
 
-GyroPositionSensorVRDevice.prototype.getOrientation = function() {
-  if (this.deviceOrientation == null) {
-    return null;
+FusionPositionSensorVRDevice.prototype.setScreenTransform_ = function() {
+  this.worldToScreenQ.set(0, 0, 0, 1);
+  switch (window.orientation) {
+    case 0:
+      break;
+    case 90:
+      this.worldToScreenQ.setFromAxisAngle(new THREE.Vector3(0, 0, 1), -Math.PI/2);
+      break;
+    case -90: 
+      this.worldToScreenQ.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
+      break;
+    case 180:
+      // TODO.
+      break;
   }
-
-  // Rotation around the z-axis.
-  var alpha = THREE.Math.degToRad(this.deviceOrientation.alpha);
-  // Front-to-back (in portrait) rotation (x-axis).
-  var beta = THREE.Math.degToRad(this.deviceOrientation.beta);
-  // Left to right (in portrait) rotation (y-axis).
-  var gamma = THREE.Math.degToRad(this.deviceOrientation.gamma);
-  var orient = THREE.Math.degToRad(this.screenOrientation);
-
-  // Use three.js to convert to quaternion. Lifted from
-  // https://github.com/richtr/threeVR/blob/master/js/DeviceOrientationController.js
-  this.deviceEuler.set(beta, alpha, -gamma, 'YXZ');
-  this.tmpQuaternion.setFromEuler(this.deviceEuler);
-  this.minusHalfAngle = -orient / 2;
-  this.screenTransform.set(0, Math.sin(this.minusHalfAngle), 0, Math.cos(this.minusHalfAngle));
-  // Take into account the reset transformation.
-  this.finalQuaternion.copy(this.resetTransform);
-  // And any rotations done via touch events.
-  this.finalQuaternion.multiply(this.touchPanner.getOrientation());
-  this.finalQuaternion.multiply(this.tmpQuaternion);
-  this.finalQuaternion.multiply(this.screenTransform);
-  this.finalQuaternion.multiply(this.worldTransform);
-
-  // DEBUG ONLY: Log rotation rate if it's large enough.
-  /*
-  if (this.deviceMotion) {
-    var rotRate = this.deviceMotion.rotationRate;
-    if (Math.abs(rotRate.alpha) > 5) {
-      console.log('Rotation around Z: %f deg', rotRate.alpha);
-    }
-    if (Math.abs(rotRate.beta) > 5) {
-      console.log('Rotation around X: %f deg', rotRate.beta);
-    }
-    if (Math.abs(rotRate.gamma) > 5) {
-      console.log('Rotation around Y: %f deg', rotRate.gamma);
-    }
-  }
-  */
-  this.posePredictor.setScreenOrientation(this.screenOrientation);
-
-  //var bestTime = this.rafTime || window.performance.now();
-  //var bestTime = window.performance.now();
-  var bestTime = this.deviceOrientation.timeStamp;
-  var rotRate = this.deviceMotion && this.deviceMotion.rotationRate;
-  return this.posePredictor.getPrediction(
-      this.finalQuaternion, rotRate, bestTime);
 };
 
-GyroPositionSensorVRDevice.prototype.resetSensor = function() {
-  var angle = THREE.Math.degToRad(this.deviceOrientation.alpha);
-  console.log('Normalizing yaw to %f', angle);
-  this.resetTransform.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -angle);
-};
 
-module.exports = GyroPositionSensorVRDevice;
+module.exports = FusionPositionSensorVRDevice;
 
-},{"./base.js":1,"./pose-predictor.js":6,"./three-math.js":7,"./touch-panner.js":8}],4:[function(require,module,exports){
+},{"./base.js":1,"./complementary-filter.js":3,"./pose-predictor.js":7,"./three-math.js":9,"./util.js":10}],5:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -265,7 +428,7 @@ var WebVRPolyfill = require('./webvr-polyfill.js');
 
 new WebVRPolyfill();
 
-},{"./webvr-polyfill.js":10}],5:[function(require,module,exports){
+},{"./webvr-polyfill.js":11}],6:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -435,7 +598,7 @@ MouseKeyboardPositionSensorVRDevice.prototype.resetSensor = function() {
 
 module.exports = MouseKeyboardPositionSensorVRDevice;
 
-},{"./base.js":1,"./three-math.js":7,"./util.js":9}],6:[function(require,module,exports){
+},{"./base.js":1,"./three-math.js":9,"./util.js":10}],7:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -452,258 +615,89 @@ module.exports = MouseKeyboardPositionSensorVRDevice;
  */
 var THREE = require('./three-math.js');
 
-var PredictionMode = {
-  NONE: 'none',
-  INTERPOLATE: 'interpolate',
-  PREDICT: 'predict'
-}
+var DEBUG = false;
 
-// How much to interpolate between the current orientation estimate and the
-// previous estimate position. This is helpful for devices with low
-// deviceorientation firing frequency (eg. on iOS8 and below, it is 20 Hz).  The
-// larger this value (in [0, 1]), the smoother but more delayed the head
-// tracking is.
-var INTERPOLATION_SMOOTHING_FACTOR = 0.01;
+/**
+ * Given an orientation and the gyroscope data, predicts the future orientation
+ * of the head. This makes rendering appear faster.
+ *
+ * Also see: http://msl.cs.uiuc.edu/~lavalle/papers/LavYerKatAnt14.pdf
+ *
+ * @param {Number} predictionTimeS time from head movement to the appearance of
+ * the corresponding image.
+ */
+function PosePredictor(predictionTimeS) {
+  this.predictionTimeS = predictionTimeS;
 
-// Angular threshold, if the angular speed (in deg/s) is less than this, do no
-// prediction. Without it, the screen flickers quite a bit.
-var PREDICTION_THRESHOLD_DEG_PER_S = 0.01;
-//var PREDICTION_THRESHOLD_DEG_PER_S = 0;
+  // The quaternion corresponding to the previous state.
+  this.previousQ = new THREE.Quaternion();
+  // Previous time a prediction occurred.
+  this.previousTimestampS = null;
 
-// How far into the future to predict.
-WEBVR_PREDICTION_TIME_MS = 80;
-
-// Whether to predict or what.
-WEBVR_PREDICTION_MODE = PredictionMode.PREDICT;
-
-function PosePredictor() {
-  this.lastQ = new THREE.Quaternion();
-  this.lastTimestamp = null;
-
-  this.outQ = new THREE.Quaternion();
+  // The delta quaternion that adjusts the current pose.
   this.deltaQ = new THREE.Quaternion();
+  // The output quaternion.
+  this.outQ = new THREE.Quaternion();
 }
 
-PosePredictor.prototype.getPrediction = function(currentQ, rotationRate, timestamp) {
-  // If there's no previous quaternion, output the current one and save for
-  // later.
-  if (!this.lastTimestamp) {
-    this.lastQ.copy(currentQ);
-    this.lastTimestamp = timestamp;
+PosePredictor.prototype.getPrediction = function(currentQ, gyro, timestampS) {
+  if (!this.previousTimestampS) {
+    this.previousQ.copy(currentQ);
+    this.previousTimestampS = timestampS;
     return currentQ;
   }
 
-  // DEBUG ONLY: Try with a fixed 60 Hz update speed.
-  //var elapsedMs = 1000/60;
-  var elapsedMs = timestamp - this.lastTimestamp;
+  // Calculate axis and angle based on gyroscope rotation rate data.
+  var axis = new THREE.Vector3();
+  axis.copy(gyro);
+  axis.normalize();
 
-  switch (WEBVR_PREDICTION_MODE) {
-    case PredictionMode.INTERPOLATE:
-      this.outQ.copy(currentQ);
-      this.outQ.slerp(this.lastQ, INTERPOLATION_SMOOTHING_FACTOR);
+  var angularSpeed = gyro.length();
 
-      // Save the current quaternion for later.
-      this.lastQ.copy(currentQ);
-      break;
-    case PredictionMode.PREDICT:
-      var axisAngle;
-      if (rotationRate) {
-        axisAngle = this.getAxisAngularSpeedFromRotationRate_(rotationRate);
-      } else {
-        axisAngle = this.getAxisAngularSpeedFromGyroDelta_(currentQ, elapsedMs);
-      }
-
-      // If there is no predicted axis/angle, don't do prediction.
-      if (!axisAngle) {
-        this.outQ.copy(currentQ);
-        this.lastQ.copy(currentQ);
-        break;
-      }
-      var angularSpeedDegS = axisAngle.speed;
-      var axis = axisAngle.axis;
-      var predictAngleDeg = (WEBVR_PREDICTION_TIME_MS / 1000) * angularSpeedDegS;
-
-      // If we're rotating slowly, don't do prediction.
-      if (angularSpeedDegS < PREDICTION_THRESHOLD_DEG_PER_S) {
-        this.outQ.copy(currentQ);
-        this.lastQ.copy(currentQ);
-        break;
-      }
-
-      // Calculate the prediction delta to apply to the original angle.
-      this.deltaQ.setFromAxisAngle(axis, THREE.Math.degToRad(predictAngleDeg));
-      // DEBUG ONLY: As a sanity check, use the same axis and angle as before,
-      // which should cause no prediction to happen.
-      //this.deltaQ.setFromAxisAngle(axis, angle);
-
-      this.outQ.copy(this.lastQ);
-      this.outQ.multiply(this.deltaQ);
-
-      // Use the predicted quaternion as the new last one.
-      //this.lastQ.copy(this.outQ);
-      this.lastQ.copy(currentQ);
-      break;
-    case PredictionMode.NONE:
-    default:
-      this.outQ.copy(currentQ);
+  // If we're rotating slowly, don't do prediction.
+  if (angularSpeed < THREE.Math.degToRad(20)) {
+    if (DEBUG) {
+      console.log('Moving slowly, at %s deg/s: no prediction',
+                  THREE.Math.radToDeg(angularSpeed).toFixed(1));
+    }
+    this.outQ.copy(currentQ);
+    this.previousQ.copy(currentQ);
+    return this.outQ;
   }
-  this.lastTimestamp = timestamp;
+
+  // Get the predicted angle based on the time delta and latency.
+  var deltaT = timestampS - this.previousTimestampS;
+  var predictAngle = angularSpeed * this.predictionTimeS;
+
+  this.deltaQ.setFromAxisAngle(axis, predictAngle);
+  this.outQ.copy(this.previousQ);
+  this.outQ.multiply(this.deltaQ);
+
+  this.previousQ.copy(currentQ);
 
   return this.outQ;
 };
 
-PosePredictor.prototype.setScreenOrientation = function(screenOrientation) {
-  this.screenOrientation = screenOrientation;
-};
-
-PosePredictor.prototype.getAxis_ = function(quat) {
-  // x = qx / sqrt(1-qw*qw)
-  // y = qy / sqrt(1-qw*qw)
-  // z = qz / sqrt(1-qw*qw)
-  var d = Math.sqrt(1 - quat.w * quat.w);
-  return new THREE.Vector3(quat.x / d, quat.y / d, quat.z / d);
-};
-
-PosePredictor.prototype.getAngle_ = function(quat) {
-  // angle = 2 * acos(qw)
-  // If w is greater than 1 (THREE.js, how can this be?), arccos is not defined.
-  if (quat.w > 1) {
-    return 0;
-  }
-  var angle = 2 * Math.acos(quat.w);
-  // Normalize the angle to be in [-π, π].
-  if (angle > Math.PI) {
-    angle -= 2 * Math.PI;
-  }
-  return angle;
-};
-
-PosePredictor.prototype.getAxisAngularSpeedFromRotationRate_ = function(rotationRate) {
-  if (!rotationRate) {
-    return null;
-  }
-  var screenRotationRate;
-  if (/iPad|iPhone|iPod/.test(navigator.platform)) {
-    // iOS: angular speed in deg/s.
-    var screenRotationRate = this.getScreenAdjustedRotationRateIOS_(rotationRate);
-  } else {
-    // Android: angular speed in rad/s, so need to convert.
-    rotationRate.alpha = THREE.Math.radToDeg(rotationRate.alpha);
-    rotationRate.beta = THREE.Math.radToDeg(rotationRate.beta);
-    rotationRate.gamma = THREE.Math.radToDeg(rotationRate.gamma);
-    var screenRotationRate = this.getScreenAdjustedRotationRate_(rotationRate);
-  }
-  var vec = new THREE.Vector3(
-      screenRotationRate.beta, screenRotationRate.alpha, screenRotationRate.gamma);
-
-  /*
-  var vec;
-  if (/iPad|iPhone|iPod/.test(navigator.platform)) {
-    vec = new THREE.Vector3(rotationRate.gamma, rotationRate.alpha, rotationRate.beta);
-  } else {
-    vec = new THREE.Vector3(rotationRate.beta, rotationRate.alpha, rotationRate.gamma);
-  }
-  // Take into account the screen orientation too!
-  vec.applyQuaternion(this.screenTransform);
-  */
-
-  // Angular speed in deg/s.
-  var angularSpeedDegS = vec.length();
-
-  var axis = vec.normalize();
-  return {
-    speed: angularSpeedDegS,
-    axis: axis
-  }
-};
-
-PosePredictor.prototype.getScreenAdjustedRotationRate_ = function(rotationRate) {
-  var screenRotationRate = {
-    alpha: -rotationRate.alpha,
-    beta: rotationRate.beta,
-    gamma: rotationRate.gamma
-  };
-  switch (this.screenOrientation) {
-    case 90:
-      screenRotationRate.beta  = - rotationRate.gamma;
-      screenRotationRate.gamma =   rotationRate.beta;
-      break;
-    case 180:
-      screenRotationRate.beta  = - rotationRate.beta;
-      screenRotationRate.gamma = - rotationRate.gamma;
-      break;
-    case 270:
-    case -90:
-      screenRotationRate.beta  =   rotationRate.gamma;
-      screenRotationRate.gamma = - rotationRate.beta;
-      break;
-    default: // SCREEN_ROTATION_0
-      screenRotationRate.beta  =   rotationRate.beta;
-      screenRotationRate.gamma =   rotationRate.gamma;
-      break;
-  }
-  return screenRotationRate;
-};
-
-PosePredictor.prototype.getScreenAdjustedRotationRateIOS_ = function(rotationRate) {
-  var screenRotationRate = {
-    alpha: rotationRate.alpha,
-    beta: rotationRate.beta,
-    gamma: rotationRate.gamma
-  };
-  // Values empirically derived.
-  switch (this.screenOrientation) {
-    case 90:
-      screenRotationRate.beta  = -rotationRate.beta;
-      screenRotationRate.gamma =  rotationRate.gamma;
-      break;
-    case 180:
-      // You can't even do this on iOS.
-      break;
-    case 270:
-    case -90:
-      screenRotationRate.alpha = -rotationRate.alpha;
-      screenRotationRate.beta  =  rotationRate.beta;
-      screenRotationRate.gamma =  rotationRate.gamma;
-      break;
-    default: // SCREEN_ROTATION_0
-      screenRotationRate.alpha =  rotationRate.beta;
-      screenRotationRate.beta  =  rotationRate.alpha;
-      screenRotationRate.gamma =  rotationRate.gamma;
-      break;
-  }
-  return screenRotationRate;
-};
-
-PosePredictor.prototype.getAxisAngularSpeedFromGyroDelta_ = function(currentQ, elapsedMs) {
-  // Sometimes we use the same sensor timestamp, in which case prediction
-  // won't work.
-  if (elapsedMs == 0) {
-    return null;
-  }
-  // Q_delta = Q_last^-1 * Q_curr
-  this.deltaQ.copy(this.lastQ);
-  this.deltaQ.inverse();
-  this.deltaQ.multiply(currentQ);
-
-  // Convert from delta quaternion to axis-angle.
-  var axis = this.getAxis_(this.deltaQ);
-  var angleRad = this.getAngle_(this.deltaQ);
-  // It took `elapsed` ms to travel the angle amount over the axis. Now,
-  // we make a new quaternion based how far in the future we want to
-  // calculate.
-  var angularSpeedRadMs = angleRad / elapsedMs;
-  var angularSpeedDegS = THREE.Math.radToDeg(angularSpeedRadMs) * 1000;
-  // If no rotation rate is provided, do no prediction.
-  return {
-    speed: angularSpeedDegS,
-    axis: axis
-  };
-};
 
 module.exports = PosePredictor;
 
-},{"./three-math.js":7}],7:[function(require,module,exports){
+},{"./three-math.js":9}],8:[function(require,module,exports){
+function SensorSample(sample, timestampS) {
+  this.set(sample, timestampS);
+};
+
+SensorSample.prototype.set = function(sample, timestampS) {
+  this.sample = sample;
+  this.timestampS = timestampS;
+};
+
+SensorSample.prototype.copy = function(sensorSample) {
+  this.set(sensorSample.sample, sensorSample.timestampS);
+};
+
+module.exports = SensorSample;
+
+},{}],9:[function(require,module,exports){
 /*
  * A subset of THREE.js, providing mostly quaternion and euler-related
  * operations, manually lifted from
@@ -2998,77 +2992,7 @@ THREE.Math = {
 
 module.exports = THREE;
 
-},{}],8:[function(require,module,exports){
-/*
- * Copyright 2015 Google Inc. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-var THREE = require('./three-math.js');
-
-var ROTATE_SPEED = -0.5;
-/**
- * Provides a quaternion responsible for pre-panning the scene before further
- * transformations due to device sensors.
- */
-function TouchPanner() {
-  window.addEventListener('touchstart', this.onTouchStart_.bind(this));
-  window.addEventListener('touchmove', this.onTouchMove_.bind(this));
-  window.addEventListener('touchend', this.onTouchEnd_.bind(this));
-
-  this.isTouching = false;
-  this.rotateStart = new THREE.Vector2();
-  this.rotateEnd = new THREE.Vector2();
-  this.rotateDelta = new THREE.Vector2();
-
-  this.theta = 0;
-  this.orientation = new THREE.Quaternion();
-  this.euler = new THREE.Euler();
-}
-
-TouchPanner.prototype.getOrientation = function() {
-  this.euler.set(0, this.theta, 0, 'YXZ');
-  this.orientation.setFromEuler(this.euler);
-  return this.orientation;
-};
-
-TouchPanner.prototype.onTouchStart_ = function(e) {
-  // Only respond if there is exactly one touch.
-  if (e.touches.length != 1) {
-    return;
-  }
-  this.rotateStart.set(e.touches[0].pageX, e.touches[0].pageY);
-  this.isTouching = true;
-};
-
-TouchPanner.prototype.onTouchMove_ = function(e) {
-  if (!this.isTouching) {
-    return;
-  }
-  this.rotateEnd.set(e.touches[0].pageX, e.touches[0].pageY);
-  this.rotateDelta.subVectors(this.rotateEnd, this.rotateStart);
-  this.rotateStart.copy(this.rotateEnd);
-
-  var element = document.body;
-  this.theta += 2 * Math.PI * this.rotateDelta.x / element.clientWidth * ROTATE_SPEED;
-};
-
-TouchPanner.prototype.onTouchEnd_ = function(e) {
-  this.isTouching = false;
-};
-
-module.exports = TouchPanner;
-
-},{"./three-math.js":7}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -3085,13 +3009,35 @@ module.exports = TouchPanner;
  */
 var Util = window.Util || {};
 
+Util.MIN_TIMESTEP = 0.001;
+Util.MAX_TIMESTEP = 1;
+
 Util.clamp = function(value, min, max) {
   return Math.min(Math.max(min, value), max);
 };
 
+Util.isIOS = function() {
+  return /iPad|iPhone|iPod/.test(navigator.platform);
+};
+
+// Helper method to validate the time steps of sensor timestamps.
+Util.isTimestampDeltaValid = function(timestampDeltaS) {
+  if (isNaN(timestampDeltaS)) {
+    return false;
+  }
+  if (timestampDeltaS <= Util.MIN_TIMESTEP) {
+    return false;
+  }
+  if (timestampDeltaS > Util.MAX_TIMESTEP) {
+    return false;
+  }
+  return true;
+}
+
+
 module.exports = Util;
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -3108,7 +3054,8 @@ module.exports = Util;
  */
 
 var CardboardHMDVRDevice = require('./cardboard-hmd-vr-device.js');
-var GyroPositionSensorVRDevice = require('./gyro-position-sensor-vr-device.js');
+//var GyroPositionSensorVRDevice = require('./gyro-position-sensor-vr-device.js');
+var FusionPositionSensorVRDevice = require('./fusion-position-sensor-vr-device.js');
 var MouseKeyboardPositionSensorVRDevice = require('./mouse-keyboard-position-sensor-vr-device.js');
 // Uncomment to add positional tracking via webcam.
 //var WebcamPositionSensorVRDevice = require('./webcam-position-sensor-vr-device.js');
@@ -3136,7 +3083,8 @@ WebVRPolyfill.prototype.enablePolyfill = function() {
 
   // Polyfill using the right position sensor.
   if (this.isMobile()) {
-    this.devices.push(new GyroPositionSensorVRDevice());
+    //this.devices.push(new GyroPositionSensorVRDevice());
+    this.devices.push(new FusionPositionSensorVRDevice());
   } else {
     this.devices.push(new MouseKeyboardPositionSensorVRDevice());
     // Uncomment to add positional tracking via webcam.
@@ -3178,4 +3126,4 @@ WebVRPolyfill.prototype.isCardboardCompatible = function() {
 
 module.exports = WebVRPolyfill;
 
-},{"./base.js":1,"./cardboard-hmd-vr-device.js":2,"./gyro-position-sensor-vr-device.js":3,"./mouse-keyboard-position-sensor-vr-device.js":5}]},{},[4]);
+},{"./base.js":1,"./cardboard-hmd-vr-device.js":2,"./fusion-position-sensor-vr-device.js":4,"./mouse-keyboard-position-sensor-vr-device.js":6}]},{},[5]);
