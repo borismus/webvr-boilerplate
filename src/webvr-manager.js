@@ -95,6 +95,8 @@ function WebVRManager(renderer, effect, params) {
       this.onFullscreenChange_.bind(this));
   window.addEventListener('orientationchange',
       this.onOrientationChange_.bind(this));
+  window.addEventListener('resize',
+      this.onResizeChange_.bind(this));
 
   // Create the necessary elements for wake lock to work.
   this.wakelock = new Wakelock();
@@ -269,6 +271,15 @@ WebVRManager.prototype.resize_ = function() {
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {
   this.updateRotateInstructions_();
+};
+
+WebVRManager.prototype.onResizeChange_ = function() {
+  // Firefox does not yet support orientationchange events, so we look at the MediaQueryList
+  // object to detect whether the device is in landscape or portrait orientation.
+  // https://bugzilla.mozilla.org/show_bug.cgi?id=920734
+  if (window.matchMedia('(orientation: landscape)').matches) {
+    this.updateRotateInstructions_();
+  }
 };
 
 WebVRManager.prototype.updateRotateInstructions_ = function() {

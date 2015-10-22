@@ -54,7 +54,7 @@ Util.getQueryParameter = function(name) {
 };
 
 Util.isLandscapeMode = function() {
-  return (window.orientation == 90 || window.orientation == -90);
+  return (window.orientation == 90 || window.orientation == -90 || window.matchMedia('(orientation: landscape)').matches);
 };
 
 
