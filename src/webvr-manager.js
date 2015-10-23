@@ -61,7 +61,7 @@ function WebVRManager(renderer, effect, params) {
   // Check if the browser is compatible with WebVR.
   this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
     // Activate either VR or Immersive mode.
-    if (window.WEBVR_FORCE_DISTORTION) {
+    if (WebVRConfig.FORCE_DISTORTION) {
       this.distorter.setActive(true);
       this.isVRCompatible = true;
     } else if (hmd) {
@@ -274,7 +274,7 @@ WebVRManager.prototype.onOrientationChange_ = function(e) {
 WebVRManager.prototype.updateRotateInstructions_ = function() {
   this.rotateInstructions.disableShowTemporarily();
   // In portrait VR mode, tell the user to rotate to landscape.
-  if (this.mode == Modes.VR && !Util.isLandscapeMode()) {
+  if (this.mode == Modes.VR && !Util.isLandscapeMode() && Util.isMobile()) {
     this.rotateInstructions.show();
   } else {
     this.rotateInstructions.hide();

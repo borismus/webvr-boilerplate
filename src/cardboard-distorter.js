@@ -114,9 +114,9 @@ function CardboardDistorter(renderer) {
   BarrelDistortion.rightCenter = {type: 'v2', value: new THREE.Vector2(right.x, right.y)};
 
   // Allow custom background colors if this global is set.
-  if (window.WEBVR_BACKGROUND_COLOR) {
+  if (WebVRConfig.DISTORTION_BGCOLOR) {
     BarrelDistortion.uniforms.background =
-      {type: 'v4', value: window.WEBVR_BACKGROUND_COLOR};
+      {type: 'v4', value: WebVRConfig.DISTORTION_BGCOLOR};
   }
 
   var shaderPass = new ShaderPass(BarrelDistortion);

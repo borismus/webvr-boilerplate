@@ -29,17 +29,26 @@ body {
 /*
  * Debug parameters.
  */
+WebVRConfig = {
+  /**
+   * webvr-polyfill configuration
+   */
 
-// Forces availability of VR mode.
-//CARDBOARD_DEBUG = true;
-// Forces distortion in VR mode.
-//WEBVR_FORCE_DISTORTION = true;
-// Override the distortion background color.
-//WEBVR_BACKGROUND_COLOR = {x: 1, y: 0, z: 0, w: 1};
-// Change the tracking prediction mode.
-//WEBVR_PREDICTION_MODE = 2;
-// In prediction mode, change how far into the future to predict.
-//WEBVR_PREDICTION_TIME_MS = 100;
+  // Forces availability of VR mode.
+  //FORCE_ENABLE_VR: true, // Default: false.
+  // Complementary filter coefficient. 0 for accelerometer, 1 for gyro.
+  //K_FILTER: 0.98, // Default: 0.98.
+  // How far into the future to predict during fast motion.
+  //PREDICTION_TIME_S: 0.050, // Default: 0.050s.
+
+  /**
+   * webvr-boilerplate configuration
+   */
+  // Forces distortion in VR mode.
+  //FORCE_DISTORTION: true, // Default: false.
+  // Override the distortion background color.
+  //DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
+};
 </script>
 
 <!--
@@ -149,16 +158,6 @@ function onKey(event) {
 }
 
 window.addEventListener('keydown', onKey, true);
-
-// Handle window resizes
-function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-
-  effect.setSize(window.innerWidth, window.innerHeight);
-}
-
-window.addEventListener('resize', onWindowResize, false);
 
 </script>
 

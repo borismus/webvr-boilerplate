@@ -274,7 +274,7 @@ ComplementaryFilter.prototype.gyroToQuaternionDelta_ = function(gyro, dt) {
 
 module.exports = ComplementaryFilter;
 
-},{"./sensor-sample.js":8,"./three-math.js":9,"./util.js":10}],4:[function(require,module,exports){
+},{"./sensor-sample.js":8,"./three-math.js":9,"./util.js":11}],4:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -290,13 +290,15 @@ module.exports = ComplementaryFilter;
  * limitations under the License.
  */
 var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
+
 var ComplementaryFilter = require('./complementary-filter.js');
 var PosePredictor = require('./pose-predictor.js');
+var TouchPanner = require('./touch-panner.js');
 var THREE = require('./three-math.js');
 var Util = require('./util.js');
 
 /**
- * The positional sensor, implemented using web DeviceOrientation APIs.
+ * The positional sensor, implemented using DeviceMotion APIs.
  */
 function FusionPositionSensorVRDevice() {
   this.deviceId = 'webvr-polyfill:fused';
@@ -308,8 +310,9 @@ function FusionPositionSensorVRDevice() {
   window.addEventListener('devicemotion', this.onDeviceMotionChange_.bind(this));
   window.addEventListener('orientationchange', this.onScreenOrientationChange_.bind(this));
 
-  this.filter = new ComplementaryFilter(0.98);
-  this.posePredictor = new PosePredictor(0.050);
+  this.filter = new ComplementaryFilter(WebVRConfig.K_FILTER || 0.98);
+  this.posePredictor = new PosePredictor(WebVRConfig.PREDICTION_TIME_S || 0.050);
+  this.touchPanner = new TouchPanner();
 
   this.filterToWorldQ = new THREE.Quaternion();
 
@@ -323,6 +326,8 @@ function FusionPositionSensorVRDevice() {
   this.worldToScreenQ = new THREE.Quaternion();
   this.setScreenTransform_();
 
+  // Keep track of a reset transform for resetSensor.
+  this.resetQ = new THREE.Quaternion();
 }
 FusionPositionSensorVRDevice.prototype = new PositionSensorVRDevice();
 
@@ -350,13 +355,20 @@ FusionPositionSensorVRDevice.prototype.getOrientation = function() {
   // Convert to THREE coordinate system: -Z forward, Y up, X right.
   var out = new THREE.Quaternion();
   out.copy(this.filterToWorldQ);
+  out.multiply(this.resetQ);
+  out.multiply(this.touchPanner.getOrientation());
   out.multiply(this.predictedQ);
   out.multiply(this.worldToScreenQ);
   return out;
 };
 
 FusionPositionSensorVRDevice.prototype.resetSensor = function() {
-  console.log('Not implemented');
+  var euler = new THREE.Euler();
+  euler.setFromQuaternion(this.filter.getOrientation());
+  var yaw = euler.y;
+  console.log('resetSensor with yaw: %f', yaw);
+  this.resetQ.setFromAxisAngle(new THREE.Vector3(0, 0, 1), -yaw);
+  this.touchPanner.resetSensor();
 };
 
 FusionPositionSensorVRDevice.prototype.onDeviceMotionChange_ = function(deviceMotion) {
@@ -411,7 +423,7 @@ FusionPositionSensorVRDevice.prototype.setScreenTransform_ = function() {
 
 module.exports = FusionPositionSensorVRDevice;
 
-},{"./base.js":1,"./complementary-filter.js":3,"./pose-predictor.js":7,"./three-math.js":9,"./util.js":10}],5:[function(require,module,exports){
+},{"./base.js":1,"./complementary-filter.js":3,"./pose-predictor.js":7,"./three-math.js":9,"./touch-panner.js":10,"./util.js":11}],5:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -428,9 +440,11 @@ module.exports = FusionPositionSensorVRDevice;
  */
 var WebVRPolyfill = require('./webvr-polyfill.js');
 
+// Initialize a WebVRConfig just in case.
+var WebVRConfig = window.WebVRConfig || {};
 new WebVRPolyfill();
 
-},{"./webvr-polyfill.js":11}],6:[function(require,module,exports){
+},{"./webvr-polyfill.js":12}],6:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -600,7 +614,7 @@ MouseKeyboardPositionSensorVRDevice.prototype.resetSensor = function() {
 
 module.exports = MouseKeyboardPositionSensorVRDevice;
 
-},{"./base.js":1,"./three-math.js":9,"./util.js":10}],7:[function(require,module,exports){
+},{"./base.js":1,"./three-math.js":9,"./util.js":11}],7:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -3009,6 +3023,78 @@ module.exports = THREE;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+var THREE = require('./three-math.js');
+
+var ROTATE_SPEED = -0.5;
+/**
+ * Provides a quaternion responsible for pre-panning the scene before further
+ * transformations due to device sensors.
+ */
+function TouchPanner() {
+  window.addEventListener('touchstart', this.onTouchStart_.bind(this));
+  window.addEventListener('touchmove', this.onTouchMove_.bind(this));
+  window.addEventListener('touchend', this.onTouchEnd_.bind(this));
+
+  this.isTouching = false;
+  this.rotateStart = new THREE.Vector2();
+  this.rotateEnd = new THREE.Vector2();
+  this.rotateDelta = new THREE.Vector2();
+
+  this.theta = 0;
+  this.orientation = new THREE.Quaternion();
+}
+
+TouchPanner.prototype.getOrientation = function() {
+  this.orientation.setFromEuler(new THREE.Euler(0, 0, this.theta));
+  return this.orientation;
+};
+
+TouchPanner.prototype.resetSensor = function() {
+  this.theta = 0;
+};
+
+TouchPanner.prototype.onTouchStart_ = function(e) {
+  // Only respond if there is exactly one touch.
+  if (e.touches.length != 1) {
+    return;
+  }
+  this.rotateStart.set(e.touches[0].pageX, e.touches[0].pageY);
+  this.isTouching = true;
+};
+
+TouchPanner.prototype.onTouchMove_ = function(e) {
+  if (!this.isTouching) {
+    return;
+  }
+  this.rotateEnd.set(e.touches[0].pageX, e.touches[0].pageY);
+  this.rotateDelta.subVectors(this.rotateEnd, this.rotateStart);
+  this.rotateStart.copy(this.rotateEnd);
+
+  var element = document.body;
+  this.theta += 2 * Math.PI * this.rotateDelta.x / element.clientWidth * ROTATE_SPEED;
+};
+
+TouchPanner.prototype.onTouchEnd_ = function(e) {
+  this.isTouching = false;
+};
+
+module.exports = TouchPanner;
+
+},{"./three-math.js":9}],11:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 var Util = window.Util || {};
 
 Util.MIN_TIMESTEP = 0.001;
@@ -3039,7 +3125,7 @@ Util.isTimestampDeltaValid = function(timestampDeltaS) {
 
 module.exports = Util;
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -3122,8 +3208,8 @@ WebVRPolyfill.prototype.isMobile = function() {
 
 WebVRPolyfill.prototype.isCardboardCompatible = function() {
   // For now, support all iOS and Android devices.
-  // Also enable the global CARDBOARD_DEBUG flag.
-  return this.isMobile() || window.CARDBOARD_DEBUG;
+  // Also enable the WebVRConfig.FORCE_VR flag for debugging.
+  return this.isMobile() || WebVRConfig.FORCE_ENABLE_VR;
 };
 
 module.exports = WebVRPolyfill;

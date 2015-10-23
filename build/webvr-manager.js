@@ -272,9 +272,9 @@ function CardboardDistorter(renderer) {
   BarrelDistortion.rightCenter = {type: 'v2', value: new THREE.Vector2(right.x, right.y)};
 
   // Allow custom background colors if this global is set.
-  if (window.WEBVR_BACKGROUND_COLOR) {
+  if (WebVRConfig.DISTORTION_BGCOLOR) {
     BarrelDistortion.uniforms.background =
-      {type: 'v4', value: window.WEBVR_BACKGROUND_COLOR};
+      {type: 'v4', value: WebVRConfig.DISTORTION_BGCOLOR};
   }
 
   var shaderPass = new ShaderPass(BarrelDistortion);
@@ -546,6 +546,7 @@ module.exports = Emitter;
 
 var WebVRManager = require('./webvr-manager.js');
 
+window.WebVRConfig = window.WebVRConfig || {};
 window.WebVRManager = WebVRManager;
 
 },{"./webvr-manager.js":10}],6:[function(require,module,exports){
@@ -865,7 +866,7 @@ function WebVRManager(renderer, effect, params) {
   // Check if the browser is compatible with WebVR.
   this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
     // Activate either VR or Immersive mode.
-    if (window.WEBVR_FORCE_DISTORTION) {
+    if (WebVRConfig.FORCE_DISTORTION) {
       this.distorter.setActive(true);
       this.isVRCompatible = true;
     } else if (hmd) {
@@ -943,9 +944,6 @@ WebVRManager.prototype.render = function(scene, camera, timestamp) {
     } else {
       this.renderer.render(scene, camera);
     }
-  }
-  if (this.input && this.input.setAnimationFrameTime) {
-    this.input.setAnimationFrameTime(timestamp);
   }
 };
 
@@ -1081,7 +1079,7 @@ WebVRManager.prototype.onOrientationChange_ = function(e) {
 WebVRManager.prototype.updateRotateInstructions_ = function() {
   this.rotateInstructions.disableShowTemporarily();
   // In portrait VR mode, tell the user to rotate to landscape.
-  if (this.mode == Modes.VR && !Util.isLandscapeMode()) {
+  if (this.mode == Modes.VR && !Util.isLandscapeMode() && Util.isMobile()) {
     this.rotateInstructions.show();
   } else {
     this.rotateInstructions.hide();

@@ -10,11 +10,11 @@ support even if the WebVR spec is not implemented.
 [three]: http://threejs.org/
 [polyfill]: https://github.com/borismus/webvr-polyfill
 
-# Projects that use the boilerplate
+## Projects that use the boilerplate
 
 [![WebVR Boilerplate](content_images/boilerplate.png)][wb]
 [![Moving Music](content_images/moving-music.png)][mm]
-[![EmbedVR](content_images/photosphere.png)][evr]
+[![Photosphere](content_images/photosphere.png)][evr]
 [![Sechelt](content_images/sechelt.png)][s]
 
 [wb]: http://borismus.github.io/webvr-boilerplate/
@@ -23,7 +23,7 @@ support even if the WebVR spec is not implemented.
 [s]: http://borismus.github.io/sechelt/
 
 
-# Getting started
+## Getting started
 
 The easiest way to start is to fork this repository or copy its contents into a
 new directory.
@@ -46,28 +46,41 @@ The manager handles going in and out of VR mode. Instead of calling
 renders in monocular view by default, or side-by-side binocular view when in VR
 mode.
 
-# Features and known issues
+The polyfill and boilerplate are also available via bower. Easy install:
+
+    bower install webvr-boilerplate
+
+## Features and known issues
 
 Features:
 
 - Enter and exit VR mode (in WebVR and WebVR polyfill compatible environments).
 - Immersive fullscreen, orientation locking and sleep prevention.
 - Distortion correction, enabled in iOS only. 
-- High quality head tracking with motion prediction thanks to the WebVR polyfill.
+- High quality head tracking with motion prediction thanks to webvr-polyfill.
 
 Bugs and known issues:
 
 - Proper distortion correction for Android. This requires knowing physical
   locations of lenses, which requires knowing device's DPI, which is hard in
   general. It's easier in iOS because there are relatively few iPhone models.
-- Drift in Chrome for Android. Please star the bug and indicate that you really
-  care about high quality head tracking for VR: <http://crbug.com/397824>.
 - Wake lock for Android currently relies on a hack in which a hidden video is
   played on repeat in the background. This causes big WebGL performance issues,
   so has been disabled. This will be resolved when the official wakelock API
   lands: <http://crbug.com/257511>
 
-# Thanks / credits!
+## Configuration 
+
+All configuration is done through the global `window.WebVRConfig` object.
+
+    WebVRConfig = {
+      // Forces distortion in VR mode.
+      //FORCE_DISTORTION: true, // Default: false.
+      // Override the distortion background color.
+      //DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
+    };
+
+## Thanks
 
 - [Dmitry Kovalev][dk] for implementing [lens distortion correction][distortion].
 - [Brandon Jones][bj] and [Vladimir Vukicevic][vv] for their work on the [WebVR
