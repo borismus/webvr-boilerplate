@@ -441,7 +441,7 @@ module.exports = FusionPositionSensorVRDevice;
 var WebVRPolyfill = require('./webvr-polyfill.js');
 
 // Initialize a WebVRConfig just in case.
-var WebVRConfig = window.WebVRConfig || {};
+window.WebVRConfig = window.WebVRConfig || {};
 new WebVRPolyfill();
 
 },{"./webvr-polyfill.js":12}],6:[function(require,module,exports){
@@ -3025,7 +3025,7 @@ module.exports = THREE;
  */
 var THREE = require('./three-math.js');
 
-var ROTATE_SPEED = -0.5;
+var ROTATE_SPEED = 0.5;
 /**
  * Provides a quaternion responsible for pre-panning the scene before further
  * transformations due to device sensors.
@@ -3122,7 +3122,6 @@ Util.isTimestampDeltaValid = function(timestampDeltaS) {
   return true;
 }
 
-
 module.exports = Util;
 
 },{}],12:[function(require,module,exports){
@@ -3142,7 +3141,7 @@ module.exports = Util;
  */
 
 var CardboardHMDVRDevice = require('./cardboard-hmd-vr-device.js');
-//var GyroPositionSensorVRDevice = require('./gyro-position-sensor-vr-device.js');
+//var OrientationPositionSensorVRDevice = require('./orientation-position-sensor-vr-device.js');
 var FusionPositionSensorVRDevice = require('./fusion-position-sensor-vr-device.js');
 var MouseKeyboardPositionSensorVRDevice = require('./mouse-keyboard-position-sensor-vr-device.js');
 // Uncomment to add positional tracking via webcam.
@@ -3171,7 +3170,7 @@ WebVRPolyfill.prototype.enablePolyfill = function() {
 
   // Polyfill using the right position sensor.
   if (this.isMobile()) {
-    //this.devices.push(new GyroPositionSensorVRDevice());
+    //this.devices.push(new OrientationPositionSensorVRDevice());
     this.devices.push(new FusionPositionSensorVRDevice());
   } else {
     this.devices.push(new MouseKeyboardPositionSensorVRDevice());
