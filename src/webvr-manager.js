@@ -66,8 +66,9 @@ function WebVRManager(renderer, effect, params) {
       this.isVRCompatible = true;
     } else if (hmd) {
       this.isVRCompatible = true;
-      // Only enable distortion if we are dealing using the polyfill and this is iOS.
-      if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && Util.isIOS()) {
+      // Only enable distortion if we are dealing using the polyfill, this is
+      // iOS and it isn't prevented via the config object
+      if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && Util.isIOS() && !WebVRConfig.PREVENT_DISTORTION) {
         this.distorter.setActive(true);
       }
     }
