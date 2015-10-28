@@ -37,8 +37,7 @@ Util.isIFrame = function() {
   }
 };
 
-Util.appendQueryParameter = function(key, value) {
-  var url = window.location.href;
+Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
   var delimiter = (url.indexOf('?') < 0 ? '?' : '&');
   url += delimiter + key + '=' + value;

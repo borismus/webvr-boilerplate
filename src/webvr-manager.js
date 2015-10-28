@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 
-var Wakelock = require('./wakelock.js');
+var ButtonManager = require('./button-manager.js');
 var CardboardDistorter = require('./cardboard-distorter.js');
+var DeviceInfo = require('./device-info.js');
 var Modes = require('./modes.js');
 var RotateInstructions = require('./rotate-instructions.js');
 var Util = require('./util.js');
-var ButtonManager = require('./button-manager.js');
+var Wakelock = require('./wakelock.js');
 
 /**
  * Helper for getting in and out of VR mode.
@@ -53,10 +54,17 @@ function WebVRManager(renderer, effect, params) {
 
   this.isVRCompatible = false;
   this.isFullscreenDisabled = !!Util.getQueryParameter('no_fullscreen');
+  this.startMode = Modes.NORMAL;
+  var startModeParam = parseInt(Util.getQueryParameter('start_mode'));
+  if (!isNaN(startModeParam)) {
+    this.startMode = startModeParam;
+  }
 
   if (hideButton) {
     this.button.setVisibility(false);
   }
+
+  var deviceInfo = new DeviceInfo();
 
   // Check if the browser is compatible with WebVR.
   this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
@@ -66,18 +74,25 @@ function WebVRManager(renderer, effect, params) {
       this.isVRCompatible = true;
     } else if (hmd) {
       this.isVRCompatible = true;
-      // Only enable distortion if we are dealing using the polyfill, this is
-      // iOS and it isn't prevented via the config object
-      if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && Util.isIOS() && !WebVRConfig.PREVENT_DISTORTION) {
+      // Only enable distortion if we are dealing using the polyfill, we have a
+      // perfect device match, and it's not prevented via configuration.
+      if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && deviceInfo.getDevice() &&
+          !WebVRConfig.PREVENT_DISTORTION) {
         this.distorter.setActive(true);
       }
     }
     // Set the right mode.
-    if (this.isFullscreenDisabled) {
-      this.normalToMagicWindow();
-      this.setMode_(Modes.MAGIC_WINDOW);
-    } else {
-      this.setMode_(Modes.NORMAL);
+    switch (this.startMode) {
+      case Modes.MAGIC_WINDOW:
+        this.normalToMagicWindow();
+        this.setMode_(Modes.MAGIC_WINDOW);
+        break;
+      case Modes.VR:
+        this.anyModeToVR();
+        this.setMode_(Modes.VR);
+        break;
+      default:
+        this.setMode_(Modes.NORMAL);
     }
     this.button.on('fs', this.onFSClick_.bind(this));
     this.button.on('vr', this.onVRClick_.bind(this));
@@ -167,7 +182,9 @@ WebVRManager.prototype.onFSClick_ = function() {
       // TODO: Remove this hack when iOS has fullscreen mode.
       // If this is an iframe on iOS, break out and open in no_fullscreen mode.
       if (Util.isIOS() && Util.isIFrame()) {
-        var url = Util.appendQueryParameter('no_fullscreen', 'true');
+        var url = window.location.href;
+        url = Util.appendQueryParameter(url, 'no_fullscreen', 'true');
+        url = Util.appendQueryParameter(url, 'start_mode', Modes.MAGIC_WINDOW);
         top.location.href = url;
         return;
       }
@@ -189,6 +206,15 @@ WebVRManager.prototype.onFSClick_ = function() {
  *
  */
 WebVRManager.prototype.onVRClick_ = function() {
+  // TODO: Remove this hack when iOS has fullscreen mode.
+  // If this is an iframe on iOS, break out and open in no_fullscreen mode.
+  if (this.mode == Modes.NORMAL && Util.isIOS() && Util.isIFrame()) {
+    var url = window.location.href;
+    url = Util.appendQueryParameter(url, 'no_fullscreen', 'true');
+    url = Util.appendQueryParameter(url, 'start_mode', Modes.VR);
+    top.location.href = url;
+    return;
+  }
   this.anyModeToVR();
   this.setMode_(Modes.VR);
 };
@@ -197,20 +223,24 @@ WebVRManager.prototype.onVRClick_ = function() {
  * Back button was clicked.
  */
 WebVRManager.prototype.onBackClick_ = function() {
+  /*
   switch (this.mode) {
     case Modes.MAGIC_WINDOW:
+      */
       if (this.isFullscreenDisabled) {
         window.history.back();
       } else {
         this.anyModeToNormal();
         this.setMode_(Modes.NORMAL);
       }
+      /*
       break;
     case Modes.VR:
       this.vrToMagicWindow();
       this.setMode_(Modes.MAGIC_WINDOW);
       break;
   }
+  */
 };
 
 /**
