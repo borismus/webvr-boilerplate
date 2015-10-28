@@ -3026,7 +3026,7 @@ module.exports = THREE;
  */
 var THREE = require('./three-math.js');
 
-var ROTATE_SPEED = 0.5;
+var ROTATE_SPEED = -0.5;
 /**
  * Provides a quaternion responsible for pre-panning the scene before further
  * transformations due to device sensors.
