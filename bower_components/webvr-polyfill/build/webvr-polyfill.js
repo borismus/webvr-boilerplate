@@ -187,9 +187,9 @@ ComplementaryFilter.prototype.addGyroMeasurement = function(vector, timestampS) 
 };
 
 ComplementaryFilter.prototype.run_ = function() {
-  this.accelQ = this.accelToQuaternion_(this.currentAccelMeasurement.sample);
 
   if (!this.isOrientationInitialized) {
+    this.accelQ = this.accelToQuaternion_(this.currentAccelMeasurement.sample);
     this.previousFilterQ.copy(this.accelQ);
     this.isOrientationInitialized = true;
     return;
@@ -258,6 +258,7 @@ ComplementaryFilter.prototype.accelToQuaternion_ = function(accel) {
   normAccel.normalize();
   var quat = new THREE.Quaternion();
   quat.setFromUnitVectors(new THREE.Vector3(0, 0, -1), normAccel);
+  quat.inverse();
   return quat;
 };
 
