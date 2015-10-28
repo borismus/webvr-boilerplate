@@ -15,10 +15,9 @@
 
 var Util = require('./util.js');
 
-// Width, height and bevel measurements done on real iPhones.
+// Display width, display height and bevel measurements done on real phones.
 // Resolutions from http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions
-// Note: iPhone pixels are not square, so relying on diagonal is not enough.
-var Devices = {
+var iOSDevices = {
   iPhone5: new Device({
     width: 640,
     height: 1136,
@@ -42,6 +41,39 @@ var Devices = {
   })
 };
 
+var AndroidDevices = {
+  Nexus5: new Device({
+    userAgentRegExp: /Nexus 5/,
+    widthMm: 62,
+    heightMm: 110,
+    bevelMm: 4
+  }),
+  GalaxyS3: new Device({
+    userAgentRegExp: /GT-I9300/,
+    widthMm: 60,
+    heightMm: 106,
+    bevelMm: 5
+  }),
+  GalaxyS4: new Device({
+    userAgentRegExp: /GT-I9505/,
+    widthMm: 62.5,
+    heightMm: 111,
+    bevelMm: 4
+  }),
+  GalaxyS5: new Device({
+    userAgentRegExp: /SM-G900F/,
+    widthMm: 66,
+    heightMm: 113,
+    bevelMm: 5
+  }),
+  GalaxyS6: new Device({
+    userAgentRegExp: /SM-G920/,
+    widthMm: 63.5,
+    heightMm: 114,
+    bevelMm: 3.5
+  }),
+};
+
 var Enclosures = {
   CardboardV1: new CardboardEnclosure({
     ipdMm: 61,
@@ -63,6 +95,10 @@ function DeviceInfo() {
   this.device = this.determineDevice_();
   this.enclosure = Enclosures.CardboardV1;
 }
+
+DeviceInfo.prototype.getDevice = function() {
+  return this.device;
+};
 
 /**
  * Gets the coordinates (in [0, 1]) for the left eye.
@@ -98,10 +134,14 @@ DeviceInfo.prototype.getRightEyeCenter = function() {
 
 DeviceInfo.prototype.determineDevice_ = function() {
   // Only support iPhones.
-  if (!Util.isIOS()) {
-    return null;
+  if (Util.isIOS()) {
+    return this.determineIPhone_();
+  } else {
+    return this.determineAndroid_();
   }
+};
 
+DeviceInfo.prototype.determineIPhone_ = function() {
   // On iOS, use screen dimensions to determine iPhone/iPad model.
   var userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
@@ -112,8 +152,8 @@ DeviceInfo.prototype.determineDevice_ = function() {
   var pixelHeight = height * window.devicePixelRatio;
 
   // Match the screen dimension to the correct device.
-  for (var id in Devices) {
-    var device = Devices[id];
+  for (var id in iOSDevices) {
+    var device = iOSDevices[id];
     // Expect an exact match on width.
     if (device.width == pixelWidth || device.width == pixelHeight) {
       console.log('Detected iPhone: %s', id);
@@ -121,11 +161,28 @@ DeviceInfo.prototype.determineDevice_ = function() {
       return device;
     }
   }
+  // This should never happen.
+  console.error('Unable to detect iPhone type.');
+  return null;
+};
+
+DeviceInfo.prototype.determineAndroid_ = function() {
+  // Do a userAgent match against all of the known Android devices.
+  for (var id in AndroidDevices) {
+    var device = AndroidDevices[id];
+    // Does it match?
+    if (navigator.userAgent.match(device.userAgentRegExp)) {
+      console.log('Detected Android: %s', id);
+      return device;
+    }
+  }
+  // No device matched.
   return null;
 };
 
 
 function Device(params) {
+  this.userAgentRegExp = params.userAgentRegExp;
   this.width = params.width;
   this.height = params.height;
   this.widthMm = params.widthMm;
