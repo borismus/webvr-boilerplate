@@ -80,6 +80,7 @@ function WebVRManager(renderer, effect, params) {
           !WebVRConfig.PREVENT_DISTORTION) {
         this.distorter.setActive(true);
       }
+      this.hmd = hmd;
     }
     // Set the right mode.
     switch (this.startMode) {
@@ -360,9 +361,9 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
-    canvas.mozRequestFullScreen();
+    canvas.mozRequestFullScreen({vrDisplay: this.hmd});
   } else if (canvas.webkitRequestFullscreen) {
-    canvas.webkitRequestFullscreen();
+    canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
   }
 };
 
