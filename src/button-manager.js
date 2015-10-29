@@ -116,7 +116,7 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
     case Modes.VR:
       this.fsButton.style.display = 'none';
       this.vrButton.style.display = 'none';
-      this.backButton.style.display = 'block';
+      this.backButton.style.display = Util.isMobile() ? 'block' : 'none';
       break;
   }
 
