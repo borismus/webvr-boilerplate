@@ -104,9 +104,7 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
     case Modes.NORMAL:
       this.fsButton.style.display = 'block';
       this.fsButton.src = this.ICONS.fullscreen;
-      //this.vrButton.style.display = (isVRCompatible ? 'block' : 'none');
-      // For now, just disable direct-to-VR mode.
-      this.vrButton.style.display = 'none';
+      this.vrButton.style.display = (isVRCompatible ? 'block' : 'none');
       this.backButton.style.display = 'none';
       break;
     case Modes.MAGIC_WINDOW:
@@ -133,6 +131,8 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
 ButtonManager.prototype.setVisibility = function(isVisible) {
   this.isVisible = isVisible;
   this.fsButton.style.display = isVisible ? 'block' : 'none';
+  this.vrButton.style.display = isVisible ? 'block' : 'none';
+  this.backButton.style.display = isVisible ? 'block' : 'none';
 };
 
 ButtonManager.prototype.createClickHandler_ = function(eventName) {

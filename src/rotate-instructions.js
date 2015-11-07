@@ -26,23 +26,56 @@ function RotateInstructions() {
   s.bottom = 0;
   s.left = 0;
   s.backgroundColor = 'gray';
-  s.backgroundRepeat = 'no-repeat';
-  s.backgroundPosition = '50% 20%';
-  s.backgroundImage = 'url(' + this.icon + ')';
+  s.fontFamily = 'sans-serif';
+
+  var img = document.createElement('img');
+  img.src = this.icon;
+  var s = img.style;
+  s.marginLeft = '25%';
+  s.marginTop = '25%';
+  s.width = '50%';
+  overlay.appendChild(img);
 
   var text = document.createElement('div');
   var s = text.style;
   s.textAlign = 'center';
-  s.fontSize = '24px';
-  s.fontFamily = 'sans-serif';
-  s.position = 'fixed';
-  s.bottom = 0;
-  s.marginBottom = '5%';
-  s.marginLeft = 'auto';
-  s.marginRight = 'auto';
-  s.width = '100%';
+  s.fontSize = '16px';
+  s.lineHeight = '24px';
+  s.margin = '24px 25%';
+  s.width = '50%';
   text.innerHTML = 'Place your phone into your Cardboard viewer.';
   overlay.appendChild(text);
+
+  var snackbar = document.createElement('div');
+  var s = snackbar.style;
+  s.backgroundColor = '#CFD8DC';
+  s.position = 'fixed';
+  s.bottom = 0;
+  s.width = '100%';
+  s.height = '48px';
+  s.padding = '14px 24px';
+  s.boxSizing = 'border-box';
+  s.color = '#656A6B';
+  overlay.appendChild(snackbar);
+
+  var snackbarText = document.createElement('div');
+  snackbarText.style.float = 'left';
+  snackbarText.innerHTML = 'No Cardboard viewer?';
+
+  var snackbarButton = document.createElement('a');
+  snackbarButton.href = 'https://www.google.com/get/cardboard/get-cardboard/';
+  snackbarButton.innerHTML = 'get one';
+  var s = snackbarButton.style;
+  s.float = 'right';
+  s.fontWeight = 600;
+  s.textTransform = 'uppercase';
+  s.borderLeft = '1px solid gray';
+  s.paddingLeft = '24px';
+  s.textDecoration = 'none';
+  s.color = '#656A6B';
+
+  snackbar.appendChild(snackbarText);
+  snackbar.appendChild(snackbarButton);
 
   this.overlay = overlay;
   this.text = text;
@@ -54,13 +87,17 @@ function RotateInstructions() {
 RotateInstructions.prototype.show = function() {
   this.overlay.style.display = 'block';
 
-  var sText = this.text.style;
-  var s = this.overlay.style;
+  var img = this.overlay.querySelector('img');
+  var s = img.style;
 
   if (Util.isLandscapeMode()) {
-    s.backgroundSize = '30%';
+    s.width = '20%';
+    s.marginLeft = '40%';
+    s.marginTop = '3%';
   } else {
-    s.backgroundSize = '60%';
+    s.width = '50%';
+    s.marginLeft = '25%';
+    s.marginTop = '25%';
   }
 };
 

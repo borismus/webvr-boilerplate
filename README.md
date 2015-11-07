@@ -76,6 +76,8 @@ All configuration is done through the global `window.WebVRConfig` object.
     WebVRConfig = {
       // Forces distortion in VR mode.
       //FORCE_DISTORTION: true, // Default: false.
+      // Prevents distortion in VR mode, also on iOS.
+      //PREVENT_DISTORTION: true, // Default: false.
       // Override the distortion background color.
       //DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
     };
