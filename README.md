@@ -71,14 +71,26 @@ Bugs and known issues:
 
 ## Configuration 
 
-All configuration is done through the global `window.WebVRConfig` object.
+All configuration is done through the global `window.WebVRConfig` object. You 
+can use the following properties:
+
+`FORCE_DISTORTION` (Boolean): Set this to `true` to enable barrel distortion for 
+cardboard devices, even if the device has unknown display properties.
+
+`PREVENT_DISTORTION` (Boolean): Set this to `true` to prevent barrel distortion 
+for cardboard devices, even if it is a known device. Do this if you encounter
+issues with barrel distortion on cardboard devices.
+
+`DISTORTION_BGCOLOR` (Object): Use this to change the background color used in 
+the barrel distortion shader pass (cardboard devices). Pass an object with `x`, 
+`y`, `z` and `w` properties (type number, ranged 0..1).
 
     WebVRConfig = {
-      // Forces distortion in VR mode.
+      // Forces cardboard distortion in VR mode.
       //FORCE_DISTORTION: true, // Default: false.
-      // Prevents distortion in VR mode, also on iOS.
+      // Prevents cardboard distortion in VR mode
       //PREVENT_DISTORTION: true, // Default: false.
-      // Override the distortion background color.
+      // Override the cardboard distortion background color.
       //DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
     };
 
