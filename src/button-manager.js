@@ -64,6 +64,7 @@ ButtonManager.prototype = new Emitter();
 
 ButtonManager.prototype.createButton = function() {
   var button = document.createElement('img');
+  button.className = 'webvr-button';
   var s = button.style;
   s.position = 'fixed';
   s.width = '24px'
