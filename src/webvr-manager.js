@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+var Emitter = require('./emitter.js');
 var ButtonManager = require('./button-manager.js');
 var CardboardDistorter = require('./cardboard-distorter.js');
 var DeviceInfo = require('./device-info.js');
@@ -98,6 +99,7 @@ function WebVRManager(renderer, effect, params) {
     this.button.on('fs', this.onFSClick_.bind(this));
     this.button.on('vr', this.onVRClick_.bind(this));
     this.button.on('back', this.onBackClick_.bind(this));
+    this.emit('initialized');
   }.bind(this));
 
   // Save the input device for later sending timing data.
@@ -116,6 +118,8 @@ function WebVRManager(renderer, effect, params) {
   // Create the necessary elements for wake lock to work.
   this.wakelock = new Wakelock();
 }
+
+WebVRManager.prototype = new Emitter();
 
 /**
  * Promise returns true if there is at least one HMD device available.
