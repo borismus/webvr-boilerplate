@@ -65,6 +65,7 @@ ButtonManager.prototype = new Emitter();
 
 ButtonManager.prototype.createButton = function() {
   var button = document.createElement('img');
+  button.className = 'webvr-button';
   var s = button.style;
   s.position = 'fixed';
   s.width = '24px'
@@ -88,11 +89,10 @@ ButtonManager.prototype.createButton = function() {
 
   // Style it on hover.
   button.addEventListener('mouseenter', function(e) {
-    /* -webkit-filter: drop-shadow(0 0 5px rgba(255,255,255,1)); */
-    s.webkitFilter = 'drop-shadow(0 0 5px rgba(255,255,255,1))';
+    s.filter = s.webkitFilter = 'drop-shadow(0 0 5px rgba(255,255,255,1))';
   });
   button.addEventListener('mouseleave', function(e) {
-    s.webkitFilter = '';
+    s.filter = s.webkitFilter = '';
   });
   return button;
 };
@@ -117,7 +117,9 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
     case Modes.VR:
       this.fsButton.style.display = 'none';
       this.vrButton.style.display = 'none';
-      this.backButton.style.display = 'block';
+      // Hack for Firefox, since it doesn't display HTML content correctly in
+      // VR at the moment.
+      this.backButton.style.display = Util.isFirefox() ? 'none' : 'block';
       break;
   }
 
@@ -785,6 +787,10 @@ Util.isMobile = function() {
   return check;
 };
 
+Util.isFirefox = function() {
+  return /firefox/i.test(navigator.userAgent);
+};
+
 Util.isIOS = function() {
   return /(iPad|iPhone|iPod)/g.test(navigator.userAgent);
 };
@@ -911,6 +917,7 @@ module.exports = getWakeLock();
  * limitations under the License.
  */
 
+var Emitter = require('./emitter.js');
 var ButtonManager = require('./button-manager.js');
 var CardboardDistorter = require('./cardboard-distorter.js');
 var DeviceInfo = require('./device-info.js');
@@ -996,6 +1003,7 @@ function WebVRManager(renderer, effect, params) {
     this.button.on('fs', this.onFSClick_.bind(this));
     this.button.on('vr', this.onVRClick_.bind(this));
     this.button.on('back', this.onBackClick_.bind(this));
+    this.emit('initialized');
   }.bind(this));
 
   // Save the input device for later sending timing data.
@@ -1014,6 +1022,8 @@ function WebVRManager(renderer, effect, params) {
   // Create the necessary elements for wake lock to work.
   this.wakelock = new Wakelock();
 }
+
+WebVRManager.prototype = new Emitter();
 
 /**
  * Promise returns true if there is at least one HMD device available.
@@ -1277,4 +1287,4 @@ WebVRManager.prototype.exitFullscreen_ = function() {
 
 module.exports = WebVRManager;
 
-},{"./button-manager.js":1,"./cardboard-distorter.js":2,"./device-info.js":3,"./modes.js":6,"./rotate-instructions.js":7,"./util.js":8,"./wakelock.js":9}]},{},[5]);
+},{"./button-manager.js":1,"./cardboard-distorter.js":2,"./device-info.js":3,"./emitter.js":4,"./modes.js":6,"./rotate-instructions.js":7,"./util.js":8,"./wakelock.js":9}]},{},[5]);
