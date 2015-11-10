@@ -64,6 +64,7 @@ ButtonManager.prototype = new Emitter();
 
 ButtonManager.prototype.createButton = function() {
   var button = document.createElement('img');
+  button.className = 'webvr-button';
   var s = button.style;
   s.position = 'fixed';
   s.width = '24px'
@@ -87,11 +88,10 @@ ButtonManager.prototype.createButton = function() {
 
   // Style it on hover.
   button.addEventListener('mouseenter', function(e) {
-    /* -webkit-filter: drop-shadow(0 0 5px rgba(255,255,255,1)); */
-    s.webkitFilter = 'drop-shadow(0 0 5px rgba(255,255,255,1))';
+    s.filter = s.webkitFilter = 'drop-shadow(0 0 5px rgba(255,255,255,1))';
   });
   button.addEventListener('mouseleave', function(e) {
-    s.webkitFilter = '';
+    s.filter = s.webkitFilter = '';
   });
   return button;
 };
