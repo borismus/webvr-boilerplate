@@ -116,7 +116,9 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
     case Modes.VR:
       this.fsButton.style.display = 'none';
       this.vrButton.style.display = 'none';
-      this.backButton.style.display = 'block';
+      // Hack for Firefox, since it doesn't display HTML content correctly in
+      // VR at the moment.
+      this.backButton.style.display = Util.isFirefox() ? 'none' : 'block';
       break;
   }
 
