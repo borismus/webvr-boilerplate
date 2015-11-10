@@ -14,6 +14,7 @@
  */
 var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
 var THREE = require('./three-math.js');
+var Util = require('./util.js');
 
 // How much to rotate per key stroke.
 var KEY_SPEED = 0.15;
@@ -73,13 +74,13 @@ MouseKeyboardPositionSensorVRDevice.prototype.getState = function() {
 
 MouseKeyboardPositionSensorVRDevice.prototype.onKeyDown_ = function(e) {
   // Track WASD and arrow keys.
-  if (e.keyCode == 38 || e.keyCode == 87) { // W or Up key.
+  if (e.keyCode == 38) { // Up key.
     this.animatePhi_(this.phi + KEY_SPEED);
-  } else if (e.keyCode == 39 || e.keyCode == 68) { // D or Right key.
+  } else if (e.keyCode == 39) { // Right key.
     this.animateTheta_(this.theta - KEY_SPEED);
-  } else if (e.keyCode == 40 || e.keyCode == 83) { // S or Down key.
+  } else if (e.keyCode == 40) { // Down key.
     this.animatePhi_(this.phi - KEY_SPEED);
-  } else if (e.keyCode == 37 || e.keyCode == 65) { // A or Left key.
+  } else if (e.keyCode == 37) { // Left key.
     this.animateTheta_(this.theta + KEY_SPEED);
   }
 };
@@ -90,7 +91,7 @@ MouseKeyboardPositionSensorVRDevice.prototype.animateTheta_ = function(targetAng
 
 MouseKeyboardPositionSensorVRDevice.prototype.animatePhi_ = function(targetAngle) {
   // Prevent looking too far up or down.
-  targetAngle = this.clamp_(targetAngle, -Math.PI/2, Math.PI/2);
+  targetAngle = Util.clamp(targetAngle, -Math.PI/2, Math.PI/2);
   this.animateKeyTransitions_('phi', targetAngle);
 };
 
@@ -131,8 +132,8 @@ MouseKeyboardPositionSensorVRDevice.prototype.onMouseMove_ = function(e) {
   }
   // Support pointer lock API.
   if (this.isPointerLocked_()) {
-    var movementX = e.movementX || e.mozMovementX || e.webkitMovementX || 0;
-    var movementY = e.movementY || e.mozMovementY || e.webkitMovementY || 0;
+    var movementX = e.movementX || e.mozMovementX || 0;
+    var movementY = e.movementY || e.mozMovementY || 0;
     this.rotateEnd.set(this.rotateStart.x - movementX, this.rotateStart.y - movementY);
   } else {
     this.rotateEnd.set(e.clientX, e.clientY);
@@ -147,15 +148,11 @@ MouseKeyboardPositionSensorVRDevice.prototype.onMouseMove_ = function(e) {
   this.theta += 2 * Math.PI * this.rotateDelta.x / element.clientWidth * MOUSE_SPEED_X;
 
   // Prevent looking too far up or down.
-  this.phi = this.clamp_(this.phi, -Math.PI/2, Math.PI/2);
+  this.phi = Util.clamp(this.phi, -Math.PI/2, Math.PI/2);
 };
 
 MouseKeyboardPositionSensorVRDevice.prototype.onMouseUp_ = function(e) {
   this.isDragging = false;
-};
-
-MouseKeyboardPositionSensorVRDevice.prototype.clamp_ = function(value, min, max) {
-  return Math.min(Math.max(min, value), max);
 };
 
 MouseKeyboardPositionSensorVRDevice.prototype.isPointerLocked_ = function() {
