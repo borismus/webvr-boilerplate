@@ -255,10 +255,13 @@ var ShaderPass = function(shader) {
 function createRenderTarget(renderer) {
   var width  = renderer.context.canvas.width;
   var height = renderer.context.canvas.height;
-  var parameters = {minFilter: THREE.LinearFilter,
-                    magFilter: THREE.LinearFilter,
-                    format: THREE.RGBFormat,
-                    stencilBuffer: false};
+  var parameters = {
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    format: THREE.RGBFormat,
+    stencilBuffer: false,
+    depthBuffer: false
+  };
 
   return new THREE.WebGLRenderTarget(width, height, parameters);
 }
