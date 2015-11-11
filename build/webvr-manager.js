@@ -258,8 +258,7 @@ function createRenderTarget(renderer) {
   var parameters = {minFilter: THREE.LinearFilter,
                     magFilter: THREE.LinearFilter,
                     format: THREE.RGBFormat,
-                    stencilBuffer: false,
-                    depthBuffer: false};
+                    stencilBuffer: false};
 
   return new THREE.WebGLRenderTarget(width, height, parameters);
 }
