@@ -14,7 +14,8 @@
  */
 
 var CardboardHMDVRDevice = require('./cardboard-hmd-vr-device.js');
-var GyroPositionSensorVRDevice = require('./gyro-position-sensor-vr-device.js');
+//var OrientationPositionSensorVRDevice = require('./orientation-position-sensor-vr-device.js');
+var FusionPositionSensorVRDevice = require('./fusion-position-sensor-vr-device.js');
 var MouseKeyboardPositionSensorVRDevice = require('./mouse-keyboard-position-sensor-vr-device.js');
 // Uncomment to add positional tracking via webcam.
 //var WebcamPositionSensorVRDevice = require('./webcam-position-sensor-vr-device.js');
@@ -42,7 +43,8 @@ WebVRPolyfill.prototype.enablePolyfill = function() {
 
   // Polyfill using the right position sensor.
   if (this.isMobile()) {
-    this.devices.push(new GyroPositionSensorVRDevice());
+    //this.devices.push(new OrientationPositionSensorVRDevice());
+    this.devices.push(new FusionPositionSensorVRDevice());
   } else {
     this.devices.push(new MouseKeyboardPositionSensorVRDevice());
     // Uncomment to add positional tracking via webcam.
@@ -78,8 +80,8 @@ WebVRPolyfill.prototype.isMobile = function() {
 
 WebVRPolyfill.prototype.isCardboardCompatible = function() {
   // For now, support all iOS and Android devices.
-  // Also enable the global CARDBOARD_DEBUG flag.
-  return this.isMobile() || window.CARDBOARD_DEBUG;
+  // Also enable the WebVRConfig.FORCE_VR flag for debugging.
+  return this.isMobile() || WebVRConfig.FORCE_ENABLE_VR;
 };
 
 module.exports = WebVRPolyfill;

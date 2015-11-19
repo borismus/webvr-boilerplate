@@ -1,6 +1,6 @@
 {
   "name": "webvr-polyfill",
-  "version": "0.2.1",
+  "version": "0.2.0",
   "homepage": "https://github.com/borismus/webvr-polyfill",
   "authors": [
     "Boris Smus <boris@smus.com>"
@@ -11,12 +11,5 @@
     "vr",
     "webvr"
   ],
-  "license": "Apache2",
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "tests"
-  ]
+  "license": "Apache2"
 }
