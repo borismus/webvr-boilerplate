@@ -634,8 +634,6 @@ var Modes = {
   MAGIC_WINDOW: 2,
   // Full screen split screen VR mode.
   VR: 3,
-  // ADDED: embedded in a web page
-  LAYOUT: 4,
 };
 
 module.exports = Modes;
@@ -807,20 +805,6 @@ Util.isIFrame = function() {
   }
 };
 
-Util.isInLayout = function(child) {
-  //ADDED: check if this element has a parent node that is not document.body
-  //don't use node.contains since we are checking upwards
-  console.log("child is a:" + typeof child);
-  window.child = child;
-  var node = child.parentNode;
-  if (node !== null && node !== document.body) {
-    console.log("IN LAYOUT");
-    return true;
-  }
-  console.log("NOT IN LAYOUT");
-  return false;
-}
-
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
   var delimiter = (url.indexOf('?') < 0 ? '?' : '&');
@@ -959,13 +943,11 @@ var Wakelock = require('./wakelock.js');
  * - Full screen
  * - Wake lock
  * - Orientation lock (mobile only)
- *
- * 5. If if the renderer canvas is embedded in a web page (rather than 
- * attached to document.body), don't go to immersive, fullscreen, VR. This 
- * allows progressive display of the VR world on standard websites.
  */
 function WebVRManager(renderer, effect, params) {
   this.params = params || {};
+
+  this.mode = Modes.UNKNOWN;
 
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
@@ -988,15 +970,6 @@ function WebVRManager(renderer, effect, params) {
   if (hideButton) {
     this.button.setVisibility(false);
   }
-
-  //see if the rendering element is in a web page layout
-  if(Util.isInLayout(this.renderer.domElement)) {
-    this.mode = Modes.LAYOUT;
-  }
-  else {
-    this.mode = Modes.UNKNOWN;
-  }
-
 
   var deviceInfo = new DeviceInfo();
 
@@ -1025,8 +998,6 @@ function WebVRManager(renderer, effect, params) {
       case Modes.VR:
         this.anyModeToVR();
         this.setMode_(Modes.VR);
-        break;
-      case Modes.LAYOUT:
         break;
       default:
         this.setMode_(Modes.NORMAL);
@@ -1080,11 +1051,6 @@ WebVRManager.prototype.getDeviceByType_ = function(type) {
 WebVRManager.prototype.isVRMode = function() {
   return this.mode == Modes.VR;
 };
-
-WebVRManager.prototype.availModes = function() {
-  //ADDED: get Modes outside WebVR for greater choice in initialization
-  return Modes;
-}
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
   this.resizeIfNeeded_(camera);
@@ -1322,6 +1288,5 @@ WebVRManager.prototype.exitFullscreen_ = function() {
 };
 
 module.exports = WebVRManager;
-
 
 },{"./button-manager.js":1,"./cardboard-distorter.js":2,"./device-info.js":3,"./emitter.js":4,"./modes.js":6,"./rotate-instructions.js":7,"./util.js":8,"./wakelock.js":9}]},{},[5]);

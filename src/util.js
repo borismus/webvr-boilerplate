@@ -41,6 +41,18 @@ Util.isIFrame = function() {
   }
 };
 
+Util.isInLayout = function(child) {
+  //ADDED: check if this element has a parent node that is not document.body
+  //don't use node.contains since we are checking upwards
+  var node = child.parentNode;
+  if (node !== null && node !== document.body) {
+    console.log("IN LAYOUT");
+    return true;
+  }
+  console.log("NOT IN LAYOUT");
+  return false;
+}
+
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
   var delimiter = (url.indexOf('?') < 0 ? '?' : '&');

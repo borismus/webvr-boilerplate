@@ -37,11 +37,13 @@ var Wakelock = require('./wakelock.js');
  * - Full screen
  * - Wake lock
  * - Orientation lock (mobile only)
+ *
+ * 5. If if the renderer canvas is embedded in a web page (rather than 
+ * attached to document.body), don't go to immersive, fullscreen, VR. This 
+ * allows progressive display of the VR world on standard websites.
  */
 function WebVRManager(renderer, effect, params) {
   this.params = params || {};
-
-  this.mode = Modes.UNKNOWN;
 
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
@@ -52,10 +54,19 @@ function WebVRManager(renderer, effect, params) {
   this.distorter = new CardboardDistorter(renderer);
   this.button = new ButtonManager();
   this.rotateInstructions = new RotateInstructions();
+  this.mode = Modes.UNKNOWN;
 
   this.isVRCompatible = false;
   this.isFullscreenDisabled = !!Util.getQueryParameter('no_fullscreen');
-  this.startMode = Modes.NORMAL;
+
+    //see if the rendering element is in a web page layout
+  if(Util.isInLayout(this.renderer.domElement)) {
+    this.mode = Modes.LAYOUT;
+  }
+  else {
+    this.startMode = Modes.NORMAL;
+  }
+
   var startModeParam = parseInt(Util.getQueryParameter('start_mode'));
   if (!isNaN(startModeParam)) {
     this.startMode = startModeParam;
@@ -92,6 +103,8 @@ function WebVRManager(renderer, effect, params) {
       case Modes.VR:
         this.anyModeToVR();
         this.setMode_(Modes.VR);
+        break;
+      case Modes.LAYOUT:
         break;
       default:
         this.setMode_(Modes.NORMAL);
@@ -145,6 +158,11 @@ WebVRManager.prototype.getDeviceByType_ = function(type) {
 WebVRManager.prototype.isVRMode = function() {
   return this.mode == Modes.VR;
 };
+
+WebVRManager.prototype.availModes = function() {
+  //ADDED: get Modes outside WebVR for greater choice in initialization
+  return Modes;
+}
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
   this.resizeIfNeeded_(camera);
@@ -382,3 +400,4 @@ WebVRManager.prototype.exitFullscreen_ = function() {
 };
 
 module.exports = WebVRManager;
+

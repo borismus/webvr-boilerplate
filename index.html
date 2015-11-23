@@ -23,6 +23,8 @@ body {
 
 <body>
 
+<canvas id="test-canvas" width="100" height="300"></canvas>
+
 </body>
 
 <script>
@@ -82,8 +84,18 @@ WebVRConfig = {
 
 
 <script>
+
+
+//get the supplied canvas
+var renderCanvas = document.getElementById("test-canvas");
+
 //Setup three.js WebGL renderer
-var renderer = new THREE.WebGLRenderer({ antialias: true });
+var renderer = new THREE.WebGLRenderer({
+  canvas:renderCanvas,
+  antialias: true 
+}); 
+renderer.setSize(window.innerWidth, window.innerHeight);
+///////////renderer.setSize(renderCanvas.clientWidth, renderCanvas.clientHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 
 // Append the canvas element created by the renderer to document body element.
@@ -94,6 +106,7 @@ var scene = new THREE.Scene();
 
 // Create a three.js camera.
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+//////////////var camera = new THREE.PerspectiveCamera(75, renderCanvas.clientWidth / renderCanvas.clientHeight, 0.1, 10000);
 
 // Apply VR headset positional data to camera.
 var controls = new THREE.VRControls(camera);
@@ -101,7 +114,7 @@ var controls = new THREE.VRControls(camera);
 // Apply VR stereo rendering to renderer.
 var effect = new THREE.VREffect(renderer);
 effect.setSize(window.innerWidth, window.innerHeight);
-
+///////////effect.setSize(renderCanvas.clientWidth, renderCanvas.clientHeight);
 
 // Add a repeating grid as a skybox.
 var boxWidth = 5;

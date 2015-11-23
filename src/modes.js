@@ -21,6 +21,8 @@ var Modes = {
   MAGIC_WINDOW: 2,
   // Full screen split screen VR mode.
   VR: 3,
+  // ADDED: embedded in a web page
+  LAYOUT: 4,
 };
 
 module.exports = Modes;
