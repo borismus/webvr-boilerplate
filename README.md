@@ -97,12 +97,14 @@ the barrel distortion shader pass (cardboard devices). Pass an object with `x`,
 In addition to `render()`, WebVRManager provides a sparse API surface:
 
 `isVRMode()` (Boolean): True if and only if currently in VR mode.
+
 `getViewer()` (Object): Information about the Cardboard-like viewer that
 is currently selected. Viewers are pre-defined in `device-info.js`.
 
 As well as emitting the following events:
 
 `modechange`: When the user changes the current mode.
+
 `viewerchange`: When the user selects a new viewer.
 
 
