@@ -76,10 +76,18 @@ var AndroidDevices = {
 
 var Enclosures = {
   CardboardV1: new CardboardEnclosure({
-    ipdMm: 61,
-    baselineLensCenterMm: 37.26
+    name: 'Cardboard V1',
+    fov: 40,
+    ipdMm: 60,
+    baselineLensCenterMm: 37.26,
+    distortionCoefficients: [0.441, 0.156]
   }),
-  FunkyMonkey: new CardboardEnclosure({
+  CardboardV2: new CardboardEnclosure({
+    name: 'Cardboard V2',
+    fov: 60,
+    ipdMm: 64,
+    baselineLensCenterMm: 37.26,
+    distortionCoefficients: [0.34, 0.55]
   })
 };
 
@@ -192,13 +200,18 @@ function Device(params) {
 
 
 function CardboardEnclosure(params) {
+  // A human readable name.
+  this.name = params.name;
+  // Field of view in degrees (per side).
+  this.fov = params.fov;
   // Distortion coefficients.
-  this.k1 = params.k1;
-  this.k2 = params.k2;
+  this.distortionCoefficients = params.distortionCoefficients;
   // IPD in millimeters.
   this.ipdMm = params.ipdMm;
-  // Distance between baseline and lens.
+  // Distance between baseline and lens center.
   this.baselineLensCenterMm = params.baselineLensCenterMm;
 }
 
+// Export enclosure information.
+DeviceInfo.Enclosures = Enclosures;
 module.exports = DeviceInfo;
