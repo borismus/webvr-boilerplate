@@ -14,4 +14,6 @@
  */
 var WebVRPolyfill = require('./webvr-polyfill.js');
 
+// Initialize a WebVRConfig just in case.
+window.WebVRConfig = window.WebVRConfig || {};
 new WebVRPolyfill();
