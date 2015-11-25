@@ -74,15 +74,15 @@ var AndroidDevices = {
   }),
 };
 
-var Enclosures = {
-  CardboardV1: new CardboardEnclosure({
+var Viewers = {
+  CardboardV1: new CardboardViewer({
     name: 'Cardboard V1',
     fov: 40,
     ipdMm: 60,
     baselineLensCenterMm: 37.26,
     distortionCoefficients: [0.441, 0.156]
   }),
-  CardboardV2: new CardboardEnclosure({
+  CardboardV2: new CardboardViewer({
     name: 'Cardboard V2',
     fov: 60,
     ipdMm: 64,
@@ -101,7 +101,7 @@ var DEFAULT_RIGHT_CENTER = {x: 0.5, y: 0.5};
  */
 function DeviceInfo() {
   this.device = this.determineDevice_();
-  this.enclosure = Enclosures.CardboardV1;
+  this.enclosure = Viewers.CardboardV1;
 }
 
 DeviceInfo.prototype.getDevice = function() {
@@ -199,7 +199,7 @@ function Device(params) {
 }
 
 
-function CardboardEnclosure(params) {
+function CardboardViewer(params) {
   // A human readable name.
   this.name = params.name;
   // Field of view in degrees (per side).
@@ -213,5 +213,5 @@ function CardboardEnclosure(params) {
 }
 
 // Export enclosure information.
-DeviceInfo.Enclosures = Enclosures;
+DeviceInfo.Viewers = Viewers;
 module.exports = DeviceInfo;
