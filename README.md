@@ -83,6 +83,7 @@ can use the following properties:
   in the barrel distortion shader pass (cardboard devices). Pass an object with
   `x`, `y`, `z` and `w` properties (type number, ranged 0..1).
 
+Here is an example of WebVRConfig usage:
 
     WebVRConfig = {
       // Forces cardboard distortion in VR mode.
