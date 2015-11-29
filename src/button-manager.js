@@ -22,8 +22,12 @@ var Util = require('./util.js');
  * Everything having to do with the WebVR button.
  * Emits a 'click' event when it's clicked.
  */
-function ButtonManager() {
+function ButtonManager(player) {
   this.loadIcons_();
+
+  // Make a container for the buttons, sibling to the display canvas (which can't have visible children)
+  var ctlsContainer = document.createElement('div');
+  ctlsContainer.className = Util.containerClasses.controls;
 
   // Make the fullscreen button.
   var fsButton = this.createButton();
@@ -33,7 +37,7 @@ function ButtonManager() {
   s.bottom = 0;
   s.right = 0;
   fsButton.addEventListener('click', this.createClickHandler_('fs'));
-  document.body.appendChild(fsButton);
+  ctlsContainer.appendChild(fsButton);
   this.fsButton = fsButton;
 
   // Make the VR button.
@@ -44,7 +48,7 @@ function ButtonManager() {
   s.bottom = 0;
   s.right = '48px';
   vrButton.addEventListener('click', this.createClickHandler_('vr'));
-  document.body.appendChild(vrButton);
+  ctlsContainer.appendChild(vrButton);
   this.vrButton = vrButton;
 
   // Make the back button.
@@ -55,7 +59,7 @@ function ButtonManager() {
   s.top = 0;
   backButton.src = this.ICONS.back;
   backButton.addEventListener('click', this.createClickHandler_('back'));
-  document.body.appendChild(backButton);
+  ctlsContainer.appendChild(backButton);
   this.backButton = backButton;
 
   // Make the settings button, but only for mobile.
@@ -68,14 +72,18 @@ function ButtonManager() {
   s.zIndex = 0;
   settingsButton.src = this.ICONS.settings;
   settingsButton.addEventListener('click', this.createClickHandler_('settings'));
-  document.body.appendChild(settingsButton);
+  ctlsContainer.appendChild(settingsButton);
   this.settingsButton = settingsButton;
+
+  player.appendChild(ctlsContainer);
 
   this.isVisible = true;
 
   this.aligner = new Aligner();
 
+  player.controls = this;
 }
+
 ButtonManager.prototype = new Emitter();
 
 ButtonManager.prototype.createButton = function(canvas) {

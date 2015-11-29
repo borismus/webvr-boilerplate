@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+var PlayerManager = require('./player-manager.js');
 var ButtonManager = require('./button-manager.js');
 var CardboardDistorter = require('./cardboard-distorter.js');
 var DeviceInfo = require('./device-info.js');
@@ -52,7 +53,8 @@ function WebVRManager(renderer, effect, params) {
   this.renderer = renderer;
   this.effect = effect;
   this.distorter = new CardboardDistorter(renderer);
-  this.button = new ButtonManager();
+  this.player = new PlayerManager(renderer.domElement);
+  this.button = this.player.controls;
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 

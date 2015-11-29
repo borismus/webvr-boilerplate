@@ -28,8 +28,9 @@ canvas {
     </header>
     <main>
         <section id="content">
-        <div class="webvr-container">
+        <div class="webvr-player-container">
           <canvas id="webvr-test-canvas">WebVR not Supported, upgrade browser!</canvas>
+          <div class="webvr-controls-container"></div>
         </div>
       </section>
       <footer>
@@ -113,8 +114,11 @@ var manager = new WebVRManager(
   renderer, 
   effect, 
   {hideButton: false, 
-    canvas:renderer.domElement, 
-    containerClass:'webvr-dom-container'} //needed for efficient DOM swap
+    containerClasses: {
+      dom: 'webvr-dom-container',
+      controls: 'webvr-controls.container'
+      }
+    } //needed for efficient DOM swap
     );
 
 // Create 3D objects.

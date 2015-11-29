@@ -41,15 +41,16 @@ Util.isIFrame = function() {
   }
 };
 
-Util.getParent = function(el) {
-  return el.parentNode;
+Util.containerClasses = {
+  dom: 'webvr-dom-container',
+  player: 'webvr-player-container',
+  controls: 'webvr-controls-container'
 }
 
 //get all current DOM children (not descendants) of document.body
 Util.getDOMChildren = function() {
   return document.querySelectorAll( 'body > *' );
 }
-
 
 //check to see if there is anything other than canvas, scripts, and document.body 
 Util.isThereADOM = function() {
@@ -105,6 +106,11 @@ Util.wrapDOM = function(selector) {
     }
   }
   return false;
+}
+
+//wrap controls so they are positioned relative to canvas object, not the window
+Util.wrapControls = function() {
+  var ctls = document.getElementsbyClassName('')
 }
 
 //http://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript

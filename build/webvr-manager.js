@@ -54,8 +54,12 @@ var Util = require('./util.js');
  * Everything having to do with the WebVR button.
  * Emits a 'click' event when it's clicked.
  */
-function ButtonManager() {
+function ButtonManager(player) {
   this.loadIcons_();
+
+  // Make a container for the buttons, sibling to the display canvas (which can't have visible children)
+  var ctlsContainer = document.createElement('div');
+  ctlsContainer.className = Util.containerClasses.controls;
 
   // Make the fullscreen button.
   var fsButton = this.createButton();
@@ -65,7 +69,7 @@ function ButtonManager() {
   s.bottom = 0;
   s.right = 0;
   fsButton.addEventListener('click', this.createClickHandler_('fs'));
-  document.body.appendChild(fsButton);
+  ctlsContainer.appendChild(fsButton);
   this.fsButton = fsButton;
 
   // Make the VR button.
@@ -76,7 +80,7 @@ function ButtonManager() {
   s.bottom = 0;
   s.right = '48px';
   vrButton.addEventListener('click', this.createClickHandler_('vr'));
-  document.body.appendChild(vrButton);
+  ctlsContainer.appendChild(vrButton);
   this.vrButton = vrButton;
 
   // Make the back button.
@@ -87,7 +91,7 @@ function ButtonManager() {
   s.top = 0;
   backButton.src = this.ICONS.back;
   backButton.addEventListener('click', this.createClickHandler_('back'));
-  document.body.appendChild(backButton);
+  ctlsContainer.appendChild(backButton);
   this.backButton = backButton;
 
   // Make the settings button, but only for mobile.
@@ -100,14 +104,18 @@ function ButtonManager() {
   s.zIndex = 0;
   settingsButton.src = this.ICONS.settings;
   settingsButton.addEventListener('click', this.createClickHandler_('settings'));
-  document.body.appendChild(settingsButton);
+  ctlsContainer.appendChild(settingsButton);
   this.settingsButton = settingsButton;
+
+  player.appendChild(ctlsContainer);
 
   this.isVisible = true;
 
   this.aligner = new Aligner();
 
+  player.controls = this;
 }
+
 ButtonManager.prototype = new Emitter();
 
 ButtonManager.prototype.createButton = function(canvas) {
@@ -212,7 +220,7 @@ ButtonManager.prototype.loadIcons_ = function() {
 
 module.exports = ButtonManager;
 
-},{"./aligner.js":1,"./emitter.js":6,"./modes.js":8,"./util.js":10}],3:[function(require,module,exports){
+},{"./aligner.js":1,"./emitter.js":6,"./modes.js":8,"./util.js":11}],3:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -575,7 +583,7 @@ function CardboardViewer(params) {
 DeviceInfo.Viewers = Viewers;
 module.exports = DeviceInfo;
 
-},{"./util.js":10}],5:[function(require,module,exports){
+},{"./util.js":11}],5:[function(require,module,exports){
 var BarrelDistortionFragment = {
   type: 'fragment',
 
@@ -697,7 +705,7 @@ var WebVRManager = require('./webvr-manager.js');
 window.WebVRConfig = window.WebVRConfig || {};
 window.WebVRManager = WebVRManager;
 
-},{"./webvr-manager.js":13}],8:[function(require,module,exports){
+},{"./webvr-manager.js":14}],8:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -726,6 +734,81 @@ var Modes = {
 module.exports = Modes;
 
 },{}],9:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+var Emitter = require('./emitter.js');
+var Modes = require('./modes.js');
+var ButtonManager = require('./button-manager.js');
+var Util = require('./util.js');
+
+/**
+ * The Player is a wrapper for the VR-enabled canvas, 
+ * plus its controls. It is implemented as an html5
+ * <figure> element.
+ */
+function PlayerManager(canvas, id, caption) {
+  this.loadIcons_();
+
+  //if our canvas isn't wrapped in a player div, add it
+  if(canvas.parentNode.className != Util.containerClasses.player) {
+    var player = document.createElement('figure');
+
+    player.className = Util.containerClasses.player;
+    canvas.parentNode.insertBefore(player, canvas);
+    player.appendChild(canvas);
+  } else {
+    player = canvas.parentNode;
+  }
+  //set the id, if present
+  if(id) {
+    player.id = id;
+  }
+  else {
+    id = ''; 
+  }
+  //set the message if web browser doesn't support canvas
+  if(canvas.textContent == '') {
+    canvas.textContent = 'Your browser does not support HTML5 Canvas. You need up upgrade!';
+  }
+  //set ARIA describedby attribute
+  canvas.setAttribute('aria-describedby', id + ' description');
+  //add buttons
+  this.controls = new ButtonManager(player);
+
+  //add figure caption, with id matching ARIA describedby
+  if(caption) {
+    var c = document.createElement('figcaption');
+    c.id = id + ' description';
+    c.textContent = caption;
+    player.appendChild(c);
+  }
+
+  this.isVisible = true;
+
+}
+
+PlayerManager.prototype.loadIcons_ = function() {
+  // Preload some hard-coded SVG.
+  this.ICONS = {};
+};
+
+
+module.exports = PlayerManager;
+
+},{"./button-manager.js":2,"./emitter.js":6,"./modes.js":8,"./util.js":11}],10:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -849,7 +932,7 @@ RotateInstructions.prototype.loadIcon_ = function() {
 
 module.exports = RotateInstructions;
 
-},{"./util.js":10}],10:[function(require,module,exports){
+},{"./util.js":11}],11:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -893,15 +976,16 @@ Util.isIFrame = function() {
   }
 };
 
-Util.getParent = function(el) {
-  return el.parentNode;
+Util.containerClasses = {
+  dom: 'webvr-dom-container',
+  player: 'webvr-player-container',
+  controls: 'webvr-controls-container'
 }
 
 //get all current DOM children (not descendants) of document.body
 Util.getDOMChildren = function() {
   return document.querySelectorAll( 'body > *' );
 }
-
 
 //check to see if there is anything other than canvas, scripts, and document.body 
 Util.isThereADOM = function() {
@@ -957,6 +1041,11 @@ Util.wrapDOM = function(selector) {
     }
   }
   return false;
+}
+
+//wrap controls so they are positioned relative to canvas object, not the window
+Util.wrapControls = function() {
+  var ctls = document.getElementsbyClassName('')
 }
 
 //http://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript
@@ -1025,7 +1114,7 @@ Util.isLandscapeMode = function() {
 
 module.exports = Util;
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var Emitter = require('./emitter.js');
 var Util = require('./util.js');
 
@@ -1190,7 +1279,7 @@ ViewerSelector.prototype.createButton_ = function(label, onclick) {
 
 module.exports = ViewerSelector;
 
-},{"./emitter.js":6,"./util.js":10}],12:[function(require,module,exports){
+},{"./emitter.js":6,"./util.js":11}],13:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1266,7 +1355,7 @@ function getWakeLock() {
 
 module.exports = getWakeLock();
 
-},{"./util.js":10}],13:[function(require,module,exports){
+},{"./util.js":11}],14:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1282,6 +1371,7 @@ module.exports = getWakeLock();
  * limitations under the License.
  */
 
+var PlayerManager = require('./player-manager.js');
 var ButtonManager = require('./button-manager.js');
 var CardboardDistorter = require('./cardboard-distorter.js');
 var DeviceInfo = require('./device-info.js');
@@ -1321,7 +1411,8 @@ function WebVRManager(renderer, effect, params) {
   this.renderer = renderer;
   this.effect = effect;
   this.distorter = new CardboardDistorter(renderer);
-  this.button = new ButtonManager();
+  this.player = new PlayerManager(renderer.domElement);
+  this.button = this.player.controls;
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
@@ -1721,4 +1812,4 @@ WebVRManager.prototype.setCardboardFov_ = function(fov) {
 
 module.exports = WebVRManager;
 
-},{"./button-manager.js":2,"./cardboard-distorter.js":3,"./device-info.js":4,"./emitter.js":6,"./modes.js":8,"./rotate-instructions.js":9,"./util.js":10,"./viewer-selector.js":11,"./wakelock.js":12}]},{},[7]);
+},{"./button-manager.js":2,"./cardboard-distorter.js":3,"./device-info.js":4,"./emitter.js":6,"./modes.js":8,"./player-manager.js":9,"./rotate-instructions.js":10,"./util.js":11,"./viewer-selector.js":12,"./wakelock.js":13}]},{},[7]);
