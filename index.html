@@ -18,25 +18,11 @@ body {
   padding: 0;
   overflow: hidden;
 }
-/* debugging only */
-canvas {
-  border: 1px solid yellow;
-}
 </style>
 </head>
 
 <body>
-  <main class="webvr-dom-container">
-    <header>
-      <h1>WebVR in DOM</h1>
-    </header>
-    <section id="content">
-      <canvas id="webvr-test-canvas"></canvas>
-    </section>
-    <footer>
-      <h2>Page Footer</h2>
-      <button style="display:fixed; bottom:0; left:0;" onclick="WebVRManager.Util.moveCanvas(document.getElementById('webvr-test-canvas'))">Swap</button>
-  </main>
+
 </body>
 
 <script>
@@ -99,34 +85,12 @@ WebVRConfig = {
 
 
 <script>
-
-// Wrap setup in DOMContentLoaded event so CSS .getComputedStyle works
-document.addEventListener('DOMContentLoaded', function() {
-
-// Setup three.js WebGL renderer
-var renderer = new THREE.WebGLRenderer({ 
-  canvas:document.getElementById('webvr-test-canvas'),
-  antialias: true 
-});
+//Setup three.js WebGL renderer
+var renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
 
-//settings for Canvas (so we can return it to the DOM)
-var canvasSize = {};
-canvaSize = renderer.domElement.getBoundingClientRect();
-if(!canvasSize.width) canvasSize.width = getComputedStyle(renderer.domElement).getPropertyValue('width');
-if(!canvasSize.height) canvasSize.height = getComputedStyle(renderer.domElement).getPropertyValue('height');
-canvasSize.position = getComputedStyle(renderer.domElement).getPropertyValue('position');
-canvasSize.zIndex = getComputedStyle(renderer.domElement).getPropertyValue('zIndex');
-window.canvasSize = canvasSize;
-
-
 // Append the canvas element created by the renderer to document body element.
-if(renderer.domElement.id || renderer.domElement.className) {
-  //nothing
-} else {
-  document.body.appendChild(renderer.domElement);
-}
-
+document.body.appendChild(renderer.domElement);
 
 // Create a three.js scene.
 var scene = new THREE.Scene();
@@ -163,13 +127,7 @@ scene.add(skybox);
 
 
 // Create a VR manager helper to enter and exit VR mode.
-var manager = new WebVRManager(
-  renderer, 
-  effect, 
-  {hideButton: false, 
-    canvas:renderer.domElement, 
-    containerClass:'webvr-dom-container'}
-    );
+var manager = new WebVRManager(renderer, effect, {hideButton: false});
 
 // Create 3D objects.
 var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
@@ -207,8 +165,6 @@ function onKey(event) {
 }
 
 window.addEventListener('keydown', onKey, true);
-
-}); //end of DOMContentLoaded
 
 </script>
 

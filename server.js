@@ -30,6 +30,10 @@ app.get('/build/*', function(req, res) {
 	res.sendFile(path.join(__dirname + req.path));
 });
 
+app.get('/test/*', function(req, res) {
+	res.sendFile(path.join(__dirname + req.path));
+});
+
 /*
 app.get('/*', function(req, res) {
 	res.sendFile(path.join(__dirname + req.path));
