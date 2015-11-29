@@ -74,12 +74,20 @@ var AndroidDevices = {
   }),
 };
 
-var Enclosures = {
-  CardboardV1: new CardboardEnclosure({
-    ipdMm: 61,
-    baselineLensCenterMm: 37.26
+var Viewers = {
+  CardboardV1: new CardboardViewer({
+    name: 'Cardboard V1',
+    fov: 40,
+    ipdMm: 60,
+    baselineLensCenterMm: 37.26,
+    distortionCoefficients: [0.441, 0.156]
   }),
-  FunkyMonkey: new CardboardEnclosure({
+  CardboardV2: new CardboardViewer({
+    name: 'Cardboard V2',
+    fov: 60,
+    ipdMm: 64,
+    baselineLensCenterMm: 37.26,
+    distortionCoefficients: [0.34, 0.55]
   })
 };
 
@@ -93,7 +101,7 @@ var DEFAULT_RIGHT_CENTER = {x: 0.5, y: 0.5};
  */
 function DeviceInfo() {
   this.device = this.determineDevice_();
-  this.enclosure = Enclosures.CardboardV1;
+  this.enclosure = Viewers.CardboardV1;
 }
 
 DeviceInfo.prototype.getDevice = function() {
@@ -191,14 +199,19 @@ function Device(params) {
 }
 
 
-function CardboardEnclosure(params) {
+function CardboardViewer(params) {
+  // A human readable name.
+  this.name = params.name;
+  // Field of view in degrees (per side).
+  this.fov = params.fov;
   // Distortion coefficients.
-  this.k1 = params.k1;
-  this.k2 = params.k2;
+  this.distortionCoefficients = params.distortionCoefficients;
   // IPD in millimeters.
   this.ipdMm = params.ipdMm;
-  // Distance between baseline and lens.
+  // Distance between baseline and lens center.
   this.baselineLensCenterMm = params.baselineLensCenterMm;
 }
 
+// Export enclosure information.
+DeviceInfo.Viewers = Viewers;
 module.exports = DeviceInfo;

@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
-var Modes = require('./modes.js');
+var Aligner = require('./aligner.js');
 var Emitter = require('./emitter.js');
+var Modes = require('./modes.js');
 var Util = require('./util.js');
 
 /**
@@ -57,7 +58,22 @@ function ButtonManager() {
   document.body.appendChild(backButton);
   this.backButton = backButton;
 
+  // Make the settings button, but only for mobile.
+  var settingsButton = this.createButton();
+  settingsButton.title = 'Configure viewer';
+  var s = settingsButton.style;
+  s.left = '50%';
+  s.marginLeft = '-24px';
+  s.bottom = 0;
+  s.zIndex = 0;
+  settingsButton.src = this.ICONS.settings;
+  settingsButton.addEventListener('click', this.createClickHandler_('settings'));
+  document.body.appendChild(settingsButton);
+  this.settingsButton = settingsButton;
+
   this.isVisible = true;
+
+  this.aligner = new Aligner();
 
 }
 ButtonManager.prototype = new Emitter();
@@ -106,12 +122,16 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
       this.fsButton.src = this.ICONS.fullscreen;
       this.vrButton.style.display = (isVRCompatible ? 'block' : 'none');
       this.backButton.style.display = 'none';
+      this.settingsButton.style.display = 'none';
+      this.aligner.hide();
       break;
     case Modes.MAGIC_WINDOW:
       this.fsButton.style.display = 'block';
       this.fsButton.src = this.ICONS.exitFullscreen;
       this.vrButton.style.display = (isVRCompatible ? 'block' : 'none');
       this.backButton.style.display = 'block';
+      this.settingsButton.style.display = 'none';
+      this.aligner.hide();
       break;
     case Modes.VR:
       this.fsButton.style.display = 'none';
@@ -119,6 +139,9 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
       // Hack for Firefox, since it doesn't display HTML content correctly in
       // VR at the moment.
       this.backButton.style.display = Util.isFirefox() ? 'none' : 'block';
+      // Only show the settings button on mobile.
+      this.settingsButton.style.display = Util.isMobile() ? 'block' : 'none';
+      this.aligner.show();
       break;
   }
 
@@ -152,6 +175,7 @@ ButtonManager.prototype.loadIcons_ = function() {
   this.ICONS.fullscreen = Util.base64('image/svg+xml', 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRkZGRiI+CiAgICA8cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+CiAgICA8cGF0aCBkPSJNNyAxNEg1djVoNXYtMkg3di0zem0tMi00aDJWN2gzVjVINXY1em0xMiA3aC0zdjJoNXYtNWgtMnYzek0xNCA1djJoM3YzaDJWNWgtNXoiLz4KPC9zdmc+Cg==');
   this.ICONS.exitFullscreen = Util.base64('image/svg+xml', 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRkZGRiI+CiAgICA8cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+CiAgICA8cGF0aCBkPSJNNSAxNmgzdjNoMnYtNUg1djJ6bTMtOEg1djJoNVY1SDh2M3ptNiAxMWgydi0zaDN2LTJoLTV2NXptMi0xMVY1aC0ydjVoNVY4aC0zeiIvPgo8L3N2Zz4K');
   this.ICONS.back = Util.base64('image/svg+xml', 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRkZGRiI+CiAgICA8cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+CiAgICA8cGF0aCBkPSJNMjAgMTFINy44M2w1LjU5LTUuNTlMMTIgNGwtOCA4IDggOCAxLjQxLTEuNDFMNy44MyAxM0gyMHYtMnoiLz4KPC9zdmc+Cg==');
+  this.ICONS.settings = Util.base64('image/svg+xml', 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRkZGRiI+CiAgICA8cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+CiAgICA8cGF0aCBkPSJNMTkuNDMgMTIuOThjLjA0LS4zMi4wNy0uNjQuMDctLjk4cy0uMDMtLjY2LS4wNy0uOThsMi4xMS0xLjY1Yy4xOS0uMTUuMjQtLjQyLjEyLS42NGwtMi0zLjQ2Yy0uMTItLjIyLS4zOS0uMy0uNjEtLjIybC0yLjQ5IDFjLS41Mi0uNC0xLjA4LS43My0xLjY5LS45OGwtLjM4LTIuNjVDMTQuNDYgMi4xOCAxNC4yNSAyIDE0IDJoLTRjLS4yNSAwLS40Ni4xOC0uNDkuNDJsLS4zOCAyLjY1Yy0uNjEuMjUtMS4xNy41OS0xLjY5Ljk4bC0yLjQ5LTFjLS4yMy0uMDktLjQ5IDAtLjYxLjIybC0yIDMuNDZjLS4xMy4yMi0uMDcuNDkuMTIuNjRsMi4xMSAxLjY1Yy0uMDQuMzItLjA3LjY1LS4wNy45OHMuMDMuNjYuMDcuOThsLTIuMTEgMS42NWMtLjE5LjE1LS4yNC40Mi0uMTIuNjRsMiAzLjQ2Yy4xMi4yMi4zOS4zLjYxLjIybDIuNDktMWMuNTIuNCAxLjA4LjczIDEuNjkuOThsLjM4IDIuNjVjLjAzLjI0LjI0LjQyLjQ5LjQyaDRjLjI1IDAgLjQ2LS4xOC40OS0uNDJsLjM4LTIuNjVjLjYxLS4yNSAxLjE3LS41OSAxLjY5LS45OGwyLjQ5IDFjLjIzLjA5LjQ5IDAgLjYxLS4yMmwyLTMuNDZjLjEyLS4yMi4wNy0uNDktLjEyLS42NGwtMi4xMS0xLjY1ek0xMiAxNS41Yy0xLjkzIDAtMy41LTEuNTctMy41LTMuNXMxLjU3LTMuNSAzLjUtMy41IDMuNSAxLjU3IDMuNSAzLjUtMS41NyAzLjUtMy41IDMuNXoiLz4KPC9zdmc+Cg==');
 };
 
 module.exports = ButtonManager;

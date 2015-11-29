@@ -312,10 +312,8 @@ function FusionPositionSensorVRDevice() {
   window.addEventListener('orientationchange', this.onScreenOrientationChange_.bind(this));
 
   this.filter = new ComplementaryFilter(WebVRConfig.K_FILTER || 0.98);
-  this.posePredictor = new PosePredictor(WebVRConfig.PREDICTION_TIME_S || 0.050);
-  if (!WebVRConfig.TOUCH_PANNER_DISABLED) {
-    this.touchPanner = new TouchPanner();
-  }
+  this.posePredictor = new PosePredictor(WebVRConfig.PREDICTION_TIME_S || 0.040);
+  this.touchPanner = new TouchPanner();
 
   this.filterToWorldQ = new THREE.Quaternion();
 
@@ -362,11 +360,19 @@ FusionPositionSensorVRDevice.prototype.getOrientation = function() {
   var out = new THREE.Quaternion();
   out.copy(this.filterToWorldQ);
   out.multiply(this.resetQ);
-  if (this.touchPanner) {
+  if (!WebVRConfig.TOUCH_PANNER_DISABLED) {
     out.multiply(this.touchPanner.getOrientation());
   }
   out.multiply(this.predictedQ);
   out.multiply(this.worldToScreenQ);
+
+  // Handle the yaw-only case.
+  if (WebVRConfig.YAW_ONLY) {
+    // Make a quaternion that only turns around the Y-axis.
+    out.x = 0;
+    out.z = 0;
+    out.normalize();
+  }
   return out;
 };
 
@@ -376,7 +382,7 @@ FusionPositionSensorVRDevice.prototype.resetSensor = function() {
   var yaw = euler.y;
   console.log('resetSensor with yaw: %f', yaw);
   this.resetQ.setFromAxisAngle(new THREE.Vector3(0, 0, 1), -yaw);
-  if (this.touchPanner) {
+  if (!WebVRConfig.TOUCH_PANNER_DISABLED) {
     this.touchPanner.resetSensor();
   }
 };

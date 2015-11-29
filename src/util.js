@@ -41,16 +41,124 @@ Util.isIFrame = function() {
   }
 };
 
-Util.isInLayout = function(child) {
-  //ADDED: check if this element has a parent node that is not document.body
-  //don't use node.contains since we are checking upwards
-  var node = child.parentNode;
-  if (node !== null && node !== document.body) {
-    console.log("IN LAYOUT");
+Util.getParent = function(el) {
+  return el.parentNode;
+}
+
+//get all current DOM elements of document.body
+Util.getDOMNodes = function() {
+  return document.querySelectorAll( 'body > *' );
+}
+
+
+//check to see if there is anything other than the canvas and document.body 
+Util.thereIsADOM = function() {
+  var nodes = this.getDOMNodes();
+  console.log("nodes[0]:" + nodes[0].tagName);
+  if(nodes[0].tagName !== 'CANVAS') {
     return true;
   }
-  console.log("NOT IN LAYOUT");
   return false;
+}
+
+/** 
+ * Clone of the jQuery .wrapAll() function. Used to hide the entire 
+ * non-canvas DOM when going to fullscreen or VR mode.
+ *
+ * Wrap an HTMLElement around another HTMLElement or an array of them.
+ * http://jsfiddle.net/EV3J5/
+ */
+HTMLElement.prototype.wrapAll = function(elms) {
+  //get the first child
+  var el = elms.length ? elms[0] : elms;
+
+  // Cache the current parent and sibling of the first element.
+  var parent  = el.parentNode;
+  var sibling = el.nextSibling;
+
+  // Wrap the first element (is automatically removed from its
+  // current parent).
+  this.appendChild(el);
+
+  // Wrap all other elements (if applicable). Each element is
+  // automatically removed from its current parent and from the elms
+  // array.
+  while (elms.length) {
+     this.appendChild(elms[0]);
+  }
+
+  // If the first element had a sibling, insert the wrapper before the
+  // sibling to maintain the HTML structure; otherwise, just append it
+  // to the parent.
+  if (sibling) {
+    parent.insertBefore(this, sibling);
+  } else {
+    parent.appendChild(this);
+  }
+};
+
+/* 
+ * wrap the entire DOM in a <main> tag (if not present), and 
+ * add a WebVR boilerplate class for show/hide.
+ */
+Util.wrapDOM = function(selector) {
+  var b = this.getDOMNodes();
+  if(b[0] && b[0].tagName === 'MAIN') {
+    //found an existing <main>, add our class if necessary
+    if(!(b.className.indexOf(selector) >= 0)) {
+      bodyChildren.className += ' ' + selector; //faster than regex
+    }
+  }
+  else {
+    //create a <main> with our class, wrap everything in it
+    var main = document.createElement('main');
+    main.id = selector;
+    main.wrapAll(document.body);
+  }
+}
+
+//http://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript
+Util.swapNodes = function(elem1, elem2) {
+  if (elem1 && elem2) {
+    var p1 = elem1.parentNode;
+    var t1 = document.createElement("span");    
+    p1.insertBefore(t1, elem1);
+
+    var p2 = elem2.parentNode;
+    var t2 = document.createElement("span");
+    p2.insertBefore(t2, elem2);
+
+    p1.insertBefore(elem2, t1);
+    p2.insertBefore(elem1, t2);
+
+    p1.removeChild(t1);
+    p2.removeChild(t2);
+  }
+}
+
+Util.moveCanvas = function(canvas) {
+  var placeholder = document.getElementById('webvr-canvas-placeholder');
+  if(!placeholder) {
+    placeholder = document.createElement('span');
+    placeholder.id = 'webvr-canvas-placeholder';
+    document.body.appendChild(placeholder);
+  }
+  if(this.thereIsADOM()) {
+    console.log("there is a DOM");
+    this.swapNodes(canvas, placeholder);
+  } else {
+    console.log("no DOM");
+  }
+}
+
+Util.hideDOM = function(domContainer) {
+  console.log("in hideDOM with selector:" + domSelector);
+  document.getElementsByClassName(domSelector)[0].style.display = 'none';
+}
+
+Util.showDOM = function(domContainer) {
+  console.log("in showDOM with selector:" + domSelector);
+  document.getElementsByClassName(domSelector)[0].style.display = 'block';
 }
 
 Util.appendQueryParameter = function(url, key, value) {

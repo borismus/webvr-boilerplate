@@ -1,0 +1,44 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #eeeeee;
+}
+
+#dialog {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  width: 280px;
+  margin-left: -140px;
+  background: #fafafa;
+  box-shadow: 0px 5px 20px #666;
+  padding: 24px;
+  overflow: hidden;
+  font-family: 'Roboto', sans-serif;
+}
+
+#dialog h1 {
+  font-size: 22px;
+  font-weight: 500;
+  margin-bottom: 24px;
+}
+
+#dialog button {
+  text-transform: uppercase;
+  color: #1094F7;
+  font-size: 14px;
+  letter-spacing: 0;
+  font-weight: 500;
+  border: none;
+  background: none;
+  float: right;
+}
+
+#dialog input {
+  font-size: 30px;
+  margin: 0 8px;
+}
+
+#dialog .choice {
+  margin-top: 8px;
+}

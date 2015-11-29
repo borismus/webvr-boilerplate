@@ -74,16 +74,16 @@ Bugs and known issues:
 All configuration is done through the global `window.WebVRConfig` object. You 
 can use the following properties:
 
-`FORCE_DISTORTION` (Boolean): Set this to `true` to enable barrel distortion for 
-cardboard devices, even if the device has unknown display properties.
+- `FORCE_DISTORTION` (Boolean): Set this to `true` to enable barrel distortion
+  for cardboard devices, even if the device has unknown display properties.
+- `PREVENT_DISTORTION` (Boolean): Set this to `true` to prevent barrel
+  distortion for cardboard devices, even if it is a known device. Do this if you
+  encounter issues with barrel distortion on cardboard devices.
+- `DISTORTION_BGCOLOR` (Object): Use this to change the background color used
+  in the barrel distortion shader pass (cardboard devices). Pass an object with
+  `x`, `y`, `z` and `w` properties (type number, ranged 0..1).
 
-`PREVENT_DISTORTION` (Boolean): Set this to `true` to prevent barrel distortion 
-for cardboard devices, even if it is a known device. Do this if you encounter
-issues with barrel distortion on cardboard devices.
-
-`DISTORTION_BGCOLOR` (Object): Use this to change the background color used in 
-the barrel distortion shader pass (cardboard devices). Pass an object with `x`, 
-`y`, `z` and `w` properties (type number, ranged 0..1).
+Here is an example of WebVRConfig usage:
 
     WebVRConfig = {
       // Forces cardboard distortion in VR mode.
@@ -93,6 +93,18 @@ the barrel distortion shader pass (cardboard devices). Pass an object with `x`,
       // Override the cardboard distortion background color.
       //DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
     };
+
+In addition to `render()`, WebVRManager provides a sparse API surface:
+
+- `isVRMode()` (Boolean): True if and only if currently in VR mode.
+- `getViewer()` (Object): Information about the Cardboard-like viewer that
+  is currently selected. Viewers are pre-defined in `device-info.js`.
+
+As well as emitting the following events:
+
+- `modechange`: When the user changes the current mode.
+- `viewerchange`: When the user selects a new viewer.
+
 
 ## Thanks
 
