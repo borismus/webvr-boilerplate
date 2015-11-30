@@ -17,7 +17,7 @@ function ViewerSelector(options) {
   this.selectedKey = localStorage[VIEWER_KEY] || DEFAULT_VIEWER;
   this.dialog = this.createDialog_(options);
   this.options = options;
-  document.body.appendChild(this.dialog);
+  ///document.body.appendChild(this.dialog);
 }
 ViewerSelector.prototype = new Emitter();
 

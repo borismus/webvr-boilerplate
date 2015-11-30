@@ -57,9 +57,19 @@ var Util = require('./util.js');
 function ButtonManager(player) {
   this.loadIcons_();
 
-  // Make a container for the buttons, sibling to the display canvas (which can't have visible children)
-  var ctlsContainer = document.createElement('div');
-  ctlsContainer.className = Util.containerClasses.controls;
+  // Make a container for the buttons, sibling to the display canvas (which can't have visible children).
+  var ctlsContainer = player.getElementsByClassName(Util.containerClasses.controls)[0];
+  if(ctlsContainer) {
+    if(!(ctlsContainer.className.indexOf(Util.containerClasses.controls) >= 0)) {
+      ctlsContainer.className += (' ' + Util.containerClasses.controls);
+    }
+  }
+  else {
+    // No container exists, make one.
+    ctlsContainer = document.createElement('div');
+    ctlsContainer.className = Util.containerClasses.controls;
+    player.appendChild(ctlsContainer);
+  }
 
   // Make the fullscreen button.
   var fsButton = this.createButton();
@@ -106,8 +116,6 @@ function ButtonManager(player) {
   settingsButton.addEventListener('click', this.createClickHandler_('settings'));
   ctlsContainer.appendChild(settingsButton);
   this.settingsButton = settingsButton;
-
-  player.appendChild(ctlsContainer);
 
   this.isVisible = true;
 
@@ -768,7 +776,6 @@ function PlayerManager(canvas, id, caption) {
 
     player.className = Util.containerClasses.player;
     canvas.parentNode.insertBefore(player, canvas);
-    player.appendChild(canvas);
   } else {
     player = canvas.parentNode;
   }
@@ -781,9 +788,10 @@ function PlayerManager(canvas, id, caption) {
   }
   //set the message if web browser doesn't support canvas
   if(canvas.textContent == '') {
-    canvas.textContent = 'Your browser does not support HTML5 Canvas. You need up upgrade!';
+    canvas.textContent = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
   }
   //set ARIA describedby attribute
+  //https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
   canvas.setAttribute('aria-describedby', id + ' description');
   //add buttons
   this.controls = new ButtonManager(player);
@@ -979,7 +987,8 @@ Util.isIFrame = function() {
 Util.containerClasses = {
   dom: 'webvr-dom-container',
   player: 'webvr-player-container',
-  controls: 'webvr-controls-container'
+  controls: 'webvr-controls-container',
+  placeholder: 'webvr-placeholder'
 }
 
 //get all current DOM children (not descendants) of document.body
@@ -1009,31 +1018,49 @@ Util.isThereADOM = function() {
  * add a WebVR boilerplate class for show/hide.
  */
 Util.wrapDOM = function(selector) {
-  if(!selector) selector = 'webvr-container';
-  var b = this.getDOMChildren(), i = 1, len  = b.length;
+  if(!selector) selector = Util.containerClasses.dom;
+  var n = this.getDOMChildren(), domCount = 0, i = 0, len  = n.length;
   //if we have a container,there is only one child, plus possibly scripts
-  if(b && b[0]) {
-      console.log('b has a value');
-      console.log('checking first postition of b');
-      if(len == 1) {
+  if(n && n[0]) {
+      console.log('document has children');
+      for(i = 0; i < len; i++) {
+        if(n[i].tagName != 'SCRIPT') {
+          domCount++;
+        }
+      }
+      console.log("domCount:" + domCount);
+      if(domCount == 1) {
         console.log('only one element visible, don\'t need to wrap');
         //only one child of document.body -which can be a container
-        if(!(b.className.indexOf(selector) >= 0)) {
+        if(!(n.className.indexOf(selector) >= 0)) {
         //add our WebVR class to the container
           console.log('adding webvr class' + selector + to )
-          b[0].className += ' ' + selector; //faster than regex
+          n[0].className += ' ' + selector; //faster than regex
           return true;
         }
       }
       else {
+        /* 
+         * catch incorrect manual wrapping (e.g. bad HTML markup, or another 
+         * JS object appends directly to document.body)
+         */
+        var container = document.getElementsByClassName(Util.containerClasses.dom)[0];
+        if(container) {
+          console.log('Warning: defined container class doesn\'t enclose all non-script DOM elements');
+          for(i = 0; i < len; i++) {
+            if(n[i] != container && n[i].tagName != 'SCRIPT')
+              container.appendChild(n[i]);
+          }
+          return false;
+        }
         console.log('need to wrap stuff');
         var container = document.createElement('div');
         container.className = selector; i = 1;
         document.body.appendChild(container);
         if(container.parentNode == document.body) {
         for(i = 1; i < len; i++) {
-          if(b[i].tagName != 'SCRIPT') {
-            container.appendChild(b[i]);
+          if(n[i].tagName != 'SCRIPT') {
+            container.appendChild(n[i]);
           }
         }
       return true;
@@ -1043,9 +1070,17 @@ Util.wrapDOM = function(selector) {
   return false;
 }
 
-//wrap controls so they are positioned relative to canvas object, not the window
-Util.wrapControls = function() {
-  var ctls = document.getElementsbyClassName('')
+
+Util.hideDOM = function(canvas, domContainer) {
+  console.log("in hideDOM with selector:" + domContainer);
+  this.moveCanvas(canvas);
+  document.getElementsByClassName(domContainer)[0].style.display = 'none';
+}
+
+Util.showDOM = function(canvas, domContainer) {
+  console.log("in showDOM with selector:" + domContainer);
+  this.moveCanvas(canvas);
+  document.getElementsByClassName(domContainer)[0].style.display = 'block';
 }
 
 //http://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript
@@ -1069,27 +1104,17 @@ Util.swapNodes = function(elem1, elem2) {
 
 Util.moveCanvas = function(canvas) {
   if(this.isThereADOM()) {
-    var placeholder = document.getElementById('webvr-canvas-placeholder');
+    var placeholder = document.getElementById(Util.containerClasses.placeholder);
     if(!placeholder) {
       console.log("there is a DOM, swapping");
       placeholder = document.createElement('span');
-      placeholder.id = 'webvr-canvas-placeholder';
+      placeholder.id = Util.containerClasses.placeholder;
       document.body.appendChild(placeholder);
     }
-    this.swapNodes(canvas, placeholder);
+    this.swapNodes(canvas, placeholder); //canvas swaps where placeholder was
   } else {
     console.log("no DOM, don't have to move canvas");
   }
-}
-
-Util.hideDOM = function(domContainer) {
-  console.log("in hideDOM with selector:" + domSelector);
-  document.getElementsByClassName(domSelector)[0].style.display = 'none';
-}
-
-Util.showDOM = function(domContainer) {
-  console.log("in showDOM with selector:" + domSelector);
-  document.getElementsByClassName(domSelector)[0].style.display = 'block';
 }
 
 Util.appendQueryParameter = function(url, key, value) {
@@ -1134,7 +1159,7 @@ function ViewerSelector(options) {
   this.selectedKey = localStorage[VIEWER_KEY] || DEFAULT_VIEWER;
   this.dialog = this.createDialog_(options);
   this.options = options;
-  document.body.appendChild(this.dialog);
+  ///document.body.appendChild(this.dialog);
 }
 ViewerSelector.prototype = new Emitter();
 
@@ -1415,6 +1440,9 @@ function WebVRManager(renderer, effect, params) {
   this.button = this.player.controls;
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
+
+  //wrap naked canvas and DOM elements
+  Util.wrapDOM();
 
   console.log('Using the %s viewer.', this.getViewer().name);
 
@@ -1762,8 +1790,8 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 };
 
 WebVRManager.prototype.requestFullscreen_ = function() {
-  var canvas = document.body;
-  //var canvas = this.renderer.domElement;
+  //var canvas = document.body;
+  var canvas = this.renderer.domElement;
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
@@ -1771,10 +1799,11 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
   }
-  Util.hideDOM(this.containerClass);
+  Util.hideDOM(canvas, Util.containerClasses.dom);
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {
+  var canvas = this.renderer.domElement;
   if (document.exitFullscreen) {
     document.exitFullscreen();
   } else if (document.mozCancelFullScreen) {
@@ -1782,7 +1811,7 @@ WebVRManager.prototype.exitFullscreen_ = function() {
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
   }
-  Util.showDOM(this.containerClass);
+  Util.showDOM(canvas, Util.containerClasses.dom);
 };
 
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {

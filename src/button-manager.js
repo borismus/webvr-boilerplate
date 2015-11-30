@@ -25,9 +25,19 @@ var Util = require('./util.js');
 function ButtonManager(player) {
   this.loadIcons_();
 
-  // Make a container for the buttons, sibling to the display canvas (which can't have visible children)
-  var ctlsContainer = document.createElement('div');
-  ctlsContainer.className = Util.containerClasses.controls;
+  // Make a container for the buttons, sibling to the display canvas (which can't have visible children).
+  var ctlsContainer = player.getElementsByClassName(Util.containerClasses.controls)[0];
+  if(ctlsContainer) {
+    if(!(ctlsContainer.className.indexOf(Util.containerClasses.controls) >= 0)) {
+      ctlsContainer.className += (' ' + Util.containerClasses.controls);
+    }
+  }
+  else {
+    // No container exists, make one.
+    ctlsContainer = document.createElement('div');
+    ctlsContainer.className = Util.containerClasses.controls;
+    player.appendChild(ctlsContainer);
+  }
 
   // Make the fullscreen button.
   var fsButton = this.createButton();
@@ -74,8 +84,6 @@ function ButtonManager(player) {
   settingsButton.addEventListener('click', this.createClickHandler_('settings'));
   ctlsContainer.appendChild(settingsButton);
   this.settingsButton = settingsButton;
-
-  player.appendChild(ctlsContainer);
 
   this.isVisible = true;
 

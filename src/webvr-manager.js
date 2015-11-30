@@ -58,6 +58,9 @@ function WebVRManager(renderer, effect, params) {
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
+  //wrap naked canvas and DOM elements
+  Util.wrapDOM();
+
   console.log('Using the %s viewer.', this.getViewer().name);
 
   this.isVRCompatible = false;
@@ -404,8 +407,8 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 };
 
 WebVRManager.prototype.requestFullscreen_ = function() {
-  var canvas = document.body;
-  //var canvas = this.renderer.domElement;
+  //var canvas = document.body;
+  var canvas = this.renderer.domElement;
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
@@ -413,10 +416,11 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
   }
-  Util.hideDOM(this.containerClass);
+  Util.hideDOM(canvas, Util.containerClasses.dom);
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {
+  var canvas = this.renderer.domElement;
   if (document.exitFullscreen) {
     document.exitFullscreen();
   } else if (document.mozCancelFullScreen) {
@@ -424,7 +428,7 @@ WebVRManager.prototype.exitFullscreen_ = function() {
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
   }
-  Util.showDOM(this.containerClass);
+  Util.showDOM(canvas, Util.containerClasses.dom);
 };
 
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {

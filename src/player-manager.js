@@ -32,7 +32,6 @@ function PlayerManager(canvas, id, caption) {
 
     player.className = Util.containerClasses.player;
     canvas.parentNode.insertBefore(player, canvas);
-    player.appendChild(canvas);
   } else {
     player = canvas.parentNode;
   }
@@ -45,7 +44,7 @@ function PlayerManager(canvas, id, caption) {
   }
   //set the message if web browser doesn't support canvas
   if(canvas.textContent == '') {
-    canvas.textContent = 'Your browser does not support HTML5 Canvas. You need up upgrade!';
+    canvas.textContent = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
   }
   //set ARIA describedby attribute
   //https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
