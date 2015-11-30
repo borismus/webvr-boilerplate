@@ -90,7 +90,7 @@ ViewerSelector.prototype.createDialog_ = function(options) {
   s.fontFamily = "'Roboto', sans-serif";
   s.boxShadow = '0px 5px 20px #666';
 
-  dialog.appendChild(this.createH1_('Select viewer profile'));
+  dialog.appendChild(this.createH1_('Select your viewer'));
   for (var id in options) {
     dialog.appendChild(this.createChoice_(id, options[id].name));
   }
@@ -106,8 +106,8 @@ ViewerSelector.prototype.createH1_ = function(name) {
   var h1 = document.createElement('h1');
   var s = h1.style;
   s.color = 'black';
-  s.fontSize = '24px';
-  s.fontWeight = '500';
+  s.fontSize = '20px';
+  s.fontWeight = 'bold';
   s.marginTop = 0;
   s.marginBottom = '24px';
   h1.innerHTML = name;
@@ -154,6 +154,7 @@ ViewerSelector.prototype.createButton_ = function(label, onclick) {
   s.letterSpacing = 0;
   s.border = 0;
   s.background = 'none';
+  s.marginTop = '16px';
 
   button.addEventListener('click', onclick);
 

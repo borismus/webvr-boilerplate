@@ -437,14 +437,14 @@ var AndroidDevices = {
 
 var Viewers = {
   CardboardV1: new CardboardViewer({
-    name: 'Cardboard V1',
+    name: 'Cardboard 2014 (Magnet)',
     fov: 40,
     ipdMm: 60,
     baselineLensCenterMm: 37.26,
     distortionCoefficients: [0.441, 0.156]
   }),
   CardboardV2: new CardboardViewer({
-    name: 'Cardboard V2',
+    name: 'Cardboard 2015 (Button)',
     fov: 60,
     ipdMm: 64,
     baselineLensCenterMm: 37.26,
@@ -1010,7 +1010,7 @@ ViewerSelector.prototype.createDialog_ = function(options) {
   s.fontFamily = "'Roboto', sans-serif";
   s.boxShadow = '0px 5px 20px #666';
 
-  dialog.appendChild(this.createH1_('Select viewer profile'));
+  dialog.appendChild(this.createH1_('Select your viewer'));
   for (var id in options) {
     dialog.appendChild(this.createChoice_(id, options[id].name));
   }
@@ -1026,8 +1026,8 @@ ViewerSelector.prototype.createH1_ = function(name) {
   var h1 = document.createElement('h1');
   var s = h1.style;
   s.color = 'black';
-  s.fontSize = '24px';
-  s.fontWeight = '500';
+  s.fontSize = '20px';
+  s.fontWeight = 'bold';
   s.marginTop = 0;
   s.marginBottom = '24px';
   h1.innerHTML = name;
@@ -1074,6 +1074,7 @@ ViewerSelector.prototype.createButton_ = function(label, onclick) {
   s.letterSpacing = 0;
   s.border = 0;
   s.background = 'none';
+  s.marginTop = '16px';
 
   button.addEventListener('click', onclick);
 
