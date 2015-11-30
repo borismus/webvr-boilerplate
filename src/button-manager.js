@@ -140,7 +140,8 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
       // VR at the moment.
       this.backButton.style.display = Util.isFirefox() ? 'none' : 'block';
       // Only show the settings button on mobile.
-      this.settingsButton.style.display = Util.isMobile() ? 'block' : 'none';
+      var isSettingsVisible = Util.isMobile() || WebVRConfig.FORCE_ENABLE_VR;
+      this.settingsButton.style.display = isSettingsVisible ? 'block' : 'none';
       this.aligner.show();
       break;
   }
