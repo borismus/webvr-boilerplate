@@ -1,8 +1,8 @@
 default:
-	browserify src/main.js > build/webvr-manager.js
+	browserify src/main.js | derequire > build/webvr-manager.js
 
-watch: 
+watch:
 	watchify src/main.js -v -d -o build/webvr-manager.js
 
-lint: 
+lint:
 	jscs src/*.js

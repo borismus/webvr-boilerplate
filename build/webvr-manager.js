@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /**
  * Responsible for showing the vertical alignment UI that separates left and
  * right eye images.
@@ -30,7 +30,7 @@ Aligner.prototype.hide = function() {
 
 module.exports = Aligner;
 
-},{}],2:[function(require,module,exports){
+},{}],2:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,10 +46,10 @@ module.exports = Aligner;
  * limitations under the License.
  */
 
-var Aligner = require('./aligner.js');
-var Emitter = require('./emitter.js');
-var Modes = require('./modes.js');
-var Util = require('./util.js');
+var Aligner = _dereq_('./aligner.js');
+var Emitter = _dereq_('./emitter.js');
+var Modes = _dereq_('./modes.js');
+var Util = _dereq_('./util.js');
 
 /**
  * Everything having to do with the WebVR button.
@@ -214,7 +214,7 @@ ButtonManager.prototype.loadIcons_ = function() {
 
 module.exports = ButtonManager;
 
-},{"./aligner.js":1,"./emitter.js":6,"./modes.js":8,"./util.js":10}],3:[function(require,module,exports){
+},{"./aligner.js":1,"./emitter.js":6,"./modes.js":8,"./util.js":10}],3:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -230,8 +230,8 @@ module.exports = ButtonManager;
  * limitations under the License.
  */
 
-var BarrelDistortion = require('./distortion/barrel-distortion-fragment.js');
-var DeviceInfo = require('./device-info.js');
+var BarrelDistortion = _dereq_('./distortion/barrel-distortion-fragment.js');
+var DeviceInfo = _dereq_('./device-info.js');
 
 var deviceInfo = new DeviceInfo();
 
@@ -357,7 +357,7 @@ CardboardDistorter.prototype.setDistortionCoefficients = function(coefficients) 
 
 module.exports = CardboardDistorter;
 
-},{"./device-info.js":4,"./distortion/barrel-distortion-fragment.js":5}],4:[function(require,module,exports){
+},{"./device-info.js":4,"./distortion/barrel-distortion-fragment.js":5}],4:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -373,7 +373,7 @@ module.exports = CardboardDistorter;
  * limitations under the License.
  */
 
-var Util = require('./util.js');
+var Util = _dereq_('./util.js');
 
 // Display width, display height and bevel measurements done on real phones.
 // Resolutions from http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions
@@ -576,7 +576,7 @@ function CardboardViewer(params) {
 DeviceInfo.Viewers = Viewers;
 module.exports = DeviceInfo;
 
-},{"./util.js":10}],5:[function(require,module,exports){
+},{"./util.js":10}],5:[function(_dereq_,module,exports){
 var BarrelDistortionFragment = {
   type: 'fragment',
 
@@ -633,7 +633,7 @@ var BarrelDistortionFragment = {
 
 module.exports = BarrelDistortionFragment;
 
-},{}],6:[function(require,module,exports){
+},{}],6:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -677,7 +677,7 @@ Emitter.prototype.on = function(eventName, callback) {
 
 module.exports = Emitter;
 
-},{}],7:[function(require,module,exports){
+},{}],7:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -693,12 +693,12 @@ module.exports = Emitter;
  * limitations under the License.
  */
 
-var WebVRManager = require('./webvr-manager.js');
+var WebVRManager = _dereq_('./webvr-manager.js');
 
 window.WebVRConfig = window.WebVRConfig || {};
 window.WebVRManager = WebVRManager;
 
-},{"./webvr-manager.js":13}],8:[function(require,module,exports){
+},{"./webvr-manager.js":13}],8:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -726,7 +726,7 @@ var Modes = {
 
 module.exports = Modes;
 
-},{}],9:[function(require,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -742,7 +742,7 @@ module.exports = Modes;
  * limitations under the License.
  */
 
-var Util = require('./util.js');
+var Util = _dereq_('./util.js');
 
 function RotateInstructions() {
   this.loadIcon_();
@@ -850,7 +850,7 @@ RotateInstructions.prototype.loadIcon_ = function() {
 
 module.exports = RotateInstructions;
 
-},{"./util.js":10}],10:[function(require,module,exports){
+},{"./util.js":10}],10:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -916,9 +916,9 @@ Util.isLandscapeMode = function() {
 
 module.exports = Util;
 
-},{}],11:[function(require,module,exports){
-var Emitter = require('./emitter.js');
-var Util = require('./util.js');
+},{}],11:[function(_dereq_,module,exports){
+var Emitter = _dereq_('./emitter.js');
+var Util = _dereq_('./util.js');
 
 var DEFAULT_VIEWER = 'CardboardV1';
 var VIEWER_KEY = 'WEBVR_CARDBOARD_VIEWER';
@@ -1082,7 +1082,7 @@ ViewerSelector.prototype.createButton_ = function(label, onclick) {
 
 module.exports = ViewerSelector;
 
-},{"./emitter.js":6,"./util.js":10}],12:[function(require,module,exports){
+},{"./emitter.js":6,"./util.js":10}],12:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1098,7 +1098,7 @@ module.exports = ViewerSelector;
  * limitations under the License.
  */
 
-var Util = require('./util.js');
+var Util = _dereq_('./util.js');
 
 /**
  * Android and iOS compatible wakelock implementation.
@@ -1158,7 +1158,7 @@ function getWakeLock() {
 
 module.exports = getWakeLock();
 
-},{"./util.js":10}],13:[function(require,module,exports){
+},{"./util.js":10}],13:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1174,15 +1174,15 @@ module.exports = getWakeLock();
  * limitations under the License.
  */
 
-var ButtonManager = require('./button-manager.js');
-var CardboardDistorter = require('./cardboard-distorter.js');
-var DeviceInfo = require('./device-info.js');
-var Emitter = require('./emitter.js');
-var Modes = require('./modes.js');
-var RotateInstructions = require('./rotate-instructions.js');
-var Util = require('./util.js');
-var ViewerSelector = require('./viewer-selector.js');
-var Wakelock = require('./wakelock.js');
+var ButtonManager = _dereq_('./button-manager.js');
+var CardboardDistorter = _dereq_('./cardboard-distorter.js');
+var DeviceInfo = _dereq_('./device-info.js');
+var Emitter = _dereq_('./emitter.js');
+var Modes = _dereq_('./modes.js');
+var RotateInstructions = _dereq_('./rotate-instructions.js');
+var Util = _dereq_('./util.js');
+var ViewerSelector = _dereq_('./viewer-selector.js');
+var Wakelock = _dereq_('./wakelock.js');
 
 /**
  * Helper for getting in and out of VR mode.
