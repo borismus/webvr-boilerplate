@@ -52,12 +52,13 @@ var Util = require('./util.js');
 
 /**
  * Everything having to do with the WebVR button.
- * Emits a 'click' event when it's clicked.
+ * Emits a 'click' event when it's clicked. 
+ * Buttons wrapped in a control container.
  */
 function ButtonManager(player) {
   this.loadIcons_();
 
-  // Make a container for the buttons, sibling to the display canvas (which can't have visible children).
+  // Make a container for the Buttons, sibling to the display canvas (which can't have visible child elements).
   var ctlsContainer = player.getElementsByClassName(Util.containerClasses.controls)[0];
   if(ctlsContainer) {
     if(!(ctlsContainer.className.indexOf(Util.containerClasses.controls) >= 0)) {
@@ -65,7 +66,7 @@ function ButtonManager(player) {
     }
   }
   else {
-    // No container exists, make one.
+    // No Button container exists, make one.
     ctlsContainer = document.createElement('div');
     ctlsContainer.className = Util.containerClasses.controls;
     player.appendChild(ctlsContainer);
@@ -765,38 +766,48 @@ var Util = require('./util.js');
 /**
  * The Player is a wrapper for the VR-enabled canvas, 
  * plus its controls. It is implemented as an html5
- * <figure> element.
+ * <figure> element with a <figcaption> describing 
+ * the VR scene. It also stores the last known style 
+ * of its canvas, for loop updates.
  */
 function PlayerManager(canvas, id, caption) {
   this.loadIcons_();
 
-  //if our canvas isn't wrapped in a player div, add it
+  // Save a canvas reference.
+  this.canvas = canvas;
+
+  // Save the size of canvas between redrawing.
+  this.canvasStyle= {};
+  this.saveCanvasStyle();
+
+  // Warning when HTML5 canvas not supported.
+  this.canvasWarn = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
+
+  // TODO: warning for VR not supported in <figcaption>
+
+  // If our canvas isn't wrapped in a Player container, add it.
   if(canvas.parentNode.className != Util.containerClasses.player) {
     var player = document.createElement('figure');
-
+    player.style.position = 'relative';
     player.className = Util.containerClasses.player;
     canvas.parentNode.insertBefore(player, canvas);
   } else {
     player = canvas.parentNode;
   }
-  //set the id, if present
-  if(id) {
-    player.id = id;
-  }
-  else {
-    id = ''; 
-  }
-  //set the message if web browser doesn't support canvas
-  if(canvas.textContent == '') {
-    canvas.textContent = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
-  }
-  //set ARIA describedby attribute
-  //https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
+  // Set the Player id, if present.
+  player.id = (id || '');
+
+  // Set the message if web browser doesn't support canvas.
+  canvas.textContent == (canvas.textContent || this.canvasWarn);
+
+  // Set ARIA describedby attribute.
+  // From: https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
   canvas.setAttribute('aria-describedby', id + ' description');
-  //add buttons
+  
+  // Add buttons (positioned inside Player container).
   this.controls = new ButtonManager(player);
 
-  //add figure caption, with id matching ARIA describedby
+  // Add figure caption, with id matching ARIA 'describedby' attribute.
   if(caption) {
     var c = document.createElement('figcaption');
     c.id = id + ' description';
@@ -805,14 +816,23 @@ function PlayerManager(canvas, id, caption) {
   }
 
   this.isVisible = true;
-
-}
-
-PlayerManager.prototype.loadIcons_ = function() {
-  // Preload some hard-coded SVG.
-  this.ICONS = {};
 };
 
+// Get current integer values for DOM element width and height, and store them.
+PlayerManager.prototype.getCanvasStyle = function() {
+  return this.canvasStyle;
+};
+
+// Save the current DOM element size for later comparison in event loop.
+PlayerManager.prototype.saveCanvasStyle = function() {
+  this.canvasStyle.width = parseInt(this.canvas.clientWidth);
+  this.canvasStyle.height = parseInt(this.canvas.clientHeight);
+};
+
+PlayerManager.prototype.loadIcons_ = function() {
+  // Preload additional Player assets, if needed.
+  this.ICONS = {};
+};
 
 module.exports = PlayerManager;
 
@@ -984,24 +1004,30 @@ Util.isIFrame = function() {
   }
 };
 
+// Set ID and classes on wrapping and Player elements.
 Util.containerClasses = {
   dom: 'webvr-dom-container',
   player: 'webvr-player-container',
   controls: 'webvr-controls-container',
   placeholder: 'webvr-placeholder'
-}
+};
 
-//get all current DOM children (not descendants) of document.body
+// Save last canvas size.
+Util.canvasSize = {};
+
+// Get all current DOM children (not descendants) of document.body
 Util.getDOMChildren = function() {
   return document.querySelectorAll( 'body > *' );
-}
+};
 
-//check to see if there is anything other than canvas, scripts, and document.body 
+// Specific to Boilerplate.
+// Check to see if there are any tags other than <canvas>, <script>, <img> in document.body 
+// Used to keep boilerplate default separate canvas embedded in page layout.
 Util.isThereADOM = function() {
   var n = this.getDOMChildren(), i=0, j;
   window.n = n;
   if(n && n.length > 0) {
-    //the three tags used by default WebVR boilerplate 
+    //these three tags are used by default WebVR boilerplate 
     var len = n.length;
     for(i = 0; i < len; i++) {
       if(n[i].tagName != 'CANVAS' && n[i].tagName != 'SCRIPT' && n[i].tagName != 'IMG') {
@@ -1011,10 +1037,10 @@ Util.isThereADOM = function() {
     }
   }
   return false;
-}
+};
 
 /* 
- * wrap the entire DOM in a container tag (if not present), and 
+ * Wrap the entire DOM in a container tag (if not present), and 
  * add a WebVR boilerplate class for show/hide.
  */
 Util.wrapDOM = function(selector) {
@@ -1042,7 +1068,7 @@ Util.wrapDOM = function(selector) {
       else {
         /* 
          * catch incorrect manual wrapping (e.g. bad HTML markup, or another 
-         * JS object appends directly to document.body)
+         * JS object (e.g. settings) that appends directly to document.body)
          */
         var container = document.getElementsByClassName(Util.containerClasses.dom)[0];
         if(container) {
@@ -1068,22 +1094,10 @@ Util.wrapDOM = function(selector) {
     }
   }
   return false;
-}
+};
 
-
-Util.hideDOM = function(canvas, domContainer) {
-  console.log("in hideDOM with selector:" + domContainer);
-  this.moveCanvas(canvas);
-  document.getElementsByClassName(domContainer)[0].style.display = 'none';
-}
-
-Util.showDOM = function(canvas, domContainer) {
-  console.log("in showDOM with selector:" + domContainer);
-  this.moveCanvas(canvas);
-  document.getElementsByClassName(domContainer)[0].style.display = 'block';
-}
-
-//http://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript
+// Swap two nodes in the DOM, preserving event handlers.
+// From: http://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript
 Util.swapNodes = function(elem1, elem2) {
   if (elem1 && elem2) {
     var p1 = elem1.parentNode;
@@ -1100,8 +1114,9 @@ Util.swapNodes = function(elem1, elem2) {
     p1.removeChild(t1);
     p2.removeChild(t2);
   }
-}
+};
 
+// Swap canvas out of the DOM to document.body, or return it.
 Util.moveCanvas = function(canvas) {
   if(this.isThereADOM()) {
     var placeholder = document.getElementById(Util.containerClasses.placeholder);
@@ -1115,7 +1130,31 @@ Util.moveCanvas = function(canvas) {
   } else {
     console.log("no DOM, don't have to move canvas");
   }
-}
+};
+
+// Get more CSS-related properties for an element (non-integer).
+Util.getDOMStyles = function(elem) {
+  var styles = elem.getBoundingClientRect();
+  if(!styles.width) styles.width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
+  if(!styles.height) styles.height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));
+  styles.position = getComputedStyle(elem.domElement).getPropertyValue('position');
+  styles.zIndex = getComputedStyle(elem).getPropertyValue('zIndex');
+  return styles;
+};
+
+// Move our drawing canvas out of the DOM, and hide the DOM.
+Util.hideDOM = function(canvas, domContainer) {
+  console.log("in hideDOM with selector:" + domContainer);
+  this.moveCanvas(canvas);
+  document.getElementsByClassName(domContainer)[0].style.display = 'none';
+};
+
+// Return our drawing canvs to its DOM location, and show the DOM;
+Util.showDOM = function(canvas, domContainer) {
+  console.log("in showDOM with selector:" + domContainer);
+  this.moveCanvas(canvas);
+  document.getElementsByClassName(domContainer)[0].style.display = 'block';
+};
 
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
@@ -1441,7 +1480,7 @@ function WebVRManager(renderer, effect, params) {
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
-  //wrap naked canvas and DOM elements
+  //wrap naked <canvas> and DOM elements to make a Player, if not already in markup
   Util.wrapDOM();
 
   console.log('Using the %s viewer.', this.getViewer().name);
@@ -1525,7 +1564,7 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
-WebVRManager.Util = Util; //TEMPORARY EXPOSURE
+WebVRManager.Util = Util;
 
 /**
  * Promise returns true if there is at least one HMD device available.
@@ -1718,17 +1757,32 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
 };
 
 WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
-  // Only resize the canvas if it needs to be resized.
+  var canvas = this.renderer.domElement;
   var size = this.renderer.getSize();
-  if (size.width != window.innerWidth || size.height != window.innerHeight) {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    this.resize_()
+  if(this.mode == Modes.NORMAL) {
+    var style = this.player.canvasStyle;
+    if(size.width != style.width || size.height != style.height) {
+      camera.aspect = style.width / style.height;
+      this.renderer.setSize(style.width, style.height);
+      this.player.saveCanvasStyle();
+    }
   }
+  else {
+    if(size.width != window.innerWidth || size.height != window.innerHeight) {
+      camera.aspect = window.innerWidth / window.innerHeight;
+    }
+  }
+  camera.updateProjectionMatrix();
+  this.resize_();
 };
 
 WebVRManager.prototype.resize_ = function() {
-  this.effect.setSize(window.innerWidth, window.innerHeight);
+  if(this.mode == Modes.NORMAL) {
+    var style = this.player.canvasStyle;
+    this.effect.setSize(style.width, style.height);
+  } else {
+    this.effect.setSize(window.innerWidth, window.innerHeight);
+  }
 };
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {
@@ -1792,6 +1846,7 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 WebVRManager.prototype.requestFullscreen_ = function() {
   //var canvas = document.body;
   var canvas = this.renderer.domElement;
+  Util.hideDOM(canvas, Util.containerClasses.dom);
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
@@ -1799,7 +1854,7 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
   }
-  Util.hideDOM(canvas, Util.containerClasses.dom);
+
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {

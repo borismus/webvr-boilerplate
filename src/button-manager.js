@@ -20,12 +20,13 @@ var Util = require('./util.js');
 
 /**
  * Everything having to do with the WebVR button.
- * Emits a 'click' event when it's clicked.
+ * Emits a 'click' event when it's clicked. 
+ * Buttons wrapped in a control container.
  */
 function ButtonManager(player) {
   this.loadIcons_();
 
-  // Make a container for the buttons, sibling to the display canvas (which can't have visible children).
+  // Make a container for the Buttons, sibling to the display canvas (which can't have visible child elements).
   var ctlsContainer = player.getElementsByClassName(Util.containerClasses.controls)[0];
   if(ctlsContainer) {
     if(!(ctlsContainer.className.indexOf(Util.containerClasses.controls) >= 0)) {
@@ -33,7 +34,7 @@ function ButtonManager(player) {
     }
   }
   else {
-    // No container exists, make one.
+    // No Button container exists, make one.
     ctlsContainer = document.createElement('div');
     ctlsContainer.className = Util.containerClasses.controls;
     player.appendChild(ctlsContainer);

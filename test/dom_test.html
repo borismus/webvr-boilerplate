@@ -21,9 +21,14 @@ body {
   padding: 0;
   overflow: hidden;
 }
+header, section, footer {
+  width:100%;
+  border-bottom: 1px solid green;
+}
 /* debugging only */
 canvas {
   border: 1px solid yellow;
+  /* width:80%!important; can't do this with THREE.js, must use renderer.setSize() */;
 }
 </style>
 </head>
@@ -32,17 +37,18 @@ canvas {
   <div class="webvr-dom-container">
     <header>
       <h1>WebVR in DOM</h1>
+      <button style="display:fixed; bottom:0; left:0;" onclick="WebVRManager.Util.moveCanvas(document.getElementById('webvr-test-canvas'))">Test DOM Swap</button>
     </header>
     <main>
         <section id="content">
-        <div class="webvr-player-container">
-          <canvas id="webvr-test-canvas">WebVR not Supported, upgrade browser!</canvas>
+          <h2>Page Content Section</h2>
+          <div class="webvr-player-container">
+            <canvas id="webvr-test-canvas">WebVR not Supported, upgrade browser!</canvas>
           <div class="webvr-controls-container"></div>
         </div>
       </section>
       <footer>
         <h2>Page Footer</h2>
-        <button style="display:fixed; bottom:0; left:0;" onclick="WebVRManager.Util.moveCanvas(document.getElementById('webvr-test-canvas'))">Swap</button>
       </footer>
     </main>
   </div>
@@ -65,16 +71,6 @@ var renderer = new THREE.WebGLRenderer({
 });
 renderer.setPixelRatio(window.devicePixelRatio);
 
-//settings for Canvas (so we can return it to the DOM)
-var canvasSize = {};
-canvaSize = renderer.domElement.getBoundingClientRect();
-if(!canvasSize.width) canvasSize.width = getComputedStyle(renderer.domElement).getPropertyValue('width');
-if(!canvasSize.height) canvasSize.height = getComputedStyle(renderer.domElement).getPropertyValue('height');
-canvasSize.position = getComputedStyle(renderer.domElement).getPropertyValue('position');
-canvasSize.zIndex = getComputedStyle(renderer.domElement).getPropertyValue('zIndex');
-window.canvasSize = canvasSize;
-
-
 // Append the canvas element created by the renderer to document body element.
 if(renderer.domElement.id || renderer.domElement.className) {
   //nothing
@@ -82,20 +78,28 @@ if(renderer.domElement.id || renderer.domElement.className) {
   document.body.appendChild(renderer.domElement);
 }
 
+//Test settings for canvas with a fixed size (rather than bound to window size)
+var canvasStyle = {
+  width:1200,
+  height:800
+};
+//canvasStyle.width = window.innerWidth;
+//canvasStyle.height = window.innerHeight;
 
 // Create a three.js scene.
 var scene = new THREE.Scene();
 
 // Create a three.js camera.
-var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+var camera = new THREE.PerspectiveCamera(75, canvasStyle.width / canvasStyle.height, 0.1, 10000);
 
 // Apply VR headset positional data to camera.
 var controls = new THREE.VRControls(camera);
 
 // Apply VR stereo rendering to renderer.
 var effect = new THREE.VREffect(renderer);
-effect.setSize(window.innerWidth, window.innerHeight);
-
+effect.setSize(canvasStyle.width, canvasStyle.height);
+// Adjust our element
+renderer.setSize(canvasStyle.width, canvasStyle.height); //TODO: IS THIS NEEDED?
 
 // Add a repeating grid as a skybox.
 var boxWidth = 5;
@@ -117,16 +121,7 @@ var skybox = new THREE.Mesh(geometry, material);
 scene.add(skybox);
 
 // Create a VR manager helper to enter and exit VR mode.
-var manager = new WebVRManager(
-  renderer, 
-  effect, 
-  {hideButton: false, 
-    containerClasses: {
-      dom: 'webvr-dom-container',
-      controls: 'webvr-controls.container'
-      }
-    } //needed for efficient DOM swap
-    );
+var manager = new WebVRManager(renderer, effect, {hideButton: false});
 
 // Create 3D objects.
 var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
@@ -139,6 +134,7 @@ cube.position.z = -1;
 
 // Add cube mesh to your three.js scene
 scene.add(cube);
+
 // Request animation frame loop function
 function animate(timestamp) {
   // Apply rotation to cube mesh

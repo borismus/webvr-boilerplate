@@ -21,38 +21,48 @@ var Util = require('./util.js');
 /**
  * The Player is a wrapper for the VR-enabled canvas, 
  * plus its controls. It is implemented as an html5
- * <figure> element.
+ * <figure> element with a <figcaption> describing 
+ * the VR scene. It also stores the last known style 
+ * of its canvas, for loop updates.
  */
 function PlayerManager(canvas, id, caption) {
   this.loadIcons_();
 
-  //if our canvas isn't wrapped in a player div, add it
+  // Save a canvas reference.
+  this.canvas = canvas;
+
+  // Save the size of canvas between redrawing.
+  this.canvasStyle= {};
+  this.saveCanvasStyle();
+
+  // Warning when HTML5 canvas not supported.
+  this.canvasWarn = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
+
+  // TODO: warning for VR not supported in <figcaption>
+
+  // If our canvas isn't wrapped in a Player container, add it.
   if(canvas.parentNode.className != Util.containerClasses.player) {
     var player = document.createElement('figure');
-
+    player.style.position = 'relative';
     player.className = Util.containerClasses.player;
     canvas.parentNode.insertBefore(player, canvas);
   } else {
     player = canvas.parentNode;
   }
-  //set the id, if present
-  if(id) {
-    player.id = id;
-  }
-  else {
-    id = ''; 
-  }
-  //set the message if web browser doesn't support canvas
-  if(canvas.textContent == '') {
-    canvas.textContent = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
-  }
-  //set ARIA describedby attribute
-  //https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
+  // Set the Player id, if present.
+  player.id = (id || '');
+
+  // Set the message if web browser doesn't support canvas.
+  canvas.textContent == (canvas.textContent || this.canvasWarn);
+
+  // Set ARIA describedby attribute.
+  // From: https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
   canvas.setAttribute('aria-describedby', id + ' description');
-  //add buttons
+  
+  // Add buttons (positioned inside Player container).
   this.controls = new ButtonManager(player);
 
-  //add figure caption, with id matching ARIA describedby
+  // Add figure caption, with id matching ARIA 'describedby' attribute.
   if(caption) {
     var c = document.createElement('figcaption');
     c.id = id + ' description';
@@ -61,13 +71,22 @@ function PlayerManager(canvas, id, caption) {
   }
 
   this.isVisible = true;
-
-}
-
-PlayerManager.prototype.loadIcons_ = function() {
-  // Preload some hard-coded SVG.
-  this.ICONS = {};
 };
 
+// Get current integer values for DOM element width and height, and store them.
+PlayerManager.prototype.getCanvasStyle = function() {
+  return this.canvasStyle;
+};
+
+// Save the current DOM element size for later comparison in event loop.
+PlayerManager.prototype.saveCanvasStyle = function() {
+  this.canvasStyle.width = parseInt(this.canvas.clientWidth);
+  this.canvasStyle.height = parseInt(this.canvas.clientHeight);
+};
+
+PlayerManager.prototype.loadIcons_ = function() {
+  // Preload additional Player assets, if needed.
+  this.ICONS = {};
+};
 
 module.exports = PlayerManager;

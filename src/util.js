@@ -41,24 +41,30 @@ Util.isIFrame = function() {
   }
 };
 
+// Set ID and classes on wrapping and Player elements.
 Util.containerClasses = {
   dom: 'webvr-dom-container',
   player: 'webvr-player-container',
   controls: 'webvr-controls-container',
   placeholder: 'webvr-placeholder'
-}
+};
 
-//get all current DOM children (not descendants) of document.body
+// Save last canvas size.
+Util.canvasSize = {};
+
+// Get all current DOM children (not descendants) of document.body
 Util.getDOMChildren = function() {
   return document.querySelectorAll( 'body > *' );
-}
+};
 
-//check to see if there is anything other than canvas, scripts, and document.body 
+// Specific to Boilerplate.
+// Check to see if there are any tags other than <canvas>, <script>, <img> in document.body 
+// Used to keep boilerplate default separate canvas embedded in page layout.
 Util.isThereADOM = function() {
   var n = this.getDOMChildren(), i=0, j;
   window.n = n;
   if(n && n.length > 0) {
-    //the three tags used by default WebVR boilerplate 
+    //these three tags are used by default WebVR boilerplate 
     var len = n.length;
     for(i = 0; i < len; i++) {
       if(n[i].tagName != 'CANVAS' && n[i].tagName != 'SCRIPT' && n[i].tagName != 'IMG') {
@@ -68,10 +74,10 @@ Util.isThereADOM = function() {
     }
   }
   return false;
-}
+};
 
 /* 
- * wrap the entire DOM in a container tag (if not present), and 
+ * Wrap the entire DOM in a container tag (if not present), and 
  * add a WebVR boilerplate class for show/hide.
  */
 Util.wrapDOM = function(selector) {
@@ -99,7 +105,7 @@ Util.wrapDOM = function(selector) {
       else {
         /* 
          * catch incorrect manual wrapping (e.g. bad HTML markup, or another 
-         * JS object appends directly to document.body)
+         * JS object (e.g. settings) that appends directly to document.body)
          */
         var container = document.getElementsByClassName(Util.containerClasses.dom)[0];
         if(container) {
@@ -125,22 +131,10 @@ Util.wrapDOM = function(selector) {
     }
   }
   return false;
-}
+};
 
-
-Util.hideDOM = function(canvas, domContainer) {
-  console.log("in hideDOM with selector:" + domContainer);
-  this.moveCanvas(canvas);
-  document.getElementsByClassName(domContainer)[0].style.display = 'none';
-}
-
-Util.showDOM = function(canvas, domContainer) {
-  console.log("in showDOM with selector:" + domContainer);
-  this.moveCanvas(canvas);
-  document.getElementsByClassName(domContainer)[0].style.display = 'block';
-}
-
-//http://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript
+// Swap two nodes in the DOM, preserving event handlers.
+// From: http://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript
 Util.swapNodes = function(elem1, elem2) {
   if (elem1 && elem2) {
     var p1 = elem1.parentNode;
@@ -157,8 +151,9 @@ Util.swapNodes = function(elem1, elem2) {
     p1.removeChild(t1);
     p2.removeChild(t2);
   }
-}
+};
 
+// Swap canvas out of the DOM to document.body, or return it.
 Util.moveCanvas = function(canvas) {
   if(this.isThereADOM()) {
     var placeholder = document.getElementById(Util.containerClasses.placeholder);
@@ -172,7 +167,31 @@ Util.moveCanvas = function(canvas) {
   } else {
     console.log("no DOM, don't have to move canvas");
   }
-}
+};
+
+// Get more CSS-related properties for an element (non-integer).
+Util.getDOMStyles = function(elem) {
+  var styles = elem.getBoundingClientRect();
+  if(!styles.width) styles.width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
+  if(!styles.height) styles.height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));
+  styles.position = getComputedStyle(elem.domElement).getPropertyValue('position');
+  styles.zIndex = getComputedStyle(elem).getPropertyValue('zIndex');
+  return styles;
+};
+
+// Move our drawing canvas out of the DOM, and hide the DOM.
+Util.hideDOM = function(canvas, domContainer) {
+  console.log("in hideDOM with selector:" + domContainer);
+  this.moveCanvas(canvas);
+  document.getElementsByClassName(domContainer)[0].style.display = 'none';
+};
+
+// Return our drawing canvs to its DOM location, and show the DOM;
+Util.showDOM = function(canvas, domContainer) {
+  console.log("in showDOM with selector:" + domContainer);
+  this.moveCanvas(canvas);
+  document.getElementsByClassName(domContainer)[0].style.display = 'block';
+};
 
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
