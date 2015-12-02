@@ -1,6 +1,6 @@
 {
   "name": "webvr-polyfill",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "homepage": "https://github.com/borismus/webvr-polyfill",
   "authors": [
     "Boris Smus <boris@smus.com>"
@@ -19,11 +19,11 @@
     "test",
     "tests"
   ],
-  "_release": "0.2.1",
+  "_release": "0.2.2",
   "_resolution": {
     "type": "version",
-    "tag": "0.2.1",
-    "commit": "136766e982fcb1712a4c4ed1f3d6e527d6feef3b"
+    "tag": "0.2.2",
+    "commit": "7e4accfdc5c13877faae27b9304f857f48bc5bc2"
   },
   "_source": "git://github.com/borismus/webvr-polyfill.git",
   "_target": "*",

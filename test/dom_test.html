@@ -42,10 +42,10 @@ canvas {
     <main>
         <section id="content">
           <h2>Page Content Section</h2>
-          <div class="webvr-player-container">
+          <figure class="webvr-player-container">
             <canvas id="webvr-test-canvas">WebVR not Supported, upgrade browser!</canvas>
           <div class="webvr-controls-container"></div>
-        </div>
+          </figure>
       </section>
       <footer>
         <h2>Page Footer</h2>
@@ -121,7 +121,7 @@ var skybox = new THREE.Mesh(geometry, material);
 scene.add(skybox);
 
 // Create a VR manager helper to enter and exit VR mode.
-var manager = new WebVRManager(renderer, effect, {hideButton: false});
+var manager = new WebVRManager(renderer, effect, {hideButton: false, caption:'WebVR Window with Controls'});
 
 // Create 3D objects.
 var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);

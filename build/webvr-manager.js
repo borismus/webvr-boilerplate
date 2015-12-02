@@ -69,6 +69,9 @@ function ButtonManager(player) {
     // No Button container exists, make one.
     ctlsContainer = document.createElement('div');
     ctlsContainer.className = Util.containerClasses.controls;
+    ctlsContainer.style.position = 'absolute';
+    ctlsContainer.style.width = "144px";
+    ctlsContainer.style.border = "1px solid red";
     player.appendChild(ctlsContainer);
   }
 
@@ -131,7 +134,7 @@ ButtonManager.prototype.createButton = function(canvas) {
   var button = document.createElement('img');
   button.className = 'webvr-button';
   var s = button.style;
-  s.position = 'fixed';
+  s.position = 'absolute';
   s.width = '24px'
   s.height = '24px';
   s.backgroundSize = 'cover';
@@ -775,6 +778,7 @@ function PlayerManager(canvas, id, caption) {
 
   // Save a canvas reference.
   this.canvas = canvas;
+  canvas.style.position = 'relative';
 
   // Save the size of canvas between redrawing.
   this.canvasStyle= {};
@@ -788,14 +792,19 @@ function PlayerManager(canvas, id, caption) {
   // If our canvas isn't wrapped in a Player container, add it.
   if(canvas.parentNode.className != Util.containerClasses.player) {
     var player = document.createElement('figure');
-    player.style.position = 'relative';
     player.className = Util.containerClasses.player;
     canvas.parentNode.insertBefore(player, canvas);
   } else {
     player = canvas.parentNode;
   }
+
   // Set the Player id, if present.
-  player.id = (id || '');
+  if(id) player.id = id;
+
+  // Additional styles.
+    player.style.position = 'relative';
+    player.style.display = 'block';
+    player.style.width = this.canvas.style.width; //same as canvas
 
   // Set the message if web browser doesn't support canvas.
   canvas.textContent == (canvas.textContent || this.canvasWarn);
@@ -803,11 +812,11 @@ function PlayerManager(canvas, id, caption) {
   // Set ARIA describedby attribute.
   // From: https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
   canvas.setAttribute('aria-describedby', id + ' description');
-  
-  // Add buttons (positioned inside Player container).
+
+  // Add Buttons (positioned inside Player container).
   this.controls = new ButtonManager(player);
 
-  // Add figure caption, with id matching ARIA 'describedby' attribute.
+  // Add <figcaption>, with id matching ARIA 'describedby' attribute.
   if(caption) {
     var c = document.createElement('figcaption');
     c.id = id + ' description';
@@ -1475,7 +1484,7 @@ function WebVRManager(renderer, effect, params) {
   this.renderer = renderer;
   this.effect = effect;
   this.distorter = new CardboardDistorter(renderer);
-  this.player = new PlayerManager(renderer.domElement);
+  this.player = new PlayerManager(renderer.domElement, '', params.caption);
   this.button = this.player.controls;
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);

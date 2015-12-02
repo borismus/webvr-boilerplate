@@ -53,7 +53,7 @@ function WebVRManager(renderer, effect, params) {
   this.renderer = renderer;
   this.effect = effect;
   this.distorter = new CardboardDistorter(renderer);
-  this.player = new PlayerManager(renderer.domElement);
+  this.player = new PlayerManager(renderer.domElement, '', params.caption);
   this.button = this.player.controls;
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);

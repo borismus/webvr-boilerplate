@@ -37,6 +37,9 @@ function ButtonManager(player) {
     // No Button container exists, make one.
     ctlsContainer = document.createElement('div');
     ctlsContainer.className = Util.containerClasses.controls;
+    ctlsContainer.style.position = 'absolute';
+    ctlsContainer.style.width = "144px";
+    ctlsContainer.style.border = "1px solid red";
     player.appendChild(ctlsContainer);
   }
 
@@ -99,7 +102,7 @@ ButtonManager.prototype.createButton = function(canvas) {
   var button = document.createElement('img');
   button.className = 'webvr-button';
   var s = button.style;
-  s.position = 'fixed';
+  s.position = 'absolute';
   s.width = '24px'
   s.height = '24px';
   s.backgroundSize = 'cover';

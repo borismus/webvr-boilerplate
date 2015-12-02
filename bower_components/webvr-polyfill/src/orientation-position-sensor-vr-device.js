@@ -17,8 +17,6 @@ var THREE = require('./three-math.js');
 var TouchPanner = require('./touch-panner.js');
 var Util = require('./util.js');
 
-WEBVR_YAW_ONLY = false;
-
 /**
  * The positional sensor, implemented using web DeviceOrientation APIs.
  */
