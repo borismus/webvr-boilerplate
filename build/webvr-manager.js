@@ -811,44 +811,36 @@ function PlayerManager(canvas, id, caption) {
 
   // Set ARIA describedby attribute.
   // From: https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
-  canvas.setAttribute('aria-describedby', id + ' description');
+  player.setAttribute('aria-describedby', id + '-caption');
 
   // Add Buttons (positioned absolutely inside Player container).
   this.controls = new ButtonManager(player);
 
   // Add <figcaption>, with id matching ARIA 'describedby' attribute.
   // Can be hidden, or used as an 'info' button after CSS styling.
-  var ch = player.children;
-  var len = ch.length;
-  foundCaption = false;
-  for (var i = 0; i < len; i++) {
-    if(ch[i].tagName == 'FIGCAPTION') {
-      cp = ch[i];
-      foundCaption = true;
-      if(!cp.id) {
-        cp.id = id + '-caption';
-      }
-      if(!(cp.className.indexOf(selector) >= 0)) {
-        cp.className += ' ' + Util.containerClasses.caption;
-      }
-      if(caption) {
-        cp.textContent = caption;
-      }
-    }
-  }
+  var figCaption = Util.findChildrenByType(player, 'figcaption');
 
-  // Create the caption if it doesn't exist.
-  if(!foundCaption && caption) {
-    var c = document.createElement('figcaption');
-    c.id = id + '-caption';
-    c.className = Util.containerClasses.caption;
-    c.textContent = caption;
-    player.appendChild(c);
+  if(figCaption && figCaption[0]) {
+    figCaption = figCaption[0];
+  }
+  else {
+    figCaption = document.createElement('figcaption');
+    player.appendChild(figCaption);
+  }
+  if(!figCaption.id) {
+    figCaption.id = player.getAttribute('aria-describedby');
+  }
+  if(!figCaption.className.indexOf(Util.containerClasses.caption)) {
+    Util.addClass(figCaption, Util.containerClasses.caption);
+  }
+  if(!figCaption.textContent && caption) {
+    figCaption.textContent = caption;
   }
 
   // Default caption styles
-  c.style.display = 'block';
-  c.style.display.margin = '0 auto';
+  console.log("about to set style of caption")
+  figCaption.style.display = 'block';
+  figCaption.style.display.margin = '0 auto';
 
   this.isVisible = true;
 };
@@ -1048,16 +1040,34 @@ Util.containerClasses = {
   placeholder: 'webvr-placeholder'
 };
 
-// Save last canvas size.
-Util.canvasSize = {};
-
 // Get all current DOM children (not descendants) of document.body
 Util.getDOMChildren = function() {
   return document.querySelectorAll( 'body > *' );
 };
 
-Util.findChildrenByType = function(elem) {
-  //TODO: finish
+Util.findChildrenByType = function(elem, types) {
+	var typeStr, i, arr = [];
+	if(Array.isArray(elem)) {
+		typeStr = types.toString().toUpperCase();
+	}
+	else {
+		typeStr = types;
+	}
+	var children = elem.children;
+	var len = children.length;
+	for(i = 0; i < len; i++) {
+		if(typeStr.indexOf(children[i].tagName) >= 0) {
+			arr.push(children[i]);
+		}
+	}
+  return arr;
+}
+
+Util.addClass = function(elem, selector) {
+	 if(!(elem.className.indexOf(selector) >= 0)) {
+	 	if(elem.className == '') elem.className = selector;
+	 	else elem.className += ' '  + selector;
+	 }
 }
 
 // Specific to Boilerplate.
@@ -1071,7 +1081,7 @@ Util.isThereADOM = function() {
     var len = n.length;
     for(i = 0; i < len; i++) {
       if(n[i].tagName != 'CANVAS' && n[i].tagName != 'SCRIPT' && n[i].tagName != 'IMG') {
-        console.log("Found DOM tagname:" + n[i].tagName);
+        console.log("Found DOM element, tagname:" + n[i].tagName);
         return true;
       }
     }

@@ -50,16 +50,34 @@ Util.containerClasses = {
   placeholder: 'webvr-placeholder'
 };
 
-// Save last canvas size.
-Util.canvasSize = {};
-
 // Get all current DOM children (not descendants) of document.body
 Util.getDOMChildren = function() {
   return document.querySelectorAll( 'body > *' );
 };
 
-Util.findChildrenByType = function(elem) {
-  //TODO: finish
+Util.findChildrenByType = function(elem, types) {
+	var typeStr, i, arr = [];
+	if(Array.isArray(elem)) {
+		typeStr = types.toString().toUpperCase();
+	}
+	else {
+		typeStr = types;
+	}
+	var children = elem.children;
+	var len = children.length;
+	for(i = 0; i < len; i++) {
+		if(typeStr.indexOf(children[i].tagName) >= 0) {
+			arr.push(children[i]);
+		}
+	}
+  return arr;
+}
+
+Util.addClass = function(elem, selector) {
+	 if(!(elem.className.indexOf(selector) >= 0)) {
+	 	if(elem.className == '') elem.className = selector;
+	 	else elem.className += ' '  + selector;
+	 }
 }
 
 // Specific to Boilerplate.
@@ -73,7 +91,7 @@ Util.isThereADOM = function() {
     var len = n.length;
     for(i = 0; i < len; i++) {
       if(n[i].tagName != 'CANVAS' && n[i].tagName != 'SCRIPT' && n[i].tagName != 'IMG') {
-        console.log("Found DOM tagname:" + n[i].tagName);
+        console.log("Found DOM element, tagname:" + n[i].tagName);
         return true;
       }
     }
