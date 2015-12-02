@@ -801,28 +801,54 @@ function PlayerManager(canvas, id, caption) {
   // Set the Player id, if present.
   if(id) player.id = id;
 
-  // Additional styles.
+  // Additional Player styles (needed to position controls).
     player.style.position = 'relative';
     player.style.display = 'block';
     player.style.width = this.canvas.style.width; //same as canvas
 
-  // Set the message if web browser doesn't support canvas.
+  // Set the error message if web browser doesn't support canvas.
   canvas.textContent == (canvas.textContent || this.canvasWarn);
 
   // Set ARIA describedby attribute.
   // From: https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
   canvas.setAttribute('aria-describedby', id + ' description');
 
-  // Add Buttons (positioned inside Player container).
+  // Add Buttons (positioned absolutely inside Player container).
   this.controls = new ButtonManager(player);
 
   // Add <figcaption>, with id matching ARIA 'describedby' attribute.
-  if(caption) {
+  // Can be hidden, or used as an 'info' button after CSS styling.
+  var ch = player.children;
+  var len = ch.length;
+  foundCaption = false;
+  for (var i = 0; i < len; i++) {
+    if(ch[i].tagName == 'FIGCAPTION') {
+      cp = ch[i];
+      foundCaption = true;
+      if(!cp.id) {
+        cp.id = id + '-caption';
+      }
+      if(!(cp.className.indexOf(selector) >= 0)) {
+        cp.className += ' ' + Util.containerClasses.caption;
+      }
+      if(caption) {
+        cp.textContent = caption;
+      }
+    }
+  }
+
+  // Create the caption if it doesn't exist.
+  if(!foundCaption && caption) {
     var c = document.createElement('figcaption');
-    c.id = id + ' description';
+    c.id = id + '-caption';
+    c.className = Util.containerClasses.caption;
     c.textContent = caption;
     player.appendChild(c);
   }
+
+  // Default caption styles
+  c.style.display = 'block';
+  c.style.display.margin = '0 auto';
 
   this.isVisible = true;
 };
@@ -839,7 +865,7 @@ PlayerManager.prototype.saveCanvasStyle = function() {
 };
 
 PlayerManager.prototype.loadIcons_ = function() {
-  // Preload additional Player assets, if needed.
+  // Preload additional non-Button Player assets, if needed.
   this.ICONS = {};
 };
 
@@ -1018,6 +1044,7 @@ Util.containerClasses = {
   dom: 'webvr-dom-container',
   player: 'webvr-player-container',
   controls: 'webvr-controls-container',
+  caption: 'webvr-player-caption',
   placeholder: 'webvr-placeholder'
 };
 
@@ -1028,6 +1055,10 @@ Util.canvasSize = {};
 Util.getDOMChildren = function() {
   return document.querySelectorAll( 'body > *' );
 };
+
+Util.findChildrenByType = function(elem) {
+  //TODO: finish
+}
 
 // Specific to Boilerplate.
 // Check to see if there are any tags other than <canvas>, <script>, <img> in document.body 

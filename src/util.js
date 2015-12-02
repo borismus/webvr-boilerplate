@@ -46,6 +46,7 @@ Util.containerClasses = {
   dom: 'webvr-dom-container',
   player: 'webvr-player-container',
   controls: 'webvr-controls-container',
+  caption: 'webvr-player-caption',
   placeholder: 'webvr-placeholder'
 };
 
@@ -56,6 +57,10 @@ Util.canvasSize = {};
 Util.getDOMChildren = function() {
   return document.querySelectorAll( 'body > *' );
 };
+
+Util.findChildrenByType = function(elem) {
+  //TODO: finish
+}
 
 // Specific to Boilerplate.
 // Check to see if there are any tags other than <canvas>, <script>, <img> in document.body 
