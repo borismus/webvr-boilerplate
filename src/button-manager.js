@@ -21,7 +21,7 @@ var Util = require('./util.js');
 /**
  * Everything having to do with the WebVR button.
  * Emits a 'click' event when it's clicked.
- * Buttons wrapped in a control container.
+ * Buttons are wrapped in a control container.
  */
 function ButtonManager(player) {
   this.loadIcons_();

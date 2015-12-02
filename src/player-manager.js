@@ -19,7 +19,7 @@ var ButtonManager = require('./button-manager.js');
 var Util = require('./util.js');
 
 /**
- * The Player is a wrapper for the VR-enabled canvas, 
+ * The Player is a wrapper for a VR-enabled canvas, 
  * plus its controls. It is implemented as an html5
  * <figure> element with a <figcaption> describing 
  * the VR scene. It also stores the last known style 
