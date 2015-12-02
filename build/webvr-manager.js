@@ -14,7 +14,8 @@ function Aligner() {
   s.left = '50%';
   s.display = 'none';
   s.marginLeft = '-2px';
-  s.border = '2px solid black';
+  s.border = '1px solid black';
+  s.borderTop = '0px';
   this.el = el;
 
   document.body.appendChild(el);
@@ -302,7 +303,7 @@ CardboardDistorter.prototype.patch = function() {
   if (!this.isActive) {
     return;
   }
-  this.textureTarget = createRenderTarget(renderer);
+  this.textureTarget = createRenderTarget(this.renderer);
 
   this.renderer.render = function(scene, camera, renderTarget, forceClear) {
     this.genuineRender.call(this.renderer, scene, camera, this.textureTarget, forceClear);
@@ -335,7 +336,7 @@ CardboardDistorter.prototype.postRender = function() {
   }
   var size = this.renderer.getSize();
   this.renderer.setViewport(0, 0, size.width, size.height);
-  this.shaderPass.render(this.genuineRender.bind(renderer), this.textureTarget);
+  this.shaderPass.render(this.genuineRender.bind(this.renderer), this.textureTarget);
 };
 
 /**
@@ -917,6 +918,21 @@ Util.isLandscapeMode = function() {
 module.exports = Util;
 
 },{}],11:[function(_dereq_,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var Emitter = _dereq_('./emitter.js');
 var Util = _dereq_('./util.js');
 

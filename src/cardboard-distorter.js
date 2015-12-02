@@ -85,7 +85,7 @@ CardboardDistorter.prototype.patch = function() {
   if (!this.isActive) {
     return;
   }
-  this.textureTarget = createRenderTarget(renderer);
+  this.textureTarget = createRenderTarget(this.renderer);
 
   this.renderer.render = function(scene, camera, renderTarget, forceClear) {
     this.genuineRender.call(this.renderer, scene, camera, this.textureTarget, forceClear);
@@ -118,7 +118,7 @@ CardboardDistorter.prototype.postRender = function() {
   }
   var size = this.renderer.getSize();
   this.renderer.setViewport(0, 0, size.width, size.height);
-  this.shaderPass.render(this.genuineRender.bind(renderer), this.textureTarget);
+  this.shaderPass.render(this.genuineRender.bind(this.renderer), this.textureTarget);
 };
 
 /**
