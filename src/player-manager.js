@@ -25,76 +25,112 @@ var Util = require('./util.js');
  * the VR scene. It also stores the last known style 
  * of its canvas, for loop updates.
  */
-function PlayerManager(canvas, id, caption) {
+function PlayerManager(canvas, params) {
   this.loadIcons_();
 
   // Save a canvas reference.
   this.canvas = canvas;
-  canvas.style.position = 'relative';
-
-  // Save the size of canvas between redrawing.
-  this.canvasStyle= {};
-  this.saveCanvasStyle();
 
   // Warning when HTML5 canvas not supported.
   this.canvasWarn = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
+  this.captionDefault = 'WebVR Boilerplate Scene';
+
+  // Save the size of canvas between redrawing.
+  this.canvasStyle = {};
+  this.saveCanvasStyle();
 
   // TODO: warning for VR not supported in <figcaption>
 
-  // If our canvas isn't wrapped in a Player container, add it.
-  if(canvas.parentNode.className != Util.containerClasses.player) {
-    var player = document.createElement('figure');
-    player.className = Util.containerClasses.player;
-    canvas.parentNode.insertBefore(player, canvas);
-  } else {
-    player = canvas.parentNode;
+  // If our canvas isn't wrapped in a Player <figure> container, add it.
+  if(canvas.parentNode.tagName != 'FIGURE') {
+    this.dom = document.createElement('figure');
+    canvas.parentNode.appendChild(this.dom);
+    this.dom.appendChild(canvas);
+  }
+  else {
+    this.dom = canvas.parentNode;
   }
 
-  // Set the Player id, if present.
-  if(id) player.id = id;
+  Util.addClass(this.dom, Util.containerClasses.player);
+
+  // Set the Player id, if present, or create a random one.
+  if(params.id) { 
+    this.dom.id = params.id;
+  } else {
+    this.dom.id = Util.containerClasses.player + '-' + Util.getRandom(100, 999);
+  }
 
   // Additional Player styles (needed to position controls).
-    player.style.position = 'relative';
-    player.style.display = 'block';
-    player.style.width = this.canvas.style.width; //same as canvas
+  this.dom.style.position = 'relative';
+  this.dom.style.display = 'block';
+  this.dom.style.width = this.canvas.style.width; //Player is same width as canvas.
+  //this.dom.style.height = this.canvas.style.height; //Speed up document reflow after swap.
 
   // Set the error message if web browser doesn't support canvas.
   canvas.textContent == (canvas.textContent || this.canvasWarn);
 
   // Set ARIA describedby attribute.
   // From: https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
-  player.setAttribute('aria-describedby', id + '-caption');
+  this.dom.setAttribute('aria-describedby', this.dom.id + '-caption');
 
   // Add Buttons (positioned absolutely inside Player container).
-  this.controls = new ButtonManager(player);
+  this.controls = new ButtonManager(this.dom);
 
   // Add <figcaption>, with id matching ARIA 'describedby' attribute.
   // Can be hidden, or used as an 'info' button after CSS styling.
-  var figCaption = Util.findChildrenByType(player, 'figcaption');
+  this.createCaption(params);
 
-  if(figCaption && figCaption[0]) {
+  this.isVisible = true;
+
+  return this;
+};
+
+// Build a caption for the Player.
+PlayerManager.prototype.createCaption = function(params) {
+  var figCaption = Util.findChildrenByType(this.dom, 'figcaption');
+  if(figCaption[0]) {
     figCaption = figCaption[0];
-  }
-  else {
+  } else {
     figCaption = document.createElement('figcaption');
-    player.appendChild(figCaption);
+    this.dom.appendChild(figCaption);
   }
+  // If there is no id, make a random one (required by ARIA).
   if(!figCaption.id) {
-    figCaption.id = player.getAttribute('aria-describedby');
+    figCaption.id = this.dom.getAttribute('aria-describedby');
   }
+
+  //add the WebVR Boilerplate className.
   if(!figCaption.className.indexOf(Util.containerClasses.caption)) {
     Util.addClass(figCaption, Util.containerClasses.caption);
   }
-  if(!figCaption.textContent && caption) {
-    figCaption.textContent = caption;
+
+  // Add a caption, if supplied, otherwise default.
+  if(params.caption) {
+    figCaption.textContent = params.caption;
+  } else {
+    if(figCaption.textContent == '') {
+      figCaption.textContent = this.captionDefault;
+    }
   }
 
-  // Default caption styles
-  console.log("about to set style of caption")
-  figCaption.style.display = 'block';
+  // Set default caption styles.
+  if(params.showCaption) {
+    figCaption.style.display = 'block';
+  } else {
+    figCaption.style.display = 'none';
+  }
+
+  // Additional styles centering caption above control row.
+  figCaption.style.width = '100%';
+  figCaption.style.position = 'absolute';
+  figCaption.style.textAlign = 'center';
+  //TODO: make ButtonManger button size arbitrary, add getter function for height
+  window.ctlStyle = this.controls.dom.style;
+  figCaption.style.bottom = '48px'; //TODO: make this just above the row of buttons
   figCaption.style.display.margin = '0 auto';
 
-  this.isVisible = true;
+  //return for show/hide
+  return figCaption;
 };
 
 // Get current integer values for DOM element width and height, and store them.

@@ -30,6 +30,12 @@ canvas {
   border: 1px solid yellow;
   /* width:80%!important; can't do this with THREE.js, must use renderer.setSize() */;
 }
+figure {
+
+}
+figcaption {
+
+}
 </style>
 </head>
 
@@ -37,7 +43,7 @@ canvas {
   <div class="webvr-dom-container">
     <header>
       <h1>WebVR in DOM</h1>
-      <button style="display:fixed; bottom:0; left:0;" onclick="WebVRManager.Util.moveCanvas(document.getElementById('webvr-test-canvas'))">Test DOM Swap</button>
+      <button style="display:fixed; bottom:0; left:0;" onclick="WebVRManager.Util.moveCanvas(document.getElementById('webvr-test-canvas'))">Toggle DOM Swap</button>
     </header>
     <main>
         <section id="content">
@@ -121,7 +127,7 @@ var skybox = new THREE.Mesh(geometry, material);
 scene.add(skybox);
 
 // Create a VR manager helper to enter and exit VR mode.
-var manager = new WebVRManager(renderer, effect, {hideButton: false, caption:'WebVR Window with Controls'});
+var manager = new WebVRManager(renderer, effect, {id:'first-vr-scene', hideButton: false, showCaption:true, caption:'WebVR Window with Controls'});
 
 // Create 3D objects.
 var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);

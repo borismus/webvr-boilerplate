@@ -52,28 +52,27 @@ var Util = require('./util.js');
 
 /**
  * Everything having to do with the WebVR button.
- * Emits a 'click' event when it's clicked. 
+ * Emits a 'click' event when it's clicked.
  * Buttons wrapped in a control container.
  */
 function ButtonManager(player) {
   this.loadIcons_();
 
-  // Make a container for the Buttons, sibling to the display canvas (which can't have visible child elements).
-  var ctlsContainer = player.getElementsByClassName(Util.containerClasses.controls)[0];
-  if(ctlsContainer) {
-    if(!(ctlsContainer.className.indexOf(Util.containerClasses.controls) >= 0)) {
-      ctlsContainer.className += (' ' + Util.containerClasses.controls);
-    }
-  }
-  else {
+  // Make a container for the Buttons, a sibling to the display canvas (which can't have visible child elements).
+  this.dom = player.getElementsByClassName(Util.containerClasses.controls)[0];
+  if (!this.dom) {
     // No Button container exists, make one.
-    ctlsContainer = document.createElement('div');
-    ctlsContainer.className = Util.containerClasses.controls;
-    ctlsContainer.style.position = 'absolute';
-    ctlsContainer.style.width = "144px";
-    ctlsContainer.style.border = "1px solid red";
-    player.appendChild(ctlsContainer);
+    this.dom = document.createElement('div');
+    this.dom.className = Util.containerClasses.controls;
+    player.appendChild(this.dom);
   }
+
+  // Set the styles for the control container.
+  this.dom.style.position = 'absolute';
+  this.dom.style.width = '100%';
+  this.dom.style.border = '1px solid red';
+  this.dom.style.bottom = 0;
+  this.dom.style.right = 0;
 
   // Make the fullscreen button.
   var fsButton = this.createButton();
@@ -83,8 +82,11 @@ function ButtonManager(player) {
   s.bottom = 0;
   s.right = 0;
   fsButton.addEventListener('click', this.createClickHandler_('fs'));
-  ctlsContainer.appendChild(fsButton);
+  this.dom.appendChild(fsButton);
   this.fsButton = fsButton;
+
+  // Use float to right-align variable array of controls in their container.
+  fsButton.style.float = 'right';
 
   // Make the VR button.
   var vrButton = this.createButton();
@@ -92,9 +94,9 @@ function ButtonManager(player) {
   vrButton.title = 'Virtual reality mode';
   var s = vrButton.style;
   s.bottom = 0;
-  s.right = '48px';
+  //s.right = '48px';
   vrButton.addEventListener('click', this.createClickHandler_('vr'));
-  ctlsContainer.appendChild(vrButton);
+  this.dom.appendChild(vrButton);
   this.vrButton = vrButton;
 
   // Make the back button.
@@ -105,7 +107,7 @@ function ButtonManager(player) {
   s.top = 0;
   backButton.src = this.ICONS.back;
   backButton.addEventListener('click', this.createClickHandler_('back'));
-  ctlsContainer.appendChild(backButton);
+  this.dom.appendChild(backButton);
   this.backButton = backButton;
 
   // Make the settings button, but only for mobile.
@@ -118,14 +120,14 @@ function ButtonManager(player) {
   s.zIndex = 0;
   settingsButton.src = this.ICONS.settings;
   settingsButton.addEventListener('click', this.createClickHandler_('settings'));
-  ctlsContainer.appendChild(settingsButton);
+  this.dom.appendChild(settingsButton);
   this.settingsButton = settingsButton;
 
   this.isVisible = true;
 
   this.aligner = new Aligner();
 
-  player.controls = this;
+  return this;
 }
 
 ButtonManager.prototype = new Emitter();
@@ -134,7 +136,7 @@ ButtonManager.prototype.createButton = function(canvas) {
   var button = document.createElement('img');
   button.className = 'webvr-button';
   var s = button.style;
-  s.position = 'absolute';
+  //s.position = 'absolute';
   s.width = '24px'
   s.height = '24px';
   s.backgroundSize = 'cover';
@@ -773,76 +775,112 @@ var Util = require('./util.js');
  * the VR scene. It also stores the last known style 
  * of its canvas, for loop updates.
  */
-function PlayerManager(canvas, id, caption) {
+function PlayerManager(canvas, params) {
   this.loadIcons_();
 
   // Save a canvas reference.
   this.canvas = canvas;
-  canvas.style.position = 'relative';
-
-  // Save the size of canvas between redrawing.
-  this.canvasStyle= {};
-  this.saveCanvasStyle();
 
   // Warning when HTML5 canvas not supported.
   this.canvasWarn = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
+  this.captionDefault = 'WebVR Boilerplate Scene';
+
+  // Save the size of canvas between redrawing.
+  this.canvasStyle = {};
+  this.saveCanvasStyle();
 
   // TODO: warning for VR not supported in <figcaption>
 
-  // If our canvas isn't wrapped in a Player container, add it.
-  if(canvas.parentNode.className != Util.containerClasses.player) {
-    var player = document.createElement('figure');
-    player.className = Util.containerClasses.player;
-    canvas.parentNode.insertBefore(player, canvas);
-  } else {
-    player = canvas.parentNode;
+  // If our canvas isn't wrapped in a Player <figure> container, add it.
+  if(canvas.parentNode.tagName != 'FIGURE') {
+    this.dom = document.createElement('figure');
+    canvas.parentNode.appendChild(this.dom);
+    this.dom.appendChild(canvas);
+  }
+  else {
+    this.dom = canvas.parentNode;
   }
 
-  // Set the Player id, if present.
-  if(id) player.id = id;
+  Util.addClass(this.dom, Util.containerClasses.player);
+
+  // Set the Player id, if present, or create a random one.
+  if(params.id) { 
+    this.dom.id = params.id;
+  } else {
+    this.dom.id = Util.containerClasses.player + '-' + Util.getRandom(100, 999);
+  }
 
   // Additional Player styles (needed to position controls).
-    player.style.position = 'relative';
-    player.style.display = 'block';
-    player.style.width = this.canvas.style.width; //same as canvas
+  this.dom.style.position = 'relative';
+  this.dom.style.display = 'block';
+  this.dom.style.width = this.canvas.style.width; //Player is same width as canvas.
+  //this.dom.style.height = this.canvas.style.height; //Speed up document reflow after swap.
 
   // Set the error message if web browser doesn't support canvas.
   canvas.textContent == (canvas.textContent || this.canvasWarn);
 
   // Set ARIA describedby attribute.
   // From: https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
-  player.setAttribute('aria-describedby', id + '-caption');
+  this.dom.setAttribute('aria-describedby', this.dom.id + '-caption');
 
   // Add Buttons (positioned absolutely inside Player container).
-  this.controls = new ButtonManager(player);
+  this.controls = new ButtonManager(this.dom);
 
   // Add <figcaption>, with id matching ARIA 'describedby' attribute.
   // Can be hidden, or used as an 'info' button after CSS styling.
-  var figCaption = Util.findChildrenByType(player, 'figcaption');
+  this.createCaption(params);
 
-  if(figCaption && figCaption[0]) {
+  this.isVisible = true;
+
+  return this;
+};
+
+// Build a caption for the Player.
+PlayerManager.prototype.createCaption = function(params) {
+  var figCaption = Util.findChildrenByType(this.dom, 'figcaption');
+  if(figCaption[0]) {
     figCaption = figCaption[0];
-  }
-  else {
+  } else {
     figCaption = document.createElement('figcaption');
-    player.appendChild(figCaption);
+    this.dom.appendChild(figCaption);
   }
+  // If there is no id, make a random one (required by ARIA).
   if(!figCaption.id) {
-    figCaption.id = player.getAttribute('aria-describedby');
+    figCaption.id = this.dom.getAttribute('aria-describedby');
   }
+
+  //add the WebVR Boilerplate className.
   if(!figCaption.className.indexOf(Util.containerClasses.caption)) {
     Util.addClass(figCaption, Util.containerClasses.caption);
   }
-  if(!figCaption.textContent && caption) {
-    figCaption.textContent = caption;
+
+  // Add a caption, if supplied, otherwise default.
+  if(params.caption) {
+    figCaption.textContent = params.caption;
+  } else {
+    if(figCaption.textContent == '') {
+      figCaption.textContent = this.captionDefault;
+    }
   }
 
-  // Default caption styles
-  console.log("about to set style of caption")
-  figCaption.style.display = 'block';
+  // Set default caption styles.
+  if(params.showCaption) {
+    figCaption.style.display = 'block';
+  } else {
+    figCaption.style.display = 'none';
+  }
+
+  // Additional styles centering caption above control row.
+  figCaption.style.width = '100%';
+  figCaption.style.position = 'absolute';
+  figCaption.style.textAlign = 'center';
+  //TODO: make ButtonManger button size arbitrary, add getter function for height
+  window.ctlStyle = this.controls.dom.style;
+  figCaption.style.bottom = '48px'; //TODO: make this just above the row of buttons
   figCaption.style.display.margin = '0 auto';
 
-  this.isVisible = true;
+  //return for show/hide
+  return figCaption;
 };
 
 // Get current integer values for DOM element width and height, and store them.
@@ -1031,6 +1069,11 @@ Util.isIFrame = function() {
   }
 };
 
+// Get a random number for container ids, if not defined
+Util.getRandom = function(start, end) {
+  return Math.floor(Math.random() * end) + start;
+};
+
 // Set ID and classes on wrapping and Player elements.
 Util.containerClasses = {
   dom: 'webvr-dom-container',
@@ -1040,48 +1083,52 @@ Util.containerClasses = {
   placeholder: 'webvr-placeholder'
 };
 
-// Get all current DOM children (not descendants) of document.body
-Util.getDOMChildren = function() {
-  return document.querySelectorAll( 'body > *' );
+Util.addClass = function(elem, selector) {
+  if (!(elem.className.indexOf(selector) >= 0)) {
+    if (elem.className == '') {
+      elem.className = selector;
+    } else {
+      elem.className += ' '  + selector;
+    }
+  }
 };
 
-Util.findChildrenByType = function(elem, types) {
-	var typeStr, i, arr = [];
-	if(Array.isArray(elem)) {
-		typeStr = types.toString().toUpperCase();
-	}
-	else {
-		typeStr = types;
-	}
-	var children = elem.children;
-	var len = children.length;
-	for(i = 0; i < len; i++) {
-		if(typeStr.indexOf(children[i].tagName) >= 0) {
-			arr.push(children[i]);
-		}
-	}
-  return arr;
-}
+// Get all current DOM children (not descendants) of document.body.
+Util.getDOMChildren = function() {
+  return document.querySelectorAll('body > *');
+};
 
-Util.addClass = function(elem, selector) {
-	 if(!(elem.className.indexOf(selector) >= 0)) {
-	 	if(elem.className == '') elem.className = selector;
-	 	else elem.className += ' '  + selector;
-	 }
-}
+// Find child elements by their tag type.
+Util.findChildrenByType = function(elem, types) {
+  var typeStr;
+  var arr = [];
+  if (Array.isArray(types)) {
+    typeStr = types.toString();
+  } else {
+    typeStr = types;
+  }
+  typeStr = typeStr.toUpperCase();
+  var children = elem.children;
+  var len = children.length;
+  for (var i = 0; i < len; i++) {
+    if (typeStr.indexOf(children[i].tagName) >= 0) {
+      arr.push(children[i]);
+    }
+  }
+  return arr;
+};
 
 // Specific to Boilerplate.
-// Check to see if there are any tags other than <canvas>, <script>, <img> in document.body 
+// Check to see if there are any tags other than <canvas>, <script>, <img> in document.body.
 // Used to keep boilerplate default separate canvas embedded in page layout.
 Util.isThereADOM = function() {
-  var n = this.getDOMChildren(), i=0, j;
-  window.n = n;
-  if(n && n.length > 0) {
-    //these three tags are used by default WebVR boilerplate 
+  var n = this.getDOMChildren();
+  if (n && n.length > 0) {
+    //these three tags are used by default WebVR boilerplate
     var len = n.length;
-    for(i = 0; i < len; i++) {
-      if(n[i].tagName != 'CANVAS' && n[i].tagName != 'SCRIPT' && n[i].tagName != 'IMG') {
-        console.log("Found DOM element, tagname:" + n[i].tagName);
+    for (var i = 0; i < len; i++) {
+      if (n[i].tagName != 'CANVAS' && n[i].tagName != 'SCRIPT' && n[i].tagName != 'IMG') {
+        console.log('found a dom');
         return true;
       }
     }
@@ -1089,57 +1136,58 @@ Util.isThereADOM = function() {
   return false;
 };
 
-/* 
- * Wrap the entire DOM in a container tag (if not present), and 
- * add a WebVR boilerplate class for show/hide.
- */
+// Wrap the entire DOM in a container tag (if not present), and add classes.
 Util.wrapDOM = function(selector) {
-  if(!selector) selector = Util.containerClasses.dom;
-  var n = this.getDOMChildren(), domCount = 0, i = 0, len  = n.length;
-  //if we have a container,there is only one child, plus possibly scripts
-  if(n && n[0]) {
-      console.log('document has children');
-      for(i = 0; i < len; i++) {
-        if(n[i].tagName != 'SCRIPT') {
-          domCount++;
-        }
+  var n = this.getDOMChildren();
+  var domCount = 0;
+  var len;
+
+  // Assign default CSS selector if necessary
+  if (!selector) {
+    selector = Util.containerClasses.dom;
+  }
+
+  //if we have a container,there is only one DOM child, plus <scripts>
+  if (n && n[0]) {
+    len = n.length;
+    for (var i = 0; i < len; i++) {
+      if (n[i].tagName != 'SCRIPT') {
+        domCount++;
       }
-      console.log("domCount:" + domCount);
-      if(domCount == 1) {
-        console.log('only one element visible, don\'t need to wrap');
-        //only one child of document.body -which can be a container
-        if(!(n.className.indexOf(selector) >= 0)) {
+    }
+
+    if (domCount == 1) {
+      console.log('only one element visible, don\'t need to wrap');
+      //only one child of document.body -which can be a container
+      if (!(n.className.indexOf(selector) >= 0)) {
         //add our WebVR class to the container
-          console.log('adding webvr class' + selector + to )
-          n[0].className += ' ' + selector; //faster than regex
-          return true;
-        }
+        console.log('adding webvr class' + selector + to);
+        n[0].className += ' ' + selector; //faster than regex
+        return true;
       }
-      else {
-        /* 
-         * catch incorrect manual wrapping (e.g. bad HTML markup, or another 
-         * JS object (e.g. settings) that appends directly to document.body)
-         */
-        var container = document.getElementsByClassName(Util.containerClasses.dom)[0];
-        if(container) {
-          console.log('Warning: defined container class doesn\'t enclose all non-script DOM elements');
-          for(i = 0; i < len; i++) {
-            if(n[i] != container && n[i].tagName != 'SCRIPT')
-              container.appendChild(n[i]);
-          }
-          return false;
-        }
-        console.log('need to wrap stuff');
-        var container = document.createElement('div');
-        container.className = selector; i = 1;
-        document.body.appendChild(container);
-        if(container.parentNode == document.body) {
-        for(i = 1; i < len; i++) {
-          if(n[i].tagName != 'SCRIPT') {
+    } else {
+      //catch incorrect manual wrapping (e.g. bad HTML markup)
+      var container = document.getElementsByClassName(Util.containerClasses.dom)[0];
+      if (container) {
+        console.log('Warning: defined container class doesn\'t enclose all non-script DOM elements');
+        for (i = 0; i < len; i++) {
+          if (n[i] != container && n[i].tagName != 'SCRIPT') {
             container.appendChild(n[i]);
           }
         }
-      return true;
+        return false;
+      }
+      console.log('need to wrap stuff');
+      var container = document.createElement('div');
+      container.className = selector; i = 1;
+      document.body.appendChild(container);
+      if (container.parentNode == document.body) {
+        for (i = 1; i < len; i++) {
+          if (n[i].tagName != 'SCRIPT') {
+            container.appendChild(n[i]);
+          }
+        }
+        return true;
       }
     }
   }
@@ -1151,11 +1199,11 @@ Util.wrapDOM = function(selector) {
 Util.swapNodes = function(elem1, elem2) {
   if (elem1 && elem2) {
     var p1 = elem1.parentNode;
-    var t1 = document.createElement("span");
+    var t1 = document.createElement('span');
     p1.insertBefore(t1, elem1);
 
     var p2 = elem2.parentNode;
-    var t2 = document.createElement("span");
+    var t2 = document.createElement('span');
     p2.insertBefore(t2, elem2);
 
     p1.insertBefore(elem2, t1);
@@ -1168,25 +1216,29 @@ Util.swapNodes = function(elem1, elem2) {
 
 // Swap canvas out of the DOM to document.body, or return it.
 Util.moveCanvas = function(canvas) {
-  if(this.isThereADOM()) {
+  if (this.isThereADOM()) {
     var placeholder = document.getElementById(Util.containerClasses.placeholder);
-    if(!placeholder) {
-      console.log("there is a DOM, swapping");
+    if (!placeholder) {
+      console.log('there is a DOM to swap, swapping');
       placeholder = document.createElement('span');
       placeholder.id = Util.containerClasses.placeholder;
       document.body.appendChild(placeholder);
     }
     this.swapNodes(canvas, placeholder); //canvas swaps where placeholder was
   } else {
-    console.log("no DOM, don't have to move canvas");
+    console.log('no extra DOM, don\'t need to swap canvas');
   }
 };
 
 // Get more CSS-related properties for an element (non-integer).
 Util.getDOMStyles = function(elem) {
   var styles = elem.getBoundingClientRect();
-  if(!styles.width) styles.width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
-  if(!styles.height) styles.height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));
+  if (!styles.width) {
+    styles.width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
+  }
+  if (!styles.height) {
+    styles.height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));
+  }
   styles.position = getComputedStyle(elem.domElement).getPropertyValue('position');
   styles.zIndex = getComputedStyle(elem).getPropertyValue('zIndex');
   return styles;
@@ -1194,14 +1246,14 @@ Util.getDOMStyles = function(elem) {
 
 // Move our drawing canvas out of the DOM, and hide the DOM.
 Util.hideDOM = function(canvas, domContainer) {
-  console.log("in hideDOM with selector:" + domContainer);
+  console.log('in hideDOM with selector:' + domContainer);
   this.moveCanvas(canvas);
   document.getElementsByClassName(domContainer)[0].style.display = 'none';
 };
 
 // Return our drawing canvs to its DOM location, and show the DOM;
 Util.showDOM = function(canvas, domContainer) {
-  console.log("in showDOM with selector:" + domContainer);
+  console.log('in showDOM with selector:' + domContainer);
   this.moveCanvas(canvas);
   document.getElementsByClassName(domContainer)[0].style.display = 'block';
 };
@@ -1522,11 +1574,18 @@ function WebVRManager(renderer, effect, params) {
 
   // Save the THREE.js renderer and effect for later.
   this.containerClass = params.containerClass; //wrapper for hiding DOM
+
+  // Record whether we have the canvas embeded in a standard DOM, or standalone.
+  this.hasDOM = Util.isThereADOM();
+
   this.renderer = renderer;
   this.effect = effect;
   this.distorter = new CardboardDistorter(renderer);
-  this.player = new PlayerManager(renderer.domElement, '', params.caption);
+
+  // Player wraps the canvas.
+  this.player = new PlayerManager(renderer.domElement, params);
   this.button = this.player.controls;
+
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
@@ -1809,15 +1868,18 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
 WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   var canvas = this.renderer.domElement;
   var size = this.renderer.getSize();
-  if(this.mode == Modes.NORMAL) {
+
+  if(this.hasDOM) {
+    // Check the last size of the Player. 
     var style = this.player.canvasStyle;
     if(size.width != style.width || size.height != style.height) {
       camera.aspect = style.width / style.height;
+
+      // We can't use CSS to style when using THREE.js.
       this.renderer.setSize(style.width, style.height);
       this.player.saveCanvasStyle();
     }
-  }
-  else {
+  } else {
     if(size.width != window.innerWidth || size.height != window.innerHeight) {
       camera.aspect = window.innerWidth / window.innerHeight;
     }
@@ -1827,7 +1889,7 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
 };
 
 WebVRManager.prototype.resize_ = function() {
-  if(this.mode == Modes.NORMAL) {
+  if(this.hasDOM) {
     var style = this.player.canvasStyle;
     this.effect.setSize(style.width, style.height);
   } else {

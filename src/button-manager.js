@@ -20,28 +20,27 @@ var Util = require('./util.js');
 
 /**
  * Everything having to do with the WebVR button.
- * Emits a 'click' event when it's clicked. 
+ * Emits a 'click' event when it's clicked.
  * Buttons wrapped in a control container.
  */
 function ButtonManager(player) {
   this.loadIcons_();
 
-  // Make a container for the Buttons, sibling to the display canvas (which can't have visible child elements).
-  var ctlsContainer = player.getElementsByClassName(Util.containerClasses.controls)[0];
-  if(ctlsContainer) {
-    if(!(ctlsContainer.className.indexOf(Util.containerClasses.controls) >= 0)) {
-      ctlsContainer.className += (' ' + Util.containerClasses.controls);
-    }
-  }
-  else {
+  // Make a container for the Buttons, a sibling to the display canvas (which can't have visible child elements).
+  this.dom = player.getElementsByClassName(Util.containerClasses.controls)[0];
+  if (!this.dom) {
     // No Button container exists, make one.
-    ctlsContainer = document.createElement('div');
-    ctlsContainer.className = Util.containerClasses.controls;
-    ctlsContainer.style.position = 'absolute';
-    ctlsContainer.style.width = "144px";
-    ctlsContainer.style.border = "1px solid red";
-    player.appendChild(ctlsContainer);
+    this.dom = document.createElement('div');
+    this.dom.className = Util.containerClasses.controls;
+    player.appendChild(this.dom);
   }
+
+  // Set the styles for the control container.
+  this.dom.style.position = 'absolute';
+  this.dom.style.width = '100%';
+  this.dom.style.border = '1px solid red';
+  this.dom.style.bottom = 0;
+  this.dom.style.right = 0;
 
   // Make the fullscreen button.
   var fsButton = this.createButton();
@@ -51,8 +50,11 @@ function ButtonManager(player) {
   s.bottom = 0;
   s.right = 0;
   fsButton.addEventListener('click', this.createClickHandler_('fs'));
-  ctlsContainer.appendChild(fsButton);
+  this.dom.appendChild(fsButton);
   this.fsButton = fsButton;
+
+  // Use float to right-align variable array of controls in their container.
+  fsButton.style.float = 'right';
 
   // Make the VR button.
   var vrButton = this.createButton();
@@ -60,9 +62,9 @@ function ButtonManager(player) {
   vrButton.title = 'Virtual reality mode';
   var s = vrButton.style;
   s.bottom = 0;
-  s.right = '48px';
+  //s.right = '48px';
   vrButton.addEventListener('click', this.createClickHandler_('vr'));
-  ctlsContainer.appendChild(vrButton);
+  this.dom.appendChild(vrButton);
   this.vrButton = vrButton;
 
   // Make the back button.
@@ -73,7 +75,7 @@ function ButtonManager(player) {
   s.top = 0;
   backButton.src = this.ICONS.back;
   backButton.addEventListener('click', this.createClickHandler_('back'));
-  ctlsContainer.appendChild(backButton);
+  this.dom.appendChild(backButton);
   this.backButton = backButton;
 
   // Make the settings button, but only for mobile.
@@ -86,14 +88,14 @@ function ButtonManager(player) {
   s.zIndex = 0;
   settingsButton.src = this.ICONS.settings;
   settingsButton.addEventListener('click', this.createClickHandler_('settings'));
-  ctlsContainer.appendChild(settingsButton);
+  this.dom.appendChild(settingsButton);
   this.settingsButton = settingsButton;
 
   this.isVisible = true;
 
   this.aligner = new Aligner();
 
-  player.controls = this;
+  return this;
 }
 
 ButtonManager.prototype = new Emitter();
@@ -102,7 +104,7 @@ ButtonManager.prototype.createButton = function(canvas) {
   var button = document.createElement('img');
   button.className = 'webvr-button';
   var s = button.style;
-  s.position = 'absolute';
+  //s.position = 'absolute';
   s.width = '24px'
   s.height = '24px';
   s.backgroundSize = 'cover';

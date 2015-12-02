@@ -41,6 +41,11 @@ Util.isIFrame = function() {
   }
 };
 
+// Get a random number for container ids, if not defined
+Util.getRandom = function(start, end) {
+  return Math.floor(Math.random() * end) + start;
+};
+
 // Set ID and classes on wrapping and Player elements.
 Util.containerClasses = {
   dom: 'webvr-dom-container',
@@ -50,48 +55,52 @@ Util.containerClasses = {
   placeholder: 'webvr-placeholder'
 };
 
-// Get all current DOM children (not descendants) of document.body
-Util.getDOMChildren = function() {
-  return document.querySelectorAll( 'body > *' );
+Util.addClass = function(elem, selector) {
+  if (!(elem.className.indexOf(selector) >= 0)) {
+    if (elem.className == '') {
+      elem.className = selector;
+    } else {
+      elem.className += ' '  + selector;
+    }
+  }
 };
 
-Util.findChildrenByType = function(elem, types) {
-	var typeStr, i, arr = [];
-	if(Array.isArray(elem)) {
-		typeStr = types.toString().toUpperCase();
-	}
-	else {
-		typeStr = types;
-	}
-	var children = elem.children;
-	var len = children.length;
-	for(i = 0; i < len; i++) {
-		if(typeStr.indexOf(children[i].tagName) >= 0) {
-			arr.push(children[i]);
-		}
-	}
-  return arr;
-}
+// Get all current DOM children (not descendants) of document.body.
+Util.getDOMChildren = function() {
+  return document.querySelectorAll('body > *');
+};
 
-Util.addClass = function(elem, selector) {
-	 if(!(elem.className.indexOf(selector) >= 0)) {
-	 	if(elem.className == '') elem.className = selector;
-	 	else elem.className += ' '  + selector;
-	 }
-}
+// Find child elements by their tag type.
+Util.findChildrenByType = function(elem, types) {
+  var typeStr;
+  var arr = [];
+  if (Array.isArray(types)) {
+    typeStr = types.toString();
+  } else {
+    typeStr = types;
+  }
+  typeStr = typeStr.toUpperCase();
+  var children = elem.children;
+  var len = children.length;
+  for (var i = 0; i < len; i++) {
+    if (typeStr.indexOf(children[i].tagName) >= 0) {
+      arr.push(children[i]);
+    }
+  }
+  return arr;
+};
 
 // Specific to Boilerplate.
-// Check to see if there are any tags other than <canvas>, <script>, <img> in document.body 
+// Check to see if there are any tags other than <canvas>, <script>, <img> in document.body.
 // Used to keep boilerplate default separate canvas embedded in page layout.
 Util.isThereADOM = function() {
-  var n = this.getDOMChildren(), i=0, j;
-  window.n = n;
-  if(n && n.length > 0) {
-    //these three tags are used by default WebVR boilerplate 
+  var n = this.getDOMChildren();
+  if (n && n.length > 0) {
+    //these three tags are used by default WebVR boilerplate
     var len = n.length;
-    for(i = 0; i < len; i++) {
-      if(n[i].tagName != 'CANVAS' && n[i].tagName != 'SCRIPT' && n[i].tagName != 'IMG') {
-        console.log("Found DOM element, tagname:" + n[i].tagName);
+    for (var i = 0; i < len; i++) {
+      if (n[i].tagName != 'CANVAS' && n[i].tagName != 'SCRIPT' && n[i].tagName != 'IMG') {
+        console.log('found a dom');
         return true;
       }
     }
@@ -99,57 +108,58 @@ Util.isThereADOM = function() {
   return false;
 };
 
-/* 
- * Wrap the entire DOM in a container tag (if not present), and 
- * add a WebVR boilerplate class for show/hide.
- */
+// Wrap the entire DOM in a container tag (if not present), and add classes.
 Util.wrapDOM = function(selector) {
-  if(!selector) selector = Util.containerClasses.dom;
-  var n = this.getDOMChildren(), domCount = 0, i = 0, len  = n.length;
-  //if we have a container,there is only one child, plus possibly scripts
-  if(n && n[0]) {
-      console.log('document has children');
-      for(i = 0; i < len; i++) {
-        if(n[i].tagName != 'SCRIPT') {
-          domCount++;
-        }
+  var n = this.getDOMChildren();
+  var domCount = 0;
+  var len;
+
+  // Assign default CSS selector if necessary
+  if (!selector) {
+    selector = Util.containerClasses.dom;
+  }
+
+  //if we have a container,there is only one DOM child, plus <scripts>
+  if (n && n[0]) {
+    len = n.length;
+    for (var i = 0; i < len; i++) {
+      if (n[i].tagName != 'SCRIPT') {
+        domCount++;
       }
-      console.log("domCount:" + domCount);
-      if(domCount == 1) {
-        console.log('only one element visible, don\'t need to wrap');
-        //only one child of document.body -which can be a container
-        if(!(n.className.indexOf(selector) >= 0)) {
+    }
+
+    if (domCount == 1) {
+      console.log('only one element visible, don\'t need to wrap');
+      //only one child of document.body -which can be a container
+      if (!(n.className.indexOf(selector) >= 0)) {
         //add our WebVR class to the container
-          console.log('adding webvr class' + selector + to )
-          n[0].className += ' ' + selector; //faster than regex
-          return true;
-        }
+        console.log('adding webvr class' + selector + to);
+        n[0].className += ' ' + selector; //faster than regex
+        return true;
       }
-      else {
-        /* 
-         * catch incorrect manual wrapping (e.g. bad HTML markup, or another 
-         * JS object (e.g. settings) that appends directly to document.body)
-         */
-        var container = document.getElementsByClassName(Util.containerClasses.dom)[0];
-        if(container) {
-          console.log('Warning: defined container class doesn\'t enclose all non-script DOM elements');
-          for(i = 0; i < len; i++) {
-            if(n[i] != container && n[i].tagName != 'SCRIPT')
-              container.appendChild(n[i]);
-          }
-          return false;
-        }
-        console.log('need to wrap stuff');
-        var container = document.createElement('div');
-        container.className = selector; i = 1;
-        document.body.appendChild(container);
-        if(container.parentNode == document.body) {
-        for(i = 1; i < len; i++) {
-          if(n[i].tagName != 'SCRIPT') {
+    } else {
+      //catch incorrect manual wrapping (e.g. bad HTML markup)
+      var container = document.getElementsByClassName(Util.containerClasses.dom)[0];
+      if (container) {
+        console.log('Warning: defined container class doesn\'t enclose all non-script DOM elements');
+        for (i = 0; i < len; i++) {
+          if (n[i] != container && n[i].tagName != 'SCRIPT') {
             container.appendChild(n[i]);
           }
         }
-      return true;
+        return false;
+      }
+      console.log('need to wrap stuff');
+      var container = document.createElement('div');
+      container.className = selector; i = 1;
+      document.body.appendChild(container);
+      if (container.parentNode == document.body) {
+        for (i = 1; i < len; i++) {
+          if (n[i].tagName != 'SCRIPT') {
+            container.appendChild(n[i]);
+          }
+        }
+        return true;
       }
     }
   }
@@ -161,11 +171,11 @@ Util.wrapDOM = function(selector) {
 Util.swapNodes = function(elem1, elem2) {
   if (elem1 && elem2) {
     var p1 = elem1.parentNode;
-    var t1 = document.createElement("span");
+    var t1 = document.createElement('span');
     p1.insertBefore(t1, elem1);
 
     var p2 = elem2.parentNode;
-    var t2 = document.createElement("span");
+    var t2 = document.createElement('span');
     p2.insertBefore(t2, elem2);
 
     p1.insertBefore(elem2, t1);
@@ -178,25 +188,29 @@ Util.swapNodes = function(elem1, elem2) {
 
 // Swap canvas out of the DOM to document.body, or return it.
 Util.moveCanvas = function(canvas) {
-  if(this.isThereADOM()) {
+  if (this.isThereADOM()) {
     var placeholder = document.getElementById(Util.containerClasses.placeholder);
-    if(!placeholder) {
-      console.log("there is a DOM, swapping");
+    if (!placeholder) {
+      console.log('there is a DOM to swap, swapping');
       placeholder = document.createElement('span');
       placeholder.id = Util.containerClasses.placeholder;
       document.body.appendChild(placeholder);
     }
     this.swapNodes(canvas, placeholder); //canvas swaps where placeholder was
   } else {
-    console.log("no DOM, don't have to move canvas");
+    console.log('no extra DOM, don\'t need to swap canvas');
   }
 };
 
 // Get more CSS-related properties for an element (non-integer).
 Util.getDOMStyles = function(elem) {
   var styles = elem.getBoundingClientRect();
-  if(!styles.width) styles.width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
-  if(!styles.height) styles.height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));
+  if (!styles.width) {
+    styles.width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
+  }
+  if (!styles.height) {
+    styles.height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));
+  }
   styles.position = getComputedStyle(elem.domElement).getPropertyValue('position');
   styles.zIndex = getComputedStyle(elem).getPropertyValue('zIndex');
   return styles;
@@ -204,14 +218,14 @@ Util.getDOMStyles = function(elem) {
 
 // Move our drawing canvas out of the DOM, and hide the DOM.
 Util.hideDOM = function(canvas, domContainer) {
-  console.log("in hideDOM with selector:" + domContainer);
+  console.log('in hideDOM with selector:' + domContainer);
   this.moveCanvas(canvas);
   document.getElementsByClassName(domContainer)[0].style.display = 'none';
 };
 
 // Return our drawing canvs to its DOM location, and show the DOM;
 Util.showDOM = function(canvas, domContainer) {
-  console.log("in showDOM with selector:" + domContainer);
+  console.log('in showDOM with selector:' + domContainer);
   this.moveCanvas(canvas);
   document.getElementsByClassName(domContainer)[0].style.display = 'block';
 };

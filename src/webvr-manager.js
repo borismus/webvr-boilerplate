@@ -50,11 +50,18 @@ function WebVRManager(renderer, effect, params) {
 
   // Save the THREE.js renderer and effect for later.
   this.containerClass = params.containerClass; //wrapper for hiding DOM
+
+  // Record whether we have the canvas embeded in a standard DOM, or standalone.
+  this.hasDOM = Util.isThereADOM();
+
   this.renderer = renderer;
   this.effect = effect;
   this.distorter = new CardboardDistorter(renderer);
-  this.player = new PlayerManager(renderer.domElement, '', params.caption);
+
+  // Player wraps the canvas.
+  this.player = new PlayerManager(renderer.domElement, params);
   this.button = this.player.controls;
+
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
@@ -337,15 +344,18 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
 WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   var canvas = this.renderer.domElement;
   var size = this.renderer.getSize();
-  if(this.mode == Modes.NORMAL) {
+
+  if(this.hasDOM) {
+    // Check the last size of the Player. 
     var style = this.player.canvasStyle;
     if(size.width != style.width || size.height != style.height) {
       camera.aspect = style.width / style.height;
+
+      // We can't use CSS to style when using THREE.js.
       this.renderer.setSize(style.width, style.height);
       this.player.saveCanvasStyle();
     }
-  }
-  else {
+  } else {
     if(size.width != window.innerWidth || size.height != window.innerHeight) {
       camera.aspect = window.innerWidth / window.innerHeight;
     }
@@ -355,7 +365,7 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
 };
 
 WebVRManager.prototype.resize_ = function() {
-  if(this.mode == Modes.NORMAL) {
+  if(this.hasDOM) {
     var style = this.player.canvasStyle;
     this.effect.setSize(style.width, style.height);
   } else {
