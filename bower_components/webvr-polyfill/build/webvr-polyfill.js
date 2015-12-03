@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +41,7 @@ module.exports.VRDevice = VRDevice;
 module.exports.HMDVRDevice = HMDVRDevice;
 module.exports.PositionSensorVRDevice = PositionSensorVRDevice;
 
-},{}],2:[function(require,module,exports){
+},{}],2:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,7 +56,7 @@ module.exports.PositionSensorVRDevice = PositionSensorVRDevice;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var HMDVRDevice = require('./base.js').HMDVRDevice;
+var HMDVRDevice = _dereq_('./base.js').HMDVRDevice;
 
 // Constants from vrtoolkit: https://github.com/googlesamples/cardboard-java.
 var INTERPUPILLARY_DISTANCE = 0.06;
@@ -107,7 +107,7 @@ CardboardHMDVRDevice.prototype.getEyeParameters = function(whichEye) {
 
 module.exports = CardboardHMDVRDevice;
 
-},{"./base.js":1}],3:[function(require,module,exports){
+},{"./base.js":1}],3:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -126,9 +126,9 @@ module.exports = CardboardHMDVRDevice;
 /**
  * TODO: Fix up all "new THREE" instantiations to improve performance.
  */
-var SensorSample = require('./sensor-sample.js');
-var THREE = require('./three-math.js');
-var Util = require('./util.js');
+var SensorSample = _dereq_('./sensor-sample.js');
+var THREE = _dereq_('./three-math.js');
+var Util = _dereq_('./util.js');
 
 var DEBUG = false;
 
@@ -275,7 +275,7 @@ ComplementaryFilter.prototype.gyroToQuaternionDelta_ = function(gyro, dt) {
 
 module.exports = ComplementaryFilter;
 
-},{"./sensor-sample.js":8,"./three-math.js":9,"./util.js":11}],4:[function(require,module,exports){
+},{"./sensor-sample.js":8,"./three-math.js":9,"./util.js":11}],4:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -290,13 +290,13 @@ module.exports = ComplementaryFilter;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
+var PositionSensorVRDevice = _dereq_('./base.js').PositionSensorVRDevice;
 
-var ComplementaryFilter = require('./complementary-filter.js');
-var PosePredictor = require('./pose-predictor.js');
-var TouchPanner = require('./touch-panner.js');
-var THREE = require('./three-math.js');
-var Util = require('./util.js');
+var ComplementaryFilter = _dereq_('./complementary-filter.js');
+var PosePredictor = _dereq_('./pose-predictor.js');
+var TouchPanner = _dereq_('./touch-panner.js');
+var THREE = _dereq_('./three-math.js');
+var Util = _dereq_('./util.js');
 
 /**
  * The positional sensor, implemented using DeviceMotion APIs.
@@ -444,7 +444,7 @@ FusionPositionSensorVRDevice.prototype.setScreenTransform_ = function() {
 
 module.exports = FusionPositionSensorVRDevice;
 
-},{"./base.js":1,"./complementary-filter.js":3,"./pose-predictor.js":7,"./three-math.js":9,"./touch-panner.js":10,"./util.js":11}],5:[function(require,module,exports){
+},{"./base.js":1,"./complementary-filter.js":3,"./pose-predictor.js":7,"./three-math.js":9,"./touch-panner.js":10,"./util.js":11}],5:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -459,13 +459,13 @@ module.exports = FusionPositionSensorVRDevice;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var WebVRPolyfill = require('./webvr-polyfill.js');
+var WebVRPolyfill = _dereq_('./webvr-polyfill.js');
 
 // Initialize a WebVRConfig just in case.
 window.WebVRConfig = window.WebVRConfig || {};
 new WebVRPolyfill();
 
-},{"./webvr-polyfill.js":12}],6:[function(require,module,exports){
+},{"./webvr-polyfill.js":12}],6:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -480,9 +480,9 @@ new WebVRPolyfill();
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
-var THREE = require('./three-math.js');
-var Util = require('./util.js');
+var PositionSensorVRDevice = _dereq_('./base.js').PositionSensorVRDevice;
+var THREE = _dereq_('./three-math.js');
+var Util = _dereq_('./util.js');
 
 // How much to rotate per key stroke.
 var KEY_SPEED = 0.15;
@@ -635,7 +635,7 @@ MouseKeyboardPositionSensorVRDevice.prototype.resetSensor = function() {
 
 module.exports = MouseKeyboardPositionSensorVRDevice;
 
-},{"./base.js":1,"./three-math.js":9,"./util.js":11}],7:[function(require,module,exports){
+},{"./base.js":1,"./three-math.js":9,"./util.js":11}],7:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -650,7 +650,7 @@ module.exports = MouseKeyboardPositionSensorVRDevice;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var THREE = require('./three-math.js');
+var THREE = _dereq_('./three-math.js');
 
 var DEBUG = false;
 
@@ -718,7 +718,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, gyro, timestampS) {
 
 module.exports = PosePredictor;
 
-},{"./three-math.js":9}],8:[function(require,module,exports){
+},{"./three-math.js":9}],8:[function(_dereq_,module,exports){
 function SensorSample(sample, timestampS) {
   this.set(sample, timestampS);
 };
@@ -734,7 +734,7 @@ SensorSample.prototype.copy = function(sensorSample) {
 
 module.exports = SensorSample;
 
-},{}],9:[function(require,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 /*
  * A subset of THREE.js, providing mostly quaternion and euler-related
  * operations, manually lifted from
@@ -3029,7 +3029,7 @@ THREE.Math = {
 
 module.exports = THREE;
 
-},{}],10:[function(require,module,exports){
+},{}],10:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -3044,7 +3044,8 @@ module.exports = THREE;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var THREE = require('./three-math.js');
+var THREE = _dereq_('./three-math.js');
+var Util = _dereq_('./util.js');
 
 var ROTATE_SPEED = 0.5;
 /**
@@ -3091,6 +3092,11 @@ TouchPanner.prototype.onTouchMove_ = function(e) {
   this.rotateDelta.subVectors(this.rotateEnd, this.rotateStart);
   this.rotateStart.copy(this.rotateEnd);
 
+  // On iOS, direction is inverted.
+  if (Util.isIOS()) {
+    this.rotateDelta.x *= -1;
+  }
+
   var element = document.body;
   this.theta += 2 * Math.PI * this.rotateDelta.x / element.clientWidth * ROTATE_SPEED;
 };
@@ -3101,7 +3107,7 @@ TouchPanner.prototype.onTouchEnd_ = function(e) {
 
 module.exports = TouchPanner;
 
-},{"./three-math.js":9}],11:[function(require,module,exports){
+},{"./three-math.js":9,"./util.js":11}],11:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -3149,7 +3155,7 @@ Util.isTimestampDeltaValid = function(timestampDeltaS) {
 
 module.exports = Util;
 
-},{}],12:[function(require,module,exports){
+},{}],12:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -3165,14 +3171,14 @@ module.exports = Util;
  * limitations under the License.
  */
 
-var CardboardHMDVRDevice = require('./cardboard-hmd-vr-device.js');
+var CardboardHMDVRDevice = _dereq_('./cardboard-hmd-vr-device.js');
 //var OrientationPositionSensorVRDevice = require('./orientation-position-sensor-vr-device.js');
-var FusionPositionSensorVRDevice = require('./fusion-position-sensor-vr-device.js');
-var MouseKeyboardPositionSensorVRDevice = require('./mouse-keyboard-position-sensor-vr-device.js');
+var FusionPositionSensorVRDevice = _dereq_('./fusion-position-sensor-vr-device.js');
+var MouseKeyboardPositionSensorVRDevice = _dereq_('./mouse-keyboard-position-sensor-vr-device.js');
 // Uncomment to add positional tracking via webcam.
 //var WebcamPositionSensorVRDevice = require('./webcam-position-sensor-vr-device.js');
-var HMDVRDevice = require('./base.js').HMDVRDevice;
-var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
+var HMDVRDevice = _dereq_('./base.js').HMDVRDevice;
+var PositionSensorVRDevice = _dereq_('./base.js').PositionSensorVRDevice;
 
 function WebVRPolyfill() {
   this.devices = [];
@@ -3198,7 +3204,9 @@ WebVRPolyfill.prototype.enablePolyfill = function() {
     //this.devices.push(new OrientationPositionSensorVRDevice());
     this.devices.push(new FusionPositionSensorVRDevice());
   } else {
-    this.devices.push(new MouseKeyboardPositionSensorVRDevice());
+    if (!WebVRConfig.MOUSE_KEYBOARD_CONTROLS_DISABLED) {
+      this.devices.push(new MouseKeyboardPositionSensorVRDevice());
+    }
     // Uncomment to add positional tracking via webcam.
     //this.devices.push(new WebcamPositionSensorVRDevice());
   }

@@ -76,14 +76,14 @@ var AndroidDevices = {
 
 var Viewers = {
   CardboardV1: new CardboardViewer({
-    name: 'Cardboard V1',
+    name: 'Cardboard 2014 (Magnet)',
     fov: 40,
     ipdMm: 60,
     baselineLensCenterMm: 37.26,
     distortionCoefficients: [0.441, 0.156]
   }),
   CardboardV2: new CardboardViewer({
-    name: 'Cardboard V2',
+    name: 'Cardboard 2015 (Button)',
     fov: 60,
     ipdMm: 64,
     baselineLensCenterMm: 37.26,

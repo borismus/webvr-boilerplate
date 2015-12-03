@@ -149,7 +149,6 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
-WebVRManager.Util = Util;
 
 /**
  * Promise returns true if there is at least one HMD device available.
@@ -455,6 +454,31 @@ WebVRManager.prototype.exitFullscreen_ = function() {
     document.webkitExitFullscreen();
   }
   Util.showDOM(canvas, Util.containerClasses.dom);
+};
+
+WebVRManager.prototype.onViewerChanged_ = function(viewer) {
+  this.emit('viewerchange', viewer);
+
+  // Set the proper coefficients.
+  this.distorter.setDistortionCoefficients(viewer.distortionCoefficients);
+
+  // And update the camera FOV.
+  this.setCardboardFov_(viewer.fov);
+};
+
+/**
+ * Sets the FOV of the CardboardHMDVRDevice. These changes are ultimately
+ * handled by VREffect.
+ */
+WebVRManager.prototype.setCardboardFov_ = function(fov) {
+  this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
+    if (hmd) {
+      hmd.fov.upDegrees = fov;
+      hmd.fov.downDegrees = fov;
+      hmd.fov.leftDegrees = fov;
+      hmd.fov.rightDegrees = fov;
+    }
+  });
 };
 
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {

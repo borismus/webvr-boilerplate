@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var Emitter = require('./emitter.js');
 var Util = require('./util.js');
 
@@ -17,7 +32,7 @@ function ViewerSelector(options) {
   this.selectedKey = localStorage[VIEWER_KEY] || DEFAULT_VIEWER;
   this.dialog = this.createDialog_(options);
   this.options = options;
-  ///document.body.appendChild(this.dialog);
+  document.body.appendChild(this.dialog);
 }
 ViewerSelector.prototype = new Emitter();
 
@@ -53,7 +68,12 @@ ViewerSelector.prototype.onSave_ = function() {
   }
 
   this.emit('change', this.options[this.selectedKey]);
-  localStorage[VIEWER_KEY] = this.selectedKey;
+  // Attempt to save the viewer profile, but fails in private mode.
+  try {
+    localStorage[VIEWER_KEY] = this.selectedKey;
+  } catch(error) {
+    console.error('Failed to save viewer profile: %s', error);
+  }
   this.hide();
 };
 
@@ -90,7 +110,7 @@ ViewerSelector.prototype.createDialog_ = function(options) {
   s.fontFamily = "'Roboto', sans-serif";
   s.boxShadow = '0px 5px 20px #666';
 
-  dialog.appendChild(this.createH1_('Select viewer profile'));
+  dialog.appendChild(this.createH1_('Select your viewer'));
   for (var id in options) {
     dialog.appendChild(this.createChoice_(id, options[id].name));
   }
@@ -106,8 +126,8 @@ ViewerSelector.prototype.createH1_ = function(name) {
   var h1 = document.createElement('h1');
   var s = h1.style;
   s.color = 'black';
-  s.fontSize = '24px';
-  s.fontWeight = '500';
+  s.fontSize = '20px';
+  s.fontWeight = 'bold';
   s.marginTop = 0;
   s.marginBottom = '24px';
   h1.innerHTML = name;
@@ -154,6 +174,7 @@ ViewerSelector.prototype.createButton_ = function(label, onclick) {
   s.letterSpacing = 0;
   s.border = 0;
   s.background = 'none';
+  s.marginTop = '16px';
 
   button.addEventListener('click', onclick);
 

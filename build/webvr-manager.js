@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /**
  * Responsible for showing the vertical alignment UI that separates left and
  * right eye images.
@@ -13,7 +13,9 @@ function Aligner() {
   s.bottom = '48px';
   s.left = '50%';
   s.display = 'none';
-  s.marginLeft = '-1px';
+  s.marginLeft = '-2px';
+  s.border = '1px solid black';
+  s.borderTop = '0px';
   this.el = el;
 
   document.body.appendChild(el);
@@ -29,7 +31,7 @@ Aligner.prototype.hide = function() {
 
 module.exports = Aligner;
 
-},{}],2:[function(require,module,exports){
+},{}],2:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,10 +47,10 @@ module.exports = Aligner;
  * limitations under the License.
  */
 
-var Aligner = require('./aligner.js');
-var Emitter = require('./emitter.js');
-var Modes = require('./modes.js');
-var Util = require('./util.js');
+var Aligner = _dereq_('./aligner.js');
+var Emitter = _dereq_('./emitter.js');
+var Modes = _dereq_('./modes.js');
+var Util = _dereq_('./util.js');
 
 /**
  * Everything having to do with the WebVR button.
@@ -196,7 +198,8 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
       // VR at the moment.
       this.backButton.style.display = Util.isFirefox() ? 'none' : 'block';
       // Only show the settings button on mobile.
-      this.settingsButton.style.display = Util.isMobile() ? 'block' : 'none';
+      var isSettingsVisible = Util.isMobile() || WebVRConfig.FORCE_ENABLE_VR;
+      this.settingsButton.style.display = isSettingsVisible ? 'block' : 'none';
       this.aligner.show();
       break;
   }
@@ -236,7 +239,7 @@ ButtonManager.prototype.loadIcons_ = function() {
 
 module.exports = ButtonManager;
 
-},{"./aligner.js":1,"./emitter.js":6,"./modes.js":8,"./util.js":11}],3:[function(require,module,exports){
+},{"./aligner.js":1,"./emitter.js":6,"./modes.js":8,"./util.js":10}],3:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -252,8 +255,8 @@ module.exports = ButtonManager;
  * limitations under the License.
  */
 
-var BarrelDistortion = require('./distortion/barrel-distortion-fragment.js');
-var DeviceInfo = require('./device-info.js');
+var BarrelDistortion = _dereq_('./distortion/barrel-distortion-fragment.js');
+var DeviceInfo = _dereq_('./device-info.js');
 
 var deviceInfo = new DeviceInfo();
 
@@ -287,8 +290,7 @@ function createRenderTarget(renderer) {
     minFilter: THREE.LinearFilter,
     magFilter: THREE.LinearFilter,
     format: THREE.RGBFormat,
-    stencilBuffer: false,
-    depthBuffer: false
+    stencilBuffer: false
   };
 
   return new THREE.WebGLRenderTarget(width, height, parameters);
@@ -325,13 +327,13 @@ CardboardDistorter.prototype.patch = function() {
   if (!this.isActive) {
     return;
   }
-  this.textureTarget = createRenderTarget(renderer);
+  this.textureTarget = createRenderTarget(this.renderer);
 
   this.renderer.render = function(scene, camera, renderTarget, forceClear) {
     this.genuineRender.call(this.renderer, scene, camera, this.textureTarget, forceClear);
   }.bind(this);
 
-  renderer.setSize = function(width, height) {
+  this.renderer.setSize = function(width, height) {
     this.genuineSetSize.call(this.renderer, width, height);
     this.textureTarget = createRenderTarget(this.renderer);
   }.bind(this);
@@ -358,7 +360,7 @@ CardboardDistorter.prototype.postRender = function() {
   }
   var size = this.renderer.getSize();
   this.renderer.setViewport(0, 0, size.width, size.height);
-  this.shaderPass.render(this.genuineRender.bind(renderer), this.textureTarget);
+  this.shaderPass.render(this.genuineRender.bind(this.renderer), this.textureTarget);
 };
 
 /**
@@ -380,7 +382,7 @@ CardboardDistorter.prototype.setDistortionCoefficients = function(coefficients) 
 
 module.exports = CardboardDistorter;
 
-},{"./device-info.js":4,"./distortion/barrel-distortion-fragment.js":5}],4:[function(require,module,exports){
+},{"./device-info.js":4,"./distortion/barrel-distortion-fragment.js":5}],4:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -396,7 +398,7 @@ module.exports = CardboardDistorter;
  * limitations under the License.
  */
 
-var Util = require('./util.js');
+var Util = _dereq_('./util.js');
 
 // Display width, display height and bevel measurements done on real phones.
 // Resolutions from http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions
@@ -459,14 +461,14 @@ var AndroidDevices = {
 
 var Viewers = {
   CardboardV1: new CardboardViewer({
-    name: 'Cardboard V1',
+    name: 'Cardboard 2014 (Magnet)',
     fov: 40,
     ipdMm: 60,
     baselineLensCenterMm: 37.26,
     distortionCoefficients: [0.441, 0.156]
   }),
   CardboardV2: new CardboardViewer({
-    name: 'Cardboard V2',
+    name: 'Cardboard 2015 (Button)',
     fov: 60,
     ipdMm: 64,
     baselineLensCenterMm: 37.26,
@@ -599,7 +601,7 @@ function CardboardViewer(params) {
 DeviceInfo.Viewers = Viewers;
 module.exports = DeviceInfo;
 
-},{"./util.js":11}],5:[function(require,module,exports){
+},{"./util.js":10}],5:[function(_dereq_,module,exports){
 var BarrelDistortionFragment = {
   type: 'fragment',
 
@@ -656,7 +658,11 @@ var BarrelDistortionFragment = {
 
 module.exports = BarrelDistortionFragment;
 
+<<<<<<< HEAD
 },{}],6:[function(require,module,exports){
+=======
+},{}],6:[function(_dereq_,module,exports){
+>>>>>>> borismus/master
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -700,7 +706,7 @@ Emitter.prototype.on = function(eventName, callback) {
 
 module.exports = Emitter;
 
-},{}],7:[function(require,module,exports){
+},{}],7:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -716,12 +722,12 @@ module.exports = Emitter;
  * limitations under the License.
  */
 
-var WebVRManager = require('./webvr-manager.js');
+var WebVRManager = _dereq_('./webvr-manager.js');
 
 window.WebVRConfig = window.WebVRConfig || {};
 window.WebVRManager = WebVRManager;
 
-},{"./webvr-manager.js":14}],8:[function(require,module,exports){
+},{"./webvr-manager.js":13}],8:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -903,7 +909,7 @@ PlayerManager.prototype.loadIcons_ = function() {
 
 module.exports = PlayerManager;
 
-},{"./button-manager.js":2,"./emitter.js":6,"./modes.js":8,"./util.js":11}],10:[function(require,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -919,7 +925,7 @@ module.exports = PlayerManager;
  * limitations under the License.
  */
 
-var Util = require('./util.js');
+var Util = _dereq_('./util.js');
 
 function RotateInstructions() {
   this.loadIcon_();
@@ -1027,7 +1033,7 @@ RotateInstructions.prototype.loadIcon_ = function() {
 
 module.exports = RotateInstructions;
 
-},{"./util.js":11}],11:[function(require,module,exports){
+},{"./util.js":10}],10:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1447,7 +1453,7 @@ ViewerSelector.prototype.createButton_ = function(label, onclick) {
 
 module.exports = ViewerSelector;
 
-},{"./emitter.js":6,"./util.js":11}],13:[function(require,module,exports){
+},{}],11:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1463,7 +1469,194 @@ module.exports = ViewerSelector;
  * limitations under the License.
  */
 
-var Util = require('./util.js');
+var Emitter = _dereq_('./emitter.js');
+var Util = _dereq_('./util.js');
+
+var DEFAULT_VIEWER = 'CardboardV1';
+var VIEWER_KEY = 'WEBVR_CARDBOARD_VIEWER';
+
+/**
+ * Creates a viewer selector with the options specified. Supports being shown
+ * and hidden. Generates events when viewer parameters change. Also supports
+ * saving the currently selected index in localStorage.
+ *
+ * @param {Object} options Option labels for all valid selections {name: index}.
+ */
+function ViewerSelector(options) {
+  // Try to load the selected key from local storage. If none exists, use the
+  // default key.
+  this.selectedKey = localStorage[VIEWER_KEY] || DEFAULT_VIEWER;
+  this.dialog = this.createDialog_(options);
+  this.options = options;
+  document.body.appendChild(this.dialog);
+}
+ViewerSelector.prototype = new Emitter();
+
+ViewerSelector.prototype.show = function() {
+  //console.log('ViewerSelector.show');
+
+  // Ensure the currently selected item is checked.
+  var selected = this.dialog.querySelector('#' + this.selectedKey);
+  selected.checked = true;
+
+  // Show the UI.
+  this.dialog.style.display = 'block';
+};
+
+ViewerSelector.prototype.hide = function() {
+  //console.log('ViewerSelector.hide');
+  this.dialog.style.display = 'none';
+};
+
+ViewerSelector.prototype.getSelectedKey_ = function() {
+  var input = this.dialog.querySelector('input[name=field]:checked');
+  if (input) {
+    return input.id;
+  }
+  return null;
+};
+
+ViewerSelector.prototype.onSave_ = function() {
+  this.selectedKey = this.getSelectedKey_();
+  if (!this.selectedKey || !this.options[this.selectedKey]) {
+    console.error('ViewerSelector.onSave_: this should never happen!');
+    return;
+  }
+
+  this.emit('change', this.options[this.selectedKey]);
+
+  // Attempt to save the viewer profile, but fails in private mode.
+  try {
+    localStorage[VIEWER_KEY] = this.selectedKey;
+  } catch(error) {
+    console.error('Failed to save viewer profile: %s', error);
+  }
+  this.hide();
+};
+
+/**
+ * Creates the dialog.
+ */
+ViewerSelector.prototype.createDialog_ = function(options) {
+  var container = document.createElement('div');
+  container.style.display = 'none';
+  // Create an overlay that dims the background, and which goes away when you
+  // tap it.
+  var overlay = document.createElement('div');
+  var s = overlay.style;
+  s.position = 'fixed';
+  s.left = 0;
+  s.top = 0;
+  s.width = '100%';
+  s.height = '100%';
+  s.background = 'rgba(0, 0, 0, 0.3)';
+  overlay.addEventListener('click', this.hide.bind(this));
+
+  var width = 280;
+  var dialog = document.createElement('div');
+  var s = dialog.style;
+  s.boxSizing = 'border-box';
+  s.position = 'fixed';
+  s.top = '24px';
+  s.left = '50%';
+  s.marginLeft = (-width/2) + 'px';
+  s.width = width + 'px';
+  s.padding = '24px';
+  s.overflow = 'hidden';
+  s.background = '#fafafa';
+  s.fontFamily = "'Roboto', sans-serif";
+  s.boxShadow = '0px 5px 20px #666';
+
+  dialog.appendChild(this.createH1_('Select your viewer'));
+  for (var id in options) {
+    dialog.appendChild(this.createChoice_(id, options[id].name));
+  }
+  dialog.appendChild(this.createButton_('Save', this.onSave_.bind(this)));
+
+  container.appendChild(overlay);
+  container.appendChild(dialog);
+
+  return container;
+};
+
+ViewerSelector.prototype.createH1_ = function(name) {
+  var h1 = document.createElement('h1');
+  var s = h1.style;
+  s.color = 'black';
+  s.fontSize = '20px';
+  s.fontWeight = 'bold';
+  s.marginTop = 0;
+  s.marginBottom = '24px';
+  h1.innerHTML = name;
+  return h1;
+};
+
+ViewerSelector.prototype.createChoice_ = function(id, name) {
+  /*
+  <div class="choice">
+  <input id="v1" type="radio" name="field" value="v1">
+  <label for="v1">Cardboard V1</label>
+  </div>
+  */
+  var div = document.createElement('div');
+  div.style.marginTop = '8px';
+  div.style.color = 'black';
+
+  var input = document.createElement('input');
+  input.style.fontSize = '30px';
+  input.setAttribute('id', id);
+  input.setAttribute('type', 'radio');
+  input.setAttribute('value', id);
+  input.setAttribute('name', 'field');
+
+  var label = document.createElement('label');
+  label.style.marginLeft = '4px';
+  label.setAttribute('for', id);
+  label.innerHTML = name;
+
+  div.appendChild(input);
+  div.appendChild(label);
+
+  return div;
+};
+
+ViewerSelector.prototype.createButton_ = function(label, onclick) {
+  var button = document.createElement('button');
+  button.innerHTML = label;
+  var s = button.style;
+  s.float = 'right';
+  s.textTransform = 'uppercase';
+  s.color = '#1094f7';
+  s.fontSize = '14px';
+  s.letterSpacing = 0;
+  s.border = 0;
+  s.background = 'none';
+  s.marginTop = '16px';
+
+  button.addEventListener('click', onclick);
+
+  return button;
+};
+
+module.exports = ViewerSelector;
+
+},{"./emitter.js":6,"./util.js":10}],12:[function(_dereq_,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+var Util = _dereq_('./util.js');
 
 /**
  * Android and iOS compatible wakelock implementation.
@@ -1523,7 +1716,7 @@ function getWakeLock() {
 
 module.exports = getWakeLock();
 
-},{"./util.js":11}],14:[function(require,module,exports){
+},{"./util.js":10}],13:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1675,7 +1868,6 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
-WebVRManager.Util = Util;
 
 /**
  * Promise returns true if there is at least one HMD device available.
@@ -2008,6 +2200,31 @@ WebVRManager.prototype.setCardboardFov_ = function(fov) {
   });
 };
 
+WebVRManager.prototype.onViewerChanged_ = function(viewer) {
+  this.emit('viewerchange', viewer);
+
+  // Set the proper coefficients.
+  this.distorter.setDistortionCoefficients(viewer.distortionCoefficients);
+
+  // And update the camera FOV.
+  this.setCardboardFov_(viewer.fov);
+};
+
+/**
+ * Sets the FOV of the CardboardHMDVRDevice. These changes are ultimately
+ * handled by VREffect.
+ */
+WebVRManager.prototype.setCardboardFov_ = function(fov) {
+  this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
+    if (hmd) {
+      hmd.fov.upDegrees = fov;
+      hmd.fov.downDegrees = fov;
+      hmd.fov.leftDegrees = fov;
+      hmd.fov.rightDegrees = fov;
+    }
+  });
+};
+
 module.exports = WebVRManager;
 
-},{"./button-manager.js":2,"./cardboard-distorter.js":3,"./device-info.js":4,"./emitter.js":6,"./modes.js":8,"./player-manager.js":9,"./rotate-instructions.js":10,"./util.js":11,"./viewer-selector.js":12,"./wakelock.js":13}]},{},[7]);
+},{"./button-manager.js":2,"./cardboard-distorter.js":3,"./device-info.js":4,"./emitter.js":6,"./modes.js":8,"./rotate-instructions.js":9,"./util.js":10,"./viewer-selector.js":11,"./wakelock.js":12}]},{},[7]);

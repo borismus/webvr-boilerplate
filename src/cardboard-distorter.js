@@ -48,8 +48,7 @@ function createRenderTarget(renderer) {
     minFilter: THREE.LinearFilter,
     magFilter: THREE.LinearFilter,
     format: THREE.RGBFormat,
-    stencilBuffer: false,
-    depthBuffer: false
+    stencilBuffer: false
   };
 
   return new THREE.WebGLRenderTarget(width, height, parameters);
@@ -86,13 +85,21 @@ CardboardDistorter.prototype.patch = function() {
   if (!this.isActive) {
     return;
   }
+<<<<<<< HEAD
   this.textureTarget = createRenderTarget(renderer);
+=======
+  this.textureTarget = createRenderTarget(this.renderer);
+>>>>>>> borismus/master
 
   this.renderer.render = function(scene, camera, renderTarget, forceClear) {
     this.genuineRender.call(this.renderer, scene, camera, this.textureTarget, forceClear);
   }.bind(this);
 
+<<<<<<< HEAD
   renderer.setSize = function(width, height) {
+=======
+  this.renderer.setSize = function(width, height) {
+>>>>>>> borismus/master
     this.genuineSetSize.call(this.renderer, width, height);
     this.textureTarget = createRenderTarget(this.renderer);
   }.bind(this);
@@ -119,7 +126,11 @@ CardboardDistorter.prototype.postRender = function() {
   }
   var size = this.renderer.getSize();
   this.renderer.setViewport(0, 0, size.width, size.height);
+<<<<<<< HEAD
   this.shaderPass.render(this.genuineRender.bind(renderer), this.textureTarget);
+=======
+  this.shaderPass.render(this.genuineRender.bind(this.renderer), this.textureTarget);
+>>>>>>> borismus/master
 };
 
 /**

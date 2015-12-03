@@ -12,7 +12,9 @@ function Aligner() {
   s.bottom = '48px';
   s.left = '50%';
   s.display = 'none';
-  s.marginLeft = '-1px';
+  s.marginLeft = '-2px';
+  s.border = '1px solid black';
+  s.borderTop = '0px';
   this.el = el;
 
   document.body.appendChild(el);
