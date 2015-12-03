@@ -53,9 +53,6 @@ function ButtonManager(player) {
   this.dom.appendChild(fsButton);
   this.fsButton = fsButton;
 
-  // Use float to right-align variable array of controls in their container.
-  fsButton.style.float = 'right';
-
   // Make the VR button.
   var vrButton = this.createButton();
   vrButton.src = this.ICONS.cardboard;
@@ -67,6 +64,8 @@ function ButtonManager(player) {
   this.dom.appendChild(vrButton);
   this.vrButton = vrButton;
 
+  vrButton.style.float = 'right';
+
   // Make the back button.
   var backButton = this.createButton();
   backButton.title = 'Back to previous mode';
@@ -77,6 +76,9 @@ function ButtonManager(player) {
   backButton.addEventListener('click', this.createClickHandler_('back'));
   this.dom.appendChild(backButton);
   this.backButton = backButton;
+
+  // Use float to right-align variable array of controls in their container.
+  fsButton.style.float = 'right';
 
   // Make the settings button, but only for mobile.
   var settingsButton = this.createButton();

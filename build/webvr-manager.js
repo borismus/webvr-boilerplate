@@ -53,7 +53,7 @@ var Util = require('./util.js');
 /**
  * Everything having to do with the WebVR button.
  * Emits a 'click' event when it's clicked.
- * Buttons wrapped in a control container.
+ * Buttons are wrapped in a control container.
  */
 function ButtonManager(player) {
   this.loadIcons_();
@@ -85,9 +85,6 @@ function ButtonManager(player) {
   this.dom.appendChild(fsButton);
   this.fsButton = fsButton;
 
-  // Use float to right-align variable array of controls in their container.
-  fsButton.style.float = 'right';
-
   // Make the VR button.
   var vrButton = this.createButton();
   vrButton.src = this.ICONS.cardboard;
@@ -99,6 +96,8 @@ function ButtonManager(player) {
   this.dom.appendChild(vrButton);
   this.vrButton = vrButton;
 
+  vrButton.style.float = 'right';
+
   // Make the back button.
   var backButton = this.createButton();
   backButton.title = 'Back to previous mode';
@@ -109,6 +108,9 @@ function ButtonManager(player) {
   backButton.addEventListener('click', this.createClickHandler_('back'));
   this.dom.appendChild(backButton);
   this.backButton = backButton;
+
+  // Use float to right-align variable array of controls in their container.
+  fsButton.style.float = 'right';
 
   // Make the settings button, but only for mobile.
   var settingsButton = this.createButton();
@@ -769,7 +771,7 @@ var ButtonManager = require('./button-manager.js');
 var Util = require('./util.js');
 
 /**
- * The Player is a wrapper for the VR-enabled canvas, 
+ * The Player is a wrapper for a VR-enabled canvas, 
  * plus its controls. It is implemented as an html5
  * <figure> element with a <figcaption> describing 
  * the VR scene. It also stores the last known style 
