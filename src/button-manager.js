@@ -38,7 +38,7 @@ function ButtonManager(player) {
   // Set the styles for the control container.
   this.dom.style.position = 'absolute';
   this.dom.style.width = '100%';
-  this.dom.style.border = '1px solid red';
+  //this.dom.style.border = '1px solid red';
   this.dom.style.bottom = 0;
   this.dom.style.right = 0;
 
