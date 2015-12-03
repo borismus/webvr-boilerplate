@@ -55,7 +55,7 @@ function WebVRManager(renderer, effect, params) {
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
-  console.log('Using the %s viewer.', this.getViewer().name);
+  console.log('Using the %s viewer.', this.getViewer().label);
 
   this.isVRCompatible = false;
   this.isFullscreenDisabled = !!Util.getQueryParameter('no_fullscreen');

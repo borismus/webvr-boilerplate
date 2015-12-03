@@ -113,7 +113,7 @@ ViewerSelector.prototype.createDialog_ = function(options) {
 
   dialog.appendChild(this.createH1_('Select your viewer'));
   for (var id in options) {
-    dialog.appendChild(this.createChoice_(id, options[id].name));
+    dialog.appendChild(this.createChoice_(id, options[id].label));
   }
   dialog.appendChild(this.createButton_('Save', this.onSave_.bind(this)));
 
