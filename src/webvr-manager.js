@@ -347,6 +347,8 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
   //this.onResize_();
 };
 
+// Mode all resizes to window resize event.
+// TODO: throttle resize when window size is changed rapidly
 WebVRManager.prototype.onResize_ = function() {
   var width; 
   var height;
@@ -453,6 +455,8 @@ WebVRManager.prototype.requestFullscreen_ = function() {
     canvas.mozRequestFullScreen({vrDisplay: this.hmd});
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
+  } else if (docElm.msRequestFullscreen) { //Internet Explorer
+    docElm.msRequestFullscreen();
   }
   // Note: we aren't fullscreen yet! Trap with window resize event
 };
@@ -465,6 +469,8 @@ WebVRManager.prototype.exitFullscreen_ = function() {
     document.mozCancelFullScreen();
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) { //Internet Explorer
+    document.msExitFullscreen();
   }
   this.player.exitFullScreen();
 };

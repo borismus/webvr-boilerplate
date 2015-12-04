@@ -94,7 +94,9 @@ Util.findChildrenByType = function(elem, types) {
 // Specific to Boilerplate.
 // Check to see if there are any tags other than <canvas>, <script>, <img> in document.body.
 // Used to keep boilerplate default separate canvas embedded in page layout.
+// Note: this will return TRUE after the Player wraps a 'naked' canvas during initialization!
 Util.isThereADOM = function() {
+  console.log('running istheradom');
   var n = this.getDOMChildren();
   if (n && n.length > 0) {
     //these three tags are used by default WebVR boilerplate
@@ -106,6 +108,7 @@ Util.isThereADOM = function() {
       }
     }
   }
+  console.log('no dom besides canvas');
   return false;
 };
 

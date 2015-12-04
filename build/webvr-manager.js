@@ -1186,7 +1186,9 @@ Util.findChildrenByType = function(elem, types) {
 // Specific to Boilerplate.
 // Check to see if there are any tags other than <canvas>, <script>, <img> in document.body.
 // Used to keep boilerplate default separate canvas embedded in page layout.
+// Note: this will return TRUE after the Player wraps a 'naked' canvas during initialization!
 Util.isThereADOM = function() {
+  console.log('running istheradom');
   var n = this.getDOMChildren();
   if (n && n.length > 0) {
     //these three tags are used by default WebVR boilerplate
@@ -1198,6 +1200,7 @@ Util.isThereADOM = function() {
       }
     }
   }
+  console.log('no dom besides canvas');
   return false;
 };
 
@@ -1950,6 +1953,7 @@ WebVRManager.prototype.vrToMagicWindow_ = function() {
   this.distorter.unpatch();
 
   // Android bug: when returning from VR, resize the effect.
+  // NOTE: using the reSize event, we automatically capture this.
   ////////////this.resize_();
   //this.onResize_();
 }
@@ -1963,16 +1967,19 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
   this.distorter.unpatch();
 
   // Android bug: when returning from VR, resize the effect.
+  // NOTE: using the reSize event, we automatically capture this.
   /////////////////this.resize_();
   //this.onResize_();
 };
 
+// Mode all resizes to window resize event.
+// TODO: throttle resize when window size is changed rapidly
 WebVRManager.prototype.onResize_ = function() {
   var width; 
   var height;
 
   if (Util.isFullScreen()) {
-    // Player size = fullscreen = window size.
+    // Player size = fullscreen = window size in fullscreen mode.
     width = window.innerWidth;
     height = window.innerHeight;
   } else {
@@ -2073,6 +2080,8 @@ WebVRManager.prototype.requestFullscreen_ = function() {
     canvas.mozRequestFullScreen({vrDisplay: this.hmd});
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
+  } else if (docElm.msRequestFullscreen) { //Internet Explorer
+    docElm.msRequestFullscreen();
   }
   // Note: we aren't fullscreen yet! Trap with window resize event
 };
@@ -2085,6 +2094,8 @@ WebVRManager.prototype.exitFullscreen_ = function() {
     document.mozCancelFullScreen();
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) { //Internet Explorer
+    document.msExitFullscreen();
   }
   this.player.exitFullScreen();
 };
