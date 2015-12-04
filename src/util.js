@@ -51,6 +51,7 @@ Util.containerClasses = {
   dom: 'webvr-dom-container',
   player: 'webvr-player-container',
   controls: 'webvr-controls-container',
+  canvas: 'webvr-canvas',
   caption: 'webvr-player-caption',
   placeholder: 'webvr-placeholder'
 };
@@ -221,6 +222,7 @@ Util.hideDOM = function(canvas, domContainer) {
   console.log('in hideDOM with selector:' + domContainer);
   this.moveCanvas(canvas);
   document.getElementsByClassName(domContainer)[0].style.display = 'none';
+  return false;
 };
 
 // Return our drawing canvs to its DOM location, and show the DOM;
@@ -228,7 +230,18 @@ Util.showDOM = function(canvas, domContainer) {
   console.log('in showDOM with selector:' + domContainer);
   this.moveCanvas(canvas);
   document.getElementsByClassName(domContainer)[0].style.display = 'block';
+  return this.isThereADOM(); //might have changed if we are in editing program.
 };
+
+Util.isFullScreen = function() {
+  if (document.fullscreen ||
+    document.mozFullScreen ||
+    document.webkitIsFullScreen ||
+    document.msFullscreenElement) {
+    return true;
+  }
+  return false;
+}
 
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.

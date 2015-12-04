@@ -28,6 +28,9 @@ var Util = require('./util.js');
 function PlayerManager(canvas, params) {
   this.loadIcons_();
 
+  // Storage for fixed size.
+
+
   // Save a canvas reference.
   this.canvas = canvas;
 
@@ -36,8 +39,13 @@ function PlayerManager(canvas, params) {
   this.captionDefault = 'WebVR Boilerplate Scene';
 
   // Save the size of canvas between redrawing.
-  this.canvasStyle = {};
-  this.saveCanvasStyle();
+  this.canvasSize = {};
+
+  //compute default size
+  this.initPlayer();
+
+  ///////////////////////////this.saveCanvasStyle();
+  //get current canvas size
 
   // TODO: warning for VR not supported in <figcaption>
 
@@ -53,17 +61,25 @@ function PlayerManager(canvas, params) {
 
   Util.addClass(this.dom, Util.containerClasses.player);
 
+  // Assign IDs and classes to the Player elements.
+  var randId = Util.getRandom(100, 999);
+
+  if(!canvas.id) {
+    canvas.id = randId;
+  }
+
   // Set the Player id, if present, or create a random one.
   if(params.id) { 
     this.dom.id = params.id;
   } else {
-    this.dom.id = Util.containerClasses.player + '-' + Util.getRandom(100, 999);
+    this.dom.id = Util.containerClasses.player + '-' + randId;
   }
 
   // Additional Player styles (needed to position controls).
   this.dom.style.position = 'relative';
   this.dom.style.display = 'block';
   this.dom.style.width = this.canvas.style.width; //Player is same width as canvas.
+  this.dom.style.height = this.canvas.style.height;
   //this.dom.style.height = this.canvas.style.height; //Speed up document reflow after swap.
 
   // Set the error message if web browser doesn't support canvas.
@@ -85,6 +101,26 @@ function PlayerManager(canvas, params) {
   return this;
 };
 
+//create a fixed-size Player
+PlayerManager.prototype.initPlayer = function() {
+  if (this.canvas.style.width) {
+    this.canvasSize.width = parseInt(this.canvas.style.width);
+  } else if (this.canvas.width) {
+    this.canvasSize.width = this.canvas.width;
+  } else {
+    this.canvasSize.width = window.innerWidth;
+  }
+
+  if (this.canvas.style.height) {
+    this.canvasSize.height = parseInt(this.canvas.style.height);
+  } else if(this.canvas.height) {
+    this.canvasSize.height = this.canvas.height;
+  } else {
+    this.canvasSize.height = window.innerHeight;
+  }
+  console.log('this.canvasSize.width:' + this.canvasSize.width + ' this.canvasSize.height:' + this.canvasSize.height)
+}
+
 // Build a caption for the Player.
 PlayerManager.prototype.createCaption = function(params) {
   var figCaption = Util.findChildrenByType(this.dom, 'figcaption');
@@ -99,7 +135,7 @@ PlayerManager.prototype.createCaption = function(params) {
     figCaption.id = this.dom.getAttribute('aria-describedby');
   }
 
-  //add the WebVR Boilerplate className.
+  // Add the WebVR Boilerplate className to the caption.
   if(!figCaption.className.indexOf(Util.containerClasses.caption)) {
     Util.addClass(figCaption, Util.containerClasses.caption);
   }
@@ -125,7 +161,6 @@ PlayerManager.prototype.createCaption = function(params) {
   figCaption.style.position = 'absolute';
   figCaption.style.textAlign = 'center';
   //TODO: make ButtonManger button size arbitrary, add getter function for height
-  window.ctlStyle = this.controls.dom.style;
   figCaption.style.bottom = '48px'; //TODO: make this just above the row of buttons
   figCaption.style.display.margin = '0 auto';
 
@@ -133,19 +168,44 @@ PlayerManager.prototype.createCaption = function(params) {
   return figCaption;
 };
 
-// Get current integer values for DOM element width and height, and store them.
-PlayerManager.prototype.getCanvasStyle = function() {
-  return this.canvasStyle;
-};
+// Get the current Player width (fixed).
+PlayerManager.prototype.getWidth = function() {
+  return this.canvasSize.width;
+}
 
-// Save the current DOM element size for later comparison in event loop.
-PlayerManager.prototype.saveCanvasStyle = function() {
-  this.canvasStyle.width = parseInt(this.canvas.clientWidth);
-  this.canvasStyle.height = parseInt(this.canvas.clientHeight);
-};
+// Get the current Player height (fixed).
+PlayerManager.prototype.getHeight = function() {
+  return this.canvasSize.height;
+}
+
+// Set the Player size (all possible sizes)
+PlayerManager.prototype.setSize = function(width, height) {
+  //container
+  this.dom.style.width = width + 'px';
+  this.dom.style.height = height + 'px';
+  this.canvasSize.width = width;
+  this.canvasSize.height = height;
+  //canvas
+  this.canvas.width = width;
+  this.canvas.height = height;
+  this.canvas.style.width = width;
+  this.canvas.style.height = height;
+}
+
+// Run on entering fullscreen.
+PlayerManager.prototype.enterFullScreen = function() {
+  console.log('player entering fullscreen')
+  return Util.hideDOM(this.canvas, Util.containerClasses.dom);
+}
+
+// Run on exiting fullscreen.
+PlayerManager.prototype.exitFullScreen = function() {
+  console.log('player exiting fullscreen');
+  return Util.showDOM(this.canvas, Util.containerClasses.dom);
+}
 
 PlayerManager.prototype.loadIcons_ = function() {
-  // Preload additional non-Button Player assets, if needed.
+  // Preload additional non-Button Player icons, as needed.
   this.ICONS = {};
 };
 

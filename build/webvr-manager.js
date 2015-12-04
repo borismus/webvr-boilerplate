@@ -70,9 +70,9 @@ function ButtonManager(player) {
   }
 
   // Set the styles for the control container.
+  //this.dom.style.boxSizing='border-box';
   this.dom.style.position = 'absolute';
   this.dom.style.width = '100%';
-  //this.dom.style.border = '1px solid red';
   this.dom.style.bottom = 0;
   this.dom.style.right = 0;
 
@@ -782,6 +782,9 @@ var Util = require('./util.js');
 function PlayerManager(canvas, params) {
   this.loadIcons_();
 
+  // Storage for fixed size.
+
+
   // Save a canvas reference.
   this.canvas = canvas;
 
@@ -790,8 +793,13 @@ function PlayerManager(canvas, params) {
   this.captionDefault = 'WebVR Boilerplate Scene';
 
   // Save the size of canvas between redrawing.
-  this.canvasStyle = {};
-  this.saveCanvasStyle();
+  this.canvasSize = {};
+
+  //compute default size
+  this.initPlayer();
+
+  ///////////////////////////this.saveCanvasStyle();
+  //get current canvas size
 
   // TODO: warning for VR not supported in <figcaption>
 
@@ -807,17 +815,25 @@ function PlayerManager(canvas, params) {
 
   Util.addClass(this.dom, Util.containerClasses.player);
 
+  // Assign IDs and classes to the Player elements.
+  var randId = Util.getRandom(100, 999);
+
+  if(!canvas.id) {
+    canvas.id = randId;
+  }
+
   // Set the Player id, if present, or create a random one.
   if(params.id) { 
     this.dom.id = params.id;
   } else {
-    this.dom.id = Util.containerClasses.player + '-' + Util.getRandom(100, 999);
+    this.dom.id = Util.containerClasses.player + '-' + randId;
   }
 
   // Additional Player styles (needed to position controls).
   this.dom.style.position = 'relative';
   this.dom.style.display = 'block';
   this.dom.style.width = this.canvas.style.width; //Player is same width as canvas.
+  this.dom.style.height = this.canvas.style.height;
   //this.dom.style.height = this.canvas.style.height; //Speed up document reflow after swap.
 
   // Set the error message if web browser doesn't support canvas.
@@ -839,6 +855,26 @@ function PlayerManager(canvas, params) {
   return this;
 };
 
+//create a fixed-size Player
+PlayerManager.prototype.initPlayer = function() {
+  if (this.canvas.style.width) {
+    this.canvasSize.width = parseInt(this.canvas.style.width);
+  } else if (this.canvas.width) {
+    this.canvasSize.width = this.canvas.width;
+  } else {
+    this.canvasSize.width = window.innerWidth;
+  }
+
+  if (this.canvas.style.height) {
+    this.canvasSize.height = parseInt(this.canvas.style.height);
+  } else if(this.canvas.height) {
+    this.canvasSize.height = this.canvas.height;
+  } else {
+    this.canvasSize.height = window.innerHeight;
+  }
+  console.log('this.canvasSize.width:' + this.canvasSize.width + ' this.canvasSize.height:' + this.canvasSize.height)
+}
+
 // Build a caption for the Player.
 PlayerManager.prototype.createCaption = function(params) {
   var figCaption = Util.findChildrenByType(this.dom, 'figcaption');
@@ -853,7 +889,7 @@ PlayerManager.prototype.createCaption = function(params) {
     figCaption.id = this.dom.getAttribute('aria-describedby');
   }
 
-  //add the WebVR Boilerplate className.
+  // Add the WebVR Boilerplate className to the caption.
   if(!figCaption.className.indexOf(Util.containerClasses.caption)) {
     Util.addClass(figCaption, Util.containerClasses.caption);
   }
@@ -879,7 +915,6 @@ PlayerManager.prototype.createCaption = function(params) {
   figCaption.style.position = 'absolute';
   figCaption.style.textAlign = 'center';
   //TODO: make ButtonManger button size arbitrary, add getter function for height
-  window.ctlStyle = this.controls.dom.style;
   figCaption.style.bottom = '48px'; //TODO: make this just above the row of buttons
   figCaption.style.display.margin = '0 auto';
 
@@ -887,19 +922,44 @@ PlayerManager.prototype.createCaption = function(params) {
   return figCaption;
 };
 
-// Get current integer values for DOM element width and height, and store them.
-PlayerManager.prototype.getCanvasStyle = function() {
-  return this.canvasStyle;
-};
+// Get the current Player width (fixed).
+PlayerManager.prototype.getWidth = function() {
+  return this.canvasSize.width;
+}
 
-// Save the current DOM element size for later comparison in event loop.
-PlayerManager.prototype.saveCanvasStyle = function() {
-  this.canvasStyle.width = parseInt(this.canvas.clientWidth);
-  this.canvasStyle.height = parseInt(this.canvas.clientHeight);
-};
+// Get the current Player height (fixed).
+PlayerManager.prototype.getHeight = function() {
+  return this.canvasSize.height;
+}
+
+// Set the Player size (all possible sizes)
+PlayerManager.prototype.setSize = function(width, height) {
+  //container
+  this.dom.style.width = width + 'px';
+  this.dom.style.height = height + 'px';
+  this.canvasSize.width = width;
+  this.canvasSize.height = height;
+  //canvas
+  this.canvas.width = width;
+  this.canvas.height = height;
+  this.canvas.style.width = width;
+  this.canvas.style.height = height;
+}
+
+// Run on entering fullscreen.
+PlayerManager.prototype.enterFullScreen = function() {
+  console.log('player entering fullscreen')
+  return Util.hideDOM(this.canvas, Util.containerClasses.dom);
+}
+
+// Run on exiting fullscreen.
+PlayerManager.prototype.exitFullScreen = function() {
+  console.log('player exiting fullscreen');
+  return Util.showDOM(this.canvas, Util.containerClasses.dom);
+}
 
 PlayerManager.prototype.loadIcons_ = function() {
-  // Preload additional non-Button Player assets, if needed.
+  // Preload additional non-Button Player icons, as needed.
   this.ICONS = {};
 };
 
@@ -1083,6 +1143,7 @@ Util.containerClasses = {
   dom: 'webvr-dom-container',
   player: 'webvr-player-container',
   controls: 'webvr-controls-container',
+  canvas: 'webvr-canvas',
   caption: 'webvr-player-caption',
   placeholder: 'webvr-placeholder'
 };
@@ -1253,6 +1314,7 @@ Util.hideDOM = function(canvas, domContainer) {
   console.log('in hideDOM with selector:' + domContainer);
   this.moveCanvas(canvas);
   document.getElementsByClassName(domContainer)[0].style.display = 'none';
+  return false;
 };
 
 // Return our drawing canvs to its DOM location, and show the DOM;
@@ -1260,7 +1322,18 @@ Util.showDOM = function(canvas, domContainer) {
   console.log('in showDOM with selector:' + domContainer);
   this.moveCanvas(canvas);
   document.getElementsByClassName(domContainer)[0].style.display = 'block';
+  return this.isThereADOM(); //might have changed if we are in editing program.
 };
+
+Util.isFullScreen = function() {
+  if (document.fullscreen ||
+    document.mozFullScreen ||
+    document.webkitIsFullScreen ||
+    document.msFullscreenElement) {
+    return true;
+  }
+  return false;
+}
 
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
@@ -1589,7 +1662,7 @@ var Wakelock = require('./wakelock.js');
  * - Wake lock
  * - Orientation lock (mobile only)
  */
-function WebVRManager(renderer, effect, params) {
+function WebVRManager(renderer, effect, camera, params) {
   this.params = params || {};
 
   this.mode = Modes.UNKNOWN;
@@ -1597,14 +1670,13 @@ function WebVRManager(renderer, effect, params) {
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
 
-  // Save the THREE.js renderer and effect for later.
-  this.containerClass = params.containerClass; //wrapper for hiding DOM
-
-  // Record whether we have the canvas embeded in a standard DOM, or standalone.
+  // Record whether we have the canvas embeded in a DOM, or standalone canvas bound to browser window.
   this.hasDOM = Util.isThereADOM();
+  params.hasDOM = this.hasDOM;
 
   this.renderer = renderer;
   this.effect = effect;
+  this.camera = camera;
   this.distorter = new CardboardDistorter(renderer);
 
   // Player wraps the canvas.
@@ -1686,6 +1758,9 @@ function WebVRManager(renderer, effect, params) {
   window.addEventListener('orientationchange',
       this.onOrientationChange_.bind(this));
 
+  window.addEventListener('resize', 
+      this.onResize_.bind(this));
+
   // Create the necessary elements for wake lock to work.
   this.wakelock = new Wakelock();
 
@@ -1698,6 +1773,7 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
+WebVRManager.Util = Util;
 
 /**
  * Promise returns true if there is at least one HMD device available.
@@ -1729,7 +1805,7 @@ WebVRManager.prototype.getViewer = function() {
 };
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
-  this.resizeIfNeeded_(camera);
+  /////////////this.resizeIfNeeded_(camera);
 
   if (this.isVRMode()) {
     this.distorter.preRender();
@@ -1874,7 +1950,8 @@ WebVRManager.prototype.vrToMagicWindow_ = function() {
   this.distorter.unpatch();
 
   // Android bug: when returning from VR, resize the effect.
-  this.resize_();
+  ////////////this.resize_();
+  //this.onResize_();
 }
 
 WebVRManager.prototype.anyModeToNormal_ = function() {
@@ -1886,40 +1963,45 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
   this.distorter.unpatch();
 
   // Android bug: when returning from VR, resize the effect.
-  this.resize_();
+  /////////////////this.resize_();
+  //this.onResize_();
 };
 
-WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
-  var canvas = this.renderer.domElement;
-  var size = this.renderer.getSize();
+WebVRManager.prototype.onResize_ = function() {
+  var width; 
+  var height;
 
-  if(this.hasDOM) {
-    // Check the last size of the Player. 
-    var style = this.player.canvasStyle;
-    if(size.width != style.width || size.height != style.height) {
-      camera.aspect = style.width / style.height;
-
-      // We can't use CSS to style when using THREE.js.
-      this.renderer.setSize(style.width, style.height);
-      this.player.saveCanvasStyle();
-    }
+  if (Util.isFullScreen()) {
+    // Player size = fullscreen = window size.
+    width = window.innerWidth;
+    height = window.innerHeight;
   } else {
-    if(size.width != window.innerWidth || size.height != window.innerHeight) {
-      camera.aspect = window.innerWidth / window.innerHeight;
+    if (this.hasDOM) {
+      // Player size is fixed.
+      // TODO: enable a relative size option.
+      width = this.player.getWidth();
+      height = this.player.getHeight();
+    } else {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      // Player size always bound to window size.
+      this.player.setSize(width, height);
     }
   }
-  camera.updateProjectionMatrix();
-  this.resize_();
-};
+  //console.log("ONRESIZE event, window.innerWidth:" + window.innerWidth + " window.innerHeight:" + window.innerHeight);
+  //console.log("ONRESIZE computed width:" + width + " height:" + height);
+  //console.log("ONRESIZE stored width:" + this.player.canvasSize.width + " height:" + this.player.canvasSize.height);
+  this.resize_(width, height);
+}
 
-WebVRManager.prototype.resize_ = function() {
-  if(this.hasDOM) {
-    var style = this.player.canvasStyle;
-    this.effect.setSize(style.width, style.height);
-  } else {
-    this.effect.setSize(window.innerWidth, window.innerHeight);
-  }
-};
+//resize the renderer with a width and height
+WebVRManager.prototype.resize_ = function(width, height) {
+  this.camera.aspect = width / height;
+  this.camera.updateProjectionMatrix();
+  this.effect.setSize(width, height);
+  this.renderer.setSize(width, height);
+  //this.player.setSize(width, height);
+}
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {
   this.updateRotateInstructions_();
@@ -1944,6 +2026,7 @@ WebVRManager.prototype.onFullscreenChange_ = function(e) {
     this.anyModeToNormal_();
     this.setMode_(Modes.NORMAL);
   }
+  console.log("full screen change event happened")
 };
 
 WebVRManager.prototype.requestPointerLock_ = function() {
@@ -1982,7 +2065,8 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 WebVRManager.prototype.requestFullscreen_ = function() {
   //var canvas = document.body;
   var canvas = this.renderer.domElement;
-  Util.hideDOM(canvas, Util.containerClasses.dom);
+  //////this.hasDOM = Util.hideDOM(canvas, Util.containerClasses.dom);
+  this.player.enterFullScreen();
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
@@ -1990,7 +2074,7 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
   }
-
+  // Note: we aren't fullscreen yet! Trap with window resize event
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {
@@ -2002,7 +2086,7 @@ WebVRManager.prototype.exitFullscreen_ = function() {
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
   }
-  Util.showDOM(canvas, Util.containerClasses.dom);
+  this.player.exitFullScreen();
 };
 
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {

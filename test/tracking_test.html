@@ -75,7 +75,7 @@ var effect = new THREE.VREffect(renderer);
 effect.setSize(window.innerWidth, window.innerHeight);
 
 // Create a VR manager helper to enter and exit VR mode.
-var manager = new WebVRManager(renderer, effect, {hideButton: false});
+var manager = new WebVRManager(renderer, effect, camera, {hideButton: false});
 
 var canvas = document.createElement('canvas');
 canvas.width = 64;
