@@ -1246,6 +1246,7 @@ function WebVRManager(renderer, effect, params) {
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
 
+  this.parentEl = params.parentEl instanceof Element ? params.parentEl : document.body;
   this.deviceInfo = new DeviceInfo();
 
   // Save the THREE.js renderer and effect for later.
@@ -1530,17 +1531,24 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
 };
 
 WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
+ var size = this.renderer.getSize(),
+     elem = this.parentEl,
+     width = elem.offsetWidth,
+     height = elem.offsetHeight;
+  
   // Only resize the canvas if it needs to be resized.
   var size = this.renderer.getSize();
-  if (size.width != window.innerWidth || size.height != window.innerHeight) {
+  if (size.width != width || size.height != height) {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    this.resize_()
+    this.resize_();
   }
 };
 
 WebVRManager.prototype.resize_ = function() {
-  this.effect.setSize(window.innerWidth, window.innerHeight);
+ var elem = this.getParentElem_();
+ 
+  this.effect.setSize(elem.offsetWidth, elem.offsetHeight);
 };
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {
