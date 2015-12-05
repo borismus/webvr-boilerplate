@@ -76,14 +76,16 @@ var AndroidDevices = {
 
 var Viewers = {
   CardboardV1: new CardboardViewer({
-    name: 'Cardboard 2014 (Magnet)',
+    id: 'CardboardV1',
+    label: 'Cardboard I/O 2014',
     fov: 40,
     ipdMm: 60,
     baselineLensCenterMm: 37.26,
     distortionCoefficients: [0.441, 0.156]
   }),
   CardboardV2: new CardboardViewer({
-    name: 'Cardboard 2015 (Button)',
+    id: 'CardboardV2',
+    label: 'Cardboard I/O 2015',
     fov: 60,
     ipdMm: 64,
     baselineLensCenterMm: 37.26,
@@ -200,8 +202,10 @@ function Device(params) {
 
 
 function CardboardViewer(params) {
-  // A human readable name.
-  this.name = params.name;
+  // A machine readable ID.
+  this.id = params.id;
+  // A human readable label.
+  this.label = params.label;
   // Field of view in degrees (per side).
   this.fov = params.fov;
   // Distortion coefficients.

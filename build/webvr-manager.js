@@ -478,14 +478,16 @@ var AndroidDevices = {
 
 var Viewers = {
   CardboardV1: new CardboardViewer({
-    name: 'Cardboard 2014 (Magnet)',
+    id: 'CardboardV1',
+    label: 'Cardboard I/O 2014',
     fov: 40,
     ipdMm: 60,
     baselineLensCenterMm: 37.26,
     distortionCoefficients: [0.441, 0.156]
   }),
   CardboardV2: new CardboardViewer({
-    name: 'Cardboard 2015 (Button)',
+    id: 'CardboardV2',
+    label: 'Cardboard I/O 2015',
     fov: 60,
     ipdMm: 64,
     baselineLensCenterMm: 37.26,
@@ -602,8 +604,10 @@ function Device(params) {
 
 
 function CardboardViewer(params) {
-  // A human readable name.
-  this.name = params.name;
+  // A machine readable ID.
+  this.id = params.id;
+  // A human readable label.
+  this.label = params.label;
   // Field of view in degrees (per side).
   this.fov = params.fov;
   // Distortion coefficients.
@@ -790,10 +794,10 @@ var ButtonManager = require('./button-manager.js');
 var Util = require('./util.js');
 
 /**
- * The Player is a wrapper for a VR-enabled canvas, 
+ * The Player is a wrapper for a VR-enabled canvas,
  * plus its controls. It is implemented as an html5
- * <figure> element with a <figcaption> describing 
- * the VR scene. It also stores the last known style 
+ * <figure> element with a <figcaption> describing
+ * the VR scene. It also stores the last known style
  * of its canvas, for loop updates.
  */
 function PlayerManager(canvas, params) {
@@ -837,7 +841,7 @@ function PlayerManager(canvas, params) {
   }
 
   // Set the Player id, if present, or create a random one.
-  if(params.id) { 
+  if(params.id) {
     this.dom.id = params.id;
   } else {
     this.dom.id = Util.containerClasses.player + '-' + randId;
@@ -1535,7 +1539,7 @@ ViewerSelector.prototype.createDialog_ = function(options) {
 
   dialog.appendChild(this.createH1_('Select your viewer'));
   for (var id in options) {
-    dialog.appendChild(this.createChoice_(id, options[id].name));
+    dialog.appendChild(this.createChoice_(id, options[id].label));
   }
   dialog.appendChild(this.createButton_('Save', this.onSave_.bind(this)));
 
@@ -1752,7 +1756,7 @@ function WebVRManager(renderer, effect, camera, params) {
   // Wrap naked <canvas> and DOM elements to make a Player, if not already in markup.
   Util.wrapDOM();
 
-  console.log('Using the %s viewer.', this.getViewer().name);
+  console.log('Using the %s viewer.', this.getViewer().label);
 
   this.isVRCompatible = false;
   this.isFullscreenDisabled = !!Util.getQueryParameter('no_fullscreen');
@@ -1821,7 +1825,7 @@ function WebVRManager(renderer, effect, camera, params) {
   window.addEventListener('orientationchange',
       this.onOrientationChange_.bind(this));
 
-  window.addEventListener('resize', 
+  window.addEventListener('resize',
       this.onResize_.bind(this));
 
   // Create the necessary elements for wake lock to work.

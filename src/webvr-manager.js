@@ -67,7 +67,7 @@ function WebVRManager(renderer, effect, camera, params) {
   // Wrap naked <canvas> and DOM elements to make a Player, if not already in markup.
   Util.wrapDOM();
 
-  console.log('Using the %s viewer.', this.getViewer().name);
+  console.log('Using the %s viewer.', this.getViewer().label);
 
   this.isVRCompatible = false;
   this.isFullscreenDisabled = !!Util.getQueryParameter('no_fullscreen');
