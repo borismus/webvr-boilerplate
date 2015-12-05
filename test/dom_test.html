@@ -50,7 +50,7 @@ figcaption {
 <body>
   <div class="webvr-dom-container">
     <header>
-      <h1>WebVR in DOM</h1>
+      <h1>Page Header:WebVR in DOM</h1>
       <button style="display:fixed; bottom:0; left:0;" onclick="WebVRManager.Util.moveCanvas(document.getElementById('webvr-test-canvas'))">Toggle DOM Swap</button>
     </header>
     <main>
@@ -93,7 +93,8 @@ if(renderer.domElement.id || renderer.domElement.className) {
   document.body.appendChild(renderer.domElement);
 }
 
-//Test settings for canvas with a fixed size (rather than bound to window size)
+//Test settings for canvas with a fixed size (rather than bound to window size).
+//TODO: make relative option (can't do this with CSS styesheet alone).
 var canvasStyle = {
   width:1200,
   height:800
@@ -136,6 +137,7 @@ var skybox = new THREE.Mesh(geometry, material);
 scene.add(skybox);
 
 // Create a VR manager helper to enter and exit VR mode.
+// TODO: define list of parameters. Need additional params for canvas to function inside DOM.
 var manager = new WebVRManager(renderer, effect, camera, {id:'first-vr-scene', hideButton: false, showCaption:true, caption:'WebVR Window with Controls'});
 
 // Create 3D objects.
@@ -145,7 +147,6 @@ var cube = new THREE.Mesh(geometry, material);
 
 // Position cube mesh
 cube.position.z = -1;
-
 
 // Add cube mesh to your three.js scene
 scene.add(cube);

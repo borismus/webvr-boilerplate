@@ -27,6 +27,7 @@ function ButtonManager(player) {
   this.loadIcons_();
 
   // Make a container for the Buttons, a sibling to the display canvas (which can't have visible child elements).
+  // TODO: define standard layout for Buttons and caption.
   this.dom = player.getElementsByClassName(Util.containerClasses.controls)[0];
   if (!this.dom) {
     // No Button container exists, make one.
@@ -36,7 +37,6 @@ function ButtonManager(player) {
   }
 
   // Set the styles for the control container.
-  //this.dom.style.boxSizing='border-box';
   this.dom.style.position = 'absolute';
   this.dom.style.width = '100%';
   this.dom.style.bottom = 0;
@@ -45,6 +45,7 @@ function ButtonManager(player) {
   // Make the fullscreen button.
   var fsButton = this.createButton();
   fsButton.src = this.ICONS.fullscreen;
+  fsButton.className = Util.containerClasses.fullscreen;
   fsButton.title = 'Fullscreen mode';
   var s = fsButton.style;
   s.bottom = 0;
@@ -56,6 +57,7 @@ function ButtonManager(player) {
   // Make the VR button.
   var vrButton = this.createButton();
   vrButton.src = this.ICONS.cardboard;
+  vrButton.className = Util.containerClasses.vr;
   vrButton.title = 'Virtual reality mode';
   var s = vrButton.style;
   s.bottom = 0;
@@ -64,20 +66,24 @@ function ButtonManager(player) {
   this.dom.appendChild(vrButton);
   this.vrButton = vrButton;
 
+  // Float in container makes it easier to handle multiple Button alignment.
+  // TODO: abstract button creation and positioning
   vrButton.style.float = 'right';
 
   // Make the back button.
   var backButton = this.createButton();
+  backButton.src = this.ICONS.back;
+  backButton.className = Util.containerClasses.backId;
   backButton.title = 'Back to previous mode';
   var s = backButton.style;
   s.left = 0;
   s.top = 0;
-  backButton.src = this.ICONS.back;
   backButton.addEventListener('click', this.createClickHandler_('back'));
   this.dom.appendChild(backButton);
   this.backButton = backButton;
 
-  // Use float to right-align variable array of controls in their container.
+  // Float in container makes it easier to handle multiple Button alignment.
+  // TODO: abstract button creation and positioning.
   fsButton.style.float = 'right';
 
   // Make the settings button, but only for mobile.
@@ -136,6 +142,17 @@ ButtonManager.prototype.createButton = function(canvas) {
   return button;
 };
 
+ButtonManager.prototype.getButtonByClassName = function(className) {
+  var children = this.dom.children;
+  var len = children.length;
+  for (var i = 0; i < len; i++) {
+    if(Util.hasClass(children[i]), className) {
+      return children[i];
+    }
+  }
+  return null;
+};
+
 ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
   if (!this.isVisible) {
     return;
@@ -170,8 +187,8 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
       break;
   }
 
-  // Hack for Safari Mac/iOS to force relayout (svg-specific issue)
-  // http://goo.gl/hjgR6r
+  // Hack for Safari Mac/iOS to force relayout (svg-specific issue).
+  // From: http://goo.gl/hjgR6r.
   var oldValue = this.fsButton.style.display;
   this.fsButton.style.display = 'inline-block';
   this.fsButton.offsetHeight;

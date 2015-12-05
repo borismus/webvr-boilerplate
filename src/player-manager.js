@@ -41,11 +41,8 @@ function PlayerManager(canvas, params) {
   // Save the size of canvas between redrawing.
   this.canvasSize = {};
 
-  //compute default size
+  // Compute default size for the Player.
   this.initPlayer();
-
-  ///////////////////////////this.saveCanvasStyle();
-  //get current canvas size
 
   // TODO: warning for VR not supported in <figcaption>
 
@@ -192,16 +189,38 @@ PlayerManager.prototype.setSize = function(width, height) {
   this.canvas.style.height = height;
 }
 
+PlayerManager.prototype.resize = function(hasDOM) {
+  var width, height;
+  if (Util.isFullScreen()) {
+    // Player size = fullscreen = window size in fullscreen mode.
+    width = window.innerWidth;
+    height = window.innerHeight;
+  } else {
+    if (hasDOM) {
+      // Player size is fixed.
+      // TODO: enable a relative sizing option for responsive design layouts.
+      width = this.getWidth();
+      height = this.getHeight();
+    } else {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      // Player size always bound to window size.
+      this.setSize(width, height);
+    }
+  }
+  return {width:width, height:height};
+}
+
 // Run on entering fullscreen.
 PlayerManager.prototype.enterFullScreen = function() {
   console.log('player entering fullscreen')
-  return Util.hideDOM(this.canvas, Util.containerClasses.dom);
+  return Util.hideDOM(this, Util.containerClasses.dom);
 }
 
 // Run on exiting fullscreen.
 PlayerManager.prototype.exitFullScreen = function() {
   console.log('player exiting fullscreen');
-  return Util.showDOM(this.canvas, Util.containerClasses.dom);
+  return Util.showDOM(this, Util.containerClasses.dom);
 }
 
 PlayerManager.prototype.loadIcons_ = function() {

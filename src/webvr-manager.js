@@ -64,7 +64,7 @@ function WebVRManager(renderer, effect, camera, params) {
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
-  //wrap naked <canvas> and DOM elements to make a Player, if not already in markup
+  // Wrap naked <canvas> and DOM elements to make a Player, if not already in markup.
   Util.wrapDOM();
 
   console.log('Using the %s viewer.', this.getViewer().name);
@@ -199,7 +199,6 @@ WebVRManager.prototype.render = function(scene, camera, timestamp) {
   }
 };
 
-
 WebVRManager.prototype.setMode_ = function(mode) {
   var oldMode = this.mode;
   if (mode == this.mode) {
@@ -328,8 +327,7 @@ WebVRManager.prototype.vrToMagicWindow_ = function() {
   this.distorter.unpatch();
 
   // Android bug: when returning from VR, resize the effect.
-  // NOTE: using the reSize event, we automatically capture this.
-  ////////////this.resize_();
+  // TODO: check if reSize event captures this.
   //this.onResize_();
 }
 
@@ -342,41 +340,19 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
   this.distorter.unpatch();
 
   // Android bug: when returning from VR, resize the effect.
-  // NOTE: using the reSize event, we automatically capture this.
-  /////////////////this.resize_();
+  // TODO: check if reSize event captures this.
   //this.onResize_();
 };
 
-// Mode all resizes to window resize event.
+// Moved all resizes to window resize callback.
+// http://www.rioki.org/2015/04/19/threejs-resize-and-canvas.html
 // TODO: throttle resize when window size is changed rapidly
 WebVRManager.prototype.onResize_ = function() {
-  var width; 
-  var height;
-
-  if (Util.isFullScreen()) {
-    // Player size = fullscreen = window size in fullscreen mode.
-    width = window.innerWidth;
-    height = window.innerHeight;
-  } else {
-    if (this.hasDOM) {
-      // Player size is fixed.
-      // TODO: enable a relative size option.
-      width = this.player.getWidth();
-      height = this.player.getHeight();
-    } else {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      // Player size always bound to window size.
-      this.player.setSize(width, height);
-    }
-  }
-  //console.log("ONRESIZE event, window.innerWidth:" + window.innerWidth + " window.innerHeight:" + window.innerHeight);
-  //console.log("ONRESIZE computed width:" + width + " height:" + height);
-  //console.log("ONRESIZE stored width:" + this.player.canvasSize.width + " height:" + this.player.canvasSize.height);
-  this.resize_(width, height);
+  var size = this.player.resize(this.hasDOM);
+  this.resize_(size.width, size.height);
 }
 
-//resize the renderer with a width and height
+// Resize the canvas and render, given a width and height.
 WebVRManager.prototype.resize_ = function(width, height) {
   this.camera.aspect = width / height;
   this.camera.updateProjectionMatrix();
@@ -447,21 +423,24 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 WebVRManager.prototype.requestFullscreen_ = function() {
   //var canvas = document.body;
   var canvas = this.renderer.domElement;
-  //////this.hasDOM = Util.hideDOM(canvas, Util.containerClasses.dom);
+
+  // Needs to be placed before fullscreen entry.
   this.player.enterFullScreen();
+
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
     canvas.mozRequestFullScreen({vrDisplay: this.hmd});
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
-  } else if (docElm.msRequestFullscreen) { //Internet Explorer
+  } else if (docElm.msRequestFullscreen) { //Internet Explorer 9
     docElm.msRequestFullscreen();
   }
-  // Note: we aren't fullscreen yet! Trap with window resize event
+  // We aren't necessarily fullscreen yet! Trap change with window resize event.
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {
+
   var canvas = this.renderer.domElement;
   if (document.exitFullscreen) {
     document.exitFullscreen();
@@ -469,9 +448,10 @@ WebVRManager.prototype.exitFullscreen_ = function() {
     document.mozCancelFullScreen();
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
-  } else if (document.msExitFullscreen) { //Internet Explorer
+  } else if (document.msExitFullscreen) { //Internet Explorer 9
     document.msExitFullscreen();
   }
+  // TODO: position doesn't matter, get redraws before rendere adapts to changed screen size.
   this.player.exitFullScreen();
 };
 

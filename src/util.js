@@ -46,18 +46,31 @@ Util.getRandom = function(start, end) {
   return Math.floor(Math.random() * end) + start;
 };
 
-// Set ID and classes on wrapping and Player elements.
+// Set ID and classes on Player elements and settings dialog.
+// TODO: change name to Util.playerSelectors
 Util.containerClasses = {
   dom: 'webvr-dom-container',
   player: 'webvr-player-container',
   controls: 'webvr-controls-container',
+  back: 'webvr-button-back',
+  backId: 'webvr-button-back-id',
+  fullscreen: 'webvr-button-fullscreen',
+  vr: 'webvr-button-vr',
+  settings: 'webvr-settings',
   canvas: 'webvr-canvas',
   caption: 'webvr-player-caption',
-  placeholder: 'webvr-placeholder'
+  placeholderId: 'webvr-placeholder-id'
+};
+
+Util.hasClass = function(elem, selector) {
+  if (elem.className.indexOf(selector) >= 0) {
+    return true;
+  }
+  return false;
 };
 
 Util.addClass = function(elem, selector) {
-  if (!(elem.className.indexOf(selector) >= 0)) {
+  if (!this.hasClass(elem, selector)) {
     if (elem.className == '') {
       elem.className = selector;
     } else {
@@ -91,10 +104,10 @@ Util.findChildrenByType = function(elem, types) {
   return arr;
 };
 
-// Specific to Boilerplate.
 // Check to see if there are any tags other than <canvas>, <script>, <img> in document.body.
 // Used to keep boilerplate default separate canvas embedded in page layout.
 // Note: this will return TRUE after the Player wraps a 'naked' canvas during initialization!
+// TODO: change name to isThereALayout()
 Util.isThereADOM = function() {
   console.log('running istheradom');
   var n = this.getDOMChildren();
@@ -103,6 +116,7 @@ Util.isThereADOM = function() {
     var len = n.length;
     for (var i = 0; i < len; i++) {
       if (n[i].tagName != 'CANVAS' && n[i].tagName != 'SCRIPT' && n[i].tagName != 'IMG') {
+        //TODO: check for placeholder elements (not considered part of layout DOM).
         console.log('found a dom');
         return true;
       }
@@ -191,16 +205,24 @@ Util.swapNodes = function(elem1, elem2) {
 };
 
 // Swap canvas out of the DOM to document.body, or return it.
+// TODO: the 'placeholder' elements will prevent the page from validating.
+// TODO: to move back button, we should shift this inside Player.
 Util.moveCanvas = function(canvas) {
   if (this.isThereADOM()) {
-    var placeholder = document.getElementById(Util.containerClasses.placeholder);
+    var placeholder = document.getElementById(Util.containerClasses.placeholderId);
     if (!placeholder) {
       console.log('there is a DOM to swap, swapping');
+      //back button
+      placeholderButton = document.createElement('span');
+      placeholderButton.id = Util.containerClasses.backId;
+      document.body.appendChild(placeholderButton);
+      //canvas
       placeholder = document.createElement('span');
-      placeholder.id = Util.containerClasses.placeholder;
+      placeholder.id = Util.containerClasses.placeholderId;
       document.body.appendChild(placeholder);
     }
-    this.swapNodes(canvas, placeholder); //canvas swaps where placeholder was
+    // TODO: after moving to Player, swap placeholderButton to visibility at top-left of screen.
+    this.swapNodes(canvas, placeholder); //canvas swaps where placeholder was.
   } else {
     console.log('no extra DOM, don\'t need to swap canvas');
   }
@@ -221,18 +243,20 @@ Util.getDOMStyles = function(elem) {
 };
 
 // Move our drawing canvas out of the DOM, and hide the DOM.
-Util.hideDOM = function(canvas, domContainer) {
-  console.log('in hideDOM with selector:' + domContainer);
+Util.hideDOM = function(player, domContainerClass) {
+  var canvas = player.canvas;
+  console.log('in hideDOM with selector:' + domContainerClass);
   this.moveCanvas(canvas);
-  document.getElementsByClassName(domContainer)[0].style.display = 'none';
+  document.getElementsByClassName(domContainerClass)[0].style.display = 'none';
   return false;
 };
 
 // Return our drawing canvs to its DOM location, and show the DOM;
-Util.showDOM = function(canvas, domContainer) {
-  console.log('in showDOM with selector:' + domContainer);
+Util.showDOM = function(player, domContainerClass) {
+  var canvas = player.canvas;
+  console.log('in showDOM with selector:' + domContainerClass);
   this.moveCanvas(canvas);
-  document.getElementsByClassName(domContainer)[0].style.display = 'block';
+  document.getElementsByClassName(domContainerClass)[0].style.display = 'block';
   return this.isThereADOM(); //might have changed if we are in editing program.
 };
 
