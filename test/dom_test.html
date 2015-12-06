@@ -51,7 +51,8 @@ figcaption {
   <div class="webvr-dom-container">
     <header>
       <h1>Page Header:WebVR in DOM</h1>
-      <button style="display:fixed; bottom:0; left:0;" onclick="WebVRManager.Util.moveCanvas(document.getElementById('webvr-test-canvas'))">Toggle DOM Swap</button>
+      <!--swap the drawing canvas out of and into the layout DOM-->
+      <button id="webvr-test-swap" style="display:fixed; bottom:0; left:0;">Toggle DOM Swap</button>
     </header>
     <main>
         <section id="content">
@@ -139,6 +140,11 @@ scene.add(skybox);
 // Create a VR manager helper to enter and exit VR mode.
 // TODO: define list of parameters. Need additional params for canvas to function inside DOM.
 var manager = new WebVRManager(renderer, effect, camera, {id:'first-vr-scene', hideButton: false, showCaption:true, caption:'WebVR Window with Controls'});
+
+// DEBUG: access Player created in manager
+document.getElementById('webvr-test-swap').onclick = function() {
+  manager.player.moveCanvas();
+};
 
 // Create 3D objects.
 var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);

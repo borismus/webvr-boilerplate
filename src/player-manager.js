@@ -28,8 +28,9 @@ var Util = require('./util.js');
 function PlayerManager(canvas, params) {
   this.loadIcons_();
 
-  // Storage for fixed size.
-
+  // Assign IDs and classes to the Player elements.
+  this.uid = Util.getUniqueId(Util.containerClasses.player);
+  console.log("PLAYER UID:" + this.uid);
 
   // Save a canvas reference.
   this.canvas = canvas;
@@ -58,18 +59,15 @@ function PlayerManager(canvas, params) {
 
   Util.addClass(this.dom, Util.containerClasses.player);
 
-  // Assign IDs and classes to the Player elements.
-  var randId = Util.getRandom(100, 999);
-
   if(!canvas.id) {
-    canvas.id = randId;
+    canvas.id = this.uid;
   }
 
   // Set the Player id, if present, or create a random one.
   if(params.id) { 
     this.dom.id = params.id;
   } else {
-    this.dom.id = Util.containerClasses.player + '-' + randId;
+    this.dom.id = this.uid;
   }
 
   // Additional Player styles (needed to position controls).
@@ -211,20 +209,85 @@ PlayerManager.prototype.resize = function(hasDOM) {
   return {width:width, height:height};
 }
 
+// Check to see if there are any tags other than <canvas>, <script>, <img> in document.body.
+// Used to keep boilerplate default separate canvas embedded in page layout.
+// Note: this will return TRUE after the Player wraps a 'naked' canvas during initialization!
+// TODO: change name to isThereALayout()
+PlayerManager.prototype.isThereALayout = function() {
+  console.log('running istheradom');
+  var n = Util.getDOMChildren();
+  if (n && n.length > 0) {
+    //these three tags are used by default WebVR boilerplate
+    var len = n.length;
+    for (var i = 0; i < len; i++) {
+      if (n[i].tagName != 'CANVAS' && n[i].tagName != 'SCRIPT' && n[i].tagName != 'IMG') {
+        //TODO: check for placeholder elements (not considered part of layout DOM).
+        console.log('found a dom');
+        return true;
+      }
+    }
+  }
+  console.log('no dom besides canvas');
+  return false;
+};
+
+// Swap canvas out of the DOM to document.body, or return it.
+// TODO: the 'placeholder' elements will prevent the page from validating.
+// TODO: to move back button, we should shift this inside Player.
+PlayerManager.prototype.moveCanvas = function() {
+  if (this.isThereALayout()) {
+    var placeholder = document.getElementById(Util.containerClasses.placeholderId);
+    // Placeholder for canvas.
+    if (!placeholder) {
+      console.log('there is a DOM to swap, swapping');
+      placeholder = document.createElement('span');
+      placeholder.id = Util.containerClasses.placeholderId;
+      document.body.appendChild(placeholder);
+    }
+    // Placeholder for back button
+    var placeholderBkButton = document.getElementById(Util.containerClasses.backId);
+    if (!placeholderBkButton) {
+      placeholderBkButton = document.createElement('span');
+      placeholderBkButton.id = Util.containerClasses.backId;
+      document.body.appendChild(placeholderBkButton);
+    }
+    // TODO: after moving to Player, swap placeholderButton to visibility at top-left of screen.
+    Util.swapNodes(this.canvas, placeholder); //canvas swaps where placeholder was.
+  } else {
+    console.log('no extra DOM, don\'t need to swap canvas');
+  }
+};
+
+// Move our drawing canvas out of the DOM, and hide the DOM.
+PlayerManager.prototype.hideDOM = function() {
+  console.log('in hideDOM with selector:' + this.dom.id);
+  this.moveCanvas();
+  document.getElementById(this.dom.id).style.display = 'none';
+  return false;
+};
+
+// Return our drawing canvs to its DOM location, and show the DOM;
+PlayerManager.prototype.showDOM = function() {
+  console.log('in showDOM with selector:' + this.dom.id);
+  this.moveCanvas();
+  document.getElementById(this.dom.id).style.display = 'block';
+  return this.isThereALayout(); //might have changed if we are in editing program.
+};
+
 // Run on entering fullscreen.
 PlayerManager.prototype.enterFullScreen = function() {
   console.log('player entering fullscreen')
-  return Util.hideDOM(this, Util.containerClasses.dom);
+  return this.hideDOM();
 }
 
 // Run on exiting fullscreen.
 PlayerManager.prototype.exitFullScreen = function() {
   console.log('player exiting fullscreen');
-  return Util.showDOM(this, Util.containerClasses.dom);
+  return this.showDOM();
 }
 
-PlayerManager.prototype.loadIcons_ = function() {
   // Preload additional non-Button Player icons, as needed.
+PlayerManager.prototype.loadIcons_ = function() {
   this.ICONS = {};
 };
 

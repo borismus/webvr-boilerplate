@@ -26,6 +26,10 @@ var Util = require('./util.js');
 function ButtonManager(player) {
   this.loadIcons_();
 
+  // Assign IDs and classes to the Button elements.
+  this.uid = Util.getUniqueId(Util.containerClasses.controls);
+  console.log("CONTROLS UID:" + this.uid);
+
   // Make a container for the Buttons, a sibling to the display canvas (which can't have visible child elements).
   // TODO: define standard layout for Buttons and caption.
   this.dom = player.getElementsByClassName(Util.containerClasses.controls)[0];
@@ -33,6 +37,7 @@ function ButtonManager(player) {
     // No Button container exists, make one.
     this.dom = document.createElement('div');
     this.dom.className = Util.containerClasses.controls;
+    this.dom.id = Util.containerClasses.controls + this.uid;
     player.appendChild(this.dom);
   }
 

@@ -49,7 +49,7 @@ function WebVRManager(renderer, effect, camera, params) {
   var hideButton = this.params.hideButton || false;
 
   // Record whether we have the canvas embeded in a DOM, or standalone canvas bound to browser window.
-  this.hasDOM = Util.isThereADOM();
+  this.hasDOM = Util.isThereALayout();
   params.hasDOM = this.hasDOM;
 
   this.renderer = renderer;
@@ -151,6 +151,8 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
+
+// TODO: Util should be standalone, used by several WebVRManager objects.
 WebVRManager.Util = Util;
 
 /**
@@ -183,6 +185,7 @@ WebVRManager.prototype.getViewer = function() {
 };
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
+  //TODO: when would we need to resize, other than browser window changing size?
   /////////////this.resizeIfNeeded_(camera);
 
   if (this.isVRMode()) {

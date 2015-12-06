@@ -60,6 +60,10 @@ var Util = require('./util.js');
 function ButtonManager(player) {
   this.loadIcons_();
 
+  // Assign IDs and classes to the Button elements.
+  this.uid = Util.getUniqueId(Util.containerClasses.controls);
+  console.log("CONTROLS UID:" + this.uid);
+
   // Make a container for the Buttons, a sibling to the display canvas (which can't have visible child elements).
   // TODO: define standard layout for Buttons and caption.
   this.dom = player.getElementsByClassName(Util.containerClasses.controls)[0];
@@ -67,6 +71,7 @@ function ButtonManager(player) {
     // No Button container exists, make one.
     this.dom = document.createElement('div');
     this.dom.className = Util.containerClasses.controls;
+    this.dom.id = Util.containerClasses.controls + this.uid;
     player.appendChild(this.dom);
   }
 
@@ -794,17 +799,18 @@ var ButtonManager = require('./button-manager.js');
 var Util = require('./util.js');
 
 /**
- * The Player is a wrapper for a VR-enabled canvas,
+ * The Player is a wrapper for a VR-enabled canvas, 
  * plus its controls. It is implemented as an html5
- * <figure> element with a <figcaption> describing
- * the VR scene. It also stores the last known style
+ * <figure> element with a <figcaption> describing 
+ * the VR scene. It also stores the last known style 
  * of its canvas, for loop updates.
  */
 function PlayerManager(canvas, params) {
   this.loadIcons_();
 
-  // Storage for fixed size.
-
+  // Assign IDs and classes to the Player elements.
+  this.uid = Util.getUniqueId(Util.containerClasses.player);
+  console.log("PLAYER UID:" + this.uid);
 
   // Save a canvas reference.
   this.canvas = canvas;
@@ -833,18 +839,15 @@ function PlayerManager(canvas, params) {
 
   Util.addClass(this.dom, Util.containerClasses.player);
 
-  // Assign IDs and classes to the Player elements.
-  var randId = Util.getRandom(100, 999);
-
   if(!canvas.id) {
-    canvas.id = randId;
+    canvas.id = this.uid;
   }
 
   // Set the Player id, if present, or create a random one.
-  if(params.id) {
+  if(params.id) { 
     this.dom.id = params.id;
   } else {
-    this.dom.id = Util.containerClasses.player + '-' + randId;
+    this.dom.id = this.uid;
   }
 
   // Additional Player styles (needed to position controls).
@@ -986,20 +989,85 @@ PlayerManager.prototype.resize = function(hasDOM) {
   return {width:width, height:height};
 }
 
+// Check to see if there are any tags other than <canvas>, <script>, <img> in document.body.
+// Used to keep boilerplate default separate canvas embedded in page layout.
+// Note: this will return TRUE after the Player wraps a 'naked' canvas during initialization!
+// TODO: change name to isThereALayout()
+PlayerManager.prototype.isThereALayout = function() {
+  console.log('running istheradom');
+  var n = Util.getDOMChildren();
+  if (n && n.length > 0) {
+    //these three tags are used by default WebVR boilerplate
+    var len = n.length;
+    for (var i = 0; i < len; i++) {
+      if (n[i].tagName != 'CANVAS' && n[i].tagName != 'SCRIPT' && n[i].tagName != 'IMG') {
+        //TODO: check for placeholder elements (not considered part of layout DOM).
+        console.log('found a dom');
+        return true;
+      }
+    }
+  }
+  console.log('no dom besides canvas');
+  return false;
+};
+
+// Swap canvas out of the DOM to document.body, or return it.
+// TODO: the 'placeholder' elements will prevent the page from validating.
+// TODO: to move back button, we should shift this inside Player.
+PlayerManager.prototype.moveCanvas = function() {
+  if (this.isThereALayout()) {
+    var placeholder = document.getElementById(Util.containerClasses.placeholderId);
+    // Placeholder for canvas.
+    if (!placeholder) {
+      console.log('there is a DOM to swap, swapping');
+      placeholder = document.createElement('span');
+      placeholder.id = Util.containerClasses.placeholderId;
+      document.body.appendChild(placeholder);
+    }
+    // Placeholder for back button
+    var placeholderBkButton = document.getElementById(Util.containerClasses.backId);
+    if (!placeholderBkButton) {
+      placeholderBkButton = document.createElement('span');
+      placeholderBkButton.id = Util.containerClasses.backId;
+      document.body.appendChild(placeholderBkButton);
+    }
+    // TODO: after moving to Player, swap placeholderButton to visibility at top-left of screen.
+    Util.swapNodes(this.canvas, placeholder); //canvas swaps where placeholder was.
+  } else {
+    console.log('no extra DOM, don\'t need to swap canvas');
+  }
+};
+
+// Move our drawing canvas out of the DOM, and hide the DOM.
+PlayerManager.prototype.hideDOM = function() {
+  console.log('in hideDOM with selector:' + this.dom.id);
+  this.moveCanvas();
+  document.getElementById(this.dom.id).style.display = 'none';
+  return false;
+};
+
+// Return our drawing canvs to its DOM location, and show the DOM;
+PlayerManager.prototype.showDOM = function() {
+  console.log('in showDOM with selector:' + this.dom.id);
+  this.moveCanvas();
+  document.getElementById(this.dom.id).style.display = 'block';
+  return this.isThereALayout(); //might have changed if we are in editing program.
+};
+
 // Run on entering fullscreen.
 PlayerManager.prototype.enterFullScreen = function() {
   console.log('player entering fullscreen')
-  return Util.hideDOM(this, Util.containerClasses.dom);
+  return this.hideDOM();
 }
 
 // Run on exiting fullscreen.
 PlayerManager.prototype.exitFullScreen = function() {
   console.log('player exiting fullscreen');
-  return Util.showDOM(this, Util.containerClasses.dom);
+  return this.showDOM();
 }
 
-PlayerManager.prototype.loadIcons_ = function() {
   // Preload additional non-Button Player icons, as needed.
+PlayerManager.prototype.loadIcons_ = function() {
   this.ICONS = {};
 };
 
@@ -1173,14 +1241,10 @@ Util.isIFrame = function() {
   }
 };
 
-// Get a random number for container ids, if not defined
-Util.getRandom = function(start, end) {
-  return Math.floor(Math.random() * end) + start;
-};
-
 // Set ID and classes on Player elements and settings dialog.
 // TODO: change name to Util.playerSelectors
 Util.containerClasses = {
+  prefix: 'webvr-',
   dom: 'webvr-dom-container',
   player: 'webvr-player-container',
   controls: 'webvr-controls-container',
@@ -1194,6 +1258,22 @@ Util.containerClasses = {
   placeholderId: 'webvr-placeholder-id'
 };
 
+// Get a unique, incrementing Id value for objects.
+// This implies that Util should be shared among multiple WebVRManager objects on the same page.
+Util.getUniqueId = (function(prefix) {
+  var i = Math.floor(Math.random() * 999) + 100;
+  var pfx = prefix;
+  function inc(pfx) {
+    if (!pfx) {
+      pfx = ''; 
+    } else {
+      pfx += '-';
+    }
+    return pfx + i++;
+  }
+  return inc;
+})();
+
 Util.hasClass = function(elem, selector) {
   if (elem.className.indexOf(selector) >= 0) {
     return true;
@@ -1206,7 +1286,7 @@ Util.addClass = function(elem, selector) {
     if (elem.className == '') {
       elem.className = selector;
     } else {
-      elem.className += ' '  + selector;
+      elem.className += ' ' + selector;
     }
   }
 };
@@ -1240,7 +1320,7 @@ Util.findChildrenByType = function(elem, types) {
 // Used to keep boilerplate default separate canvas embedded in page layout.
 // Note: this will return TRUE after the Player wraps a 'naked' canvas during initialization!
 // TODO: change name to isThereALayout()
-Util.isThereADOM = function() {
+Util.isThereALayout = function() {
   console.log('running istheradom');
   var n = this.getDOMChildren();
   if (n && n.length > 0) {
@@ -1336,29 +1416,6 @@ Util.swapNodes = function(elem1, elem2) {
   }
 };
 
-// Swap canvas out of the DOM to document.body, or return it.
-// TODO: the 'placeholder' elements will prevent the page from validating.
-// TODO: to move back button, we should shift this inside Player.
-Util.moveCanvas = function(canvas) {
-  if (this.isThereADOM()) {
-    var placeholder = document.getElementById(Util.containerClasses.placeholderId);
-    if (!placeholder) {
-      console.log('there is a DOM to swap, swapping');
-      //back button
-      placeholderButton = document.createElement('span');
-      placeholderButton.id = Util.containerClasses.backId;
-      document.body.appendChild(placeholderButton);
-      //canvas
-      placeholder = document.createElement('span');
-      placeholder.id = Util.containerClasses.placeholderId;
-      document.body.appendChild(placeholder);
-    }
-    // TODO: after moving to Player, swap placeholderButton to visibility at top-left of screen.
-    this.swapNodes(canvas, placeholder); //canvas swaps where placeholder was.
-  } else {
-    console.log('no extra DOM, don\'t need to swap canvas');
-  }
-};
 
 // Get more CSS-related properties for an element (non-integer).
 Util.getDOMStyles = function(elem) {
@@ -1374,24 +1431,6 @@ Util.getDOMStyles = function(elem) {
   return styles;
 };
 
-// Move our drawing canvas out of the DOM, and hide the DOM.
-Util.hideDOM = function(player, domContainerClass) {
-  var canvas = player.canvas;
-  console.log('in hideDOM with selector:' + domContainerClass);
-  this.moveCanvas(canvas);
-  document.getElementsByClassName(domContainerClass)[0].style.display = 'none';
-  return false;
-};
-
-// Return our drawing canvs to its DOM location, and show the DOM;
-Util.showDOM = function(player, domContainerClass) {
-  var canvas = player.canvas;
-  console.log('in showDOM with selector:' + domContainerClass);
-  this.moveCanvas(canvas);
-  document.getElementsByClassName(domContainerClass)[0].style.display = 'block';
-  return this.isThereADOM(); //might have changed if we are in editing program.
-};
-
 Util.isFullScreen = function() {
   if (document.fullscreen ||
     document.mozFullScreen ||
@@ -1400,7 +1439,7 @@ Util.isFullScreen = function() {
     return true;
   }
   return false;
-}
+};
 
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
@@ -1738,7 +1777,7 @@ function WebVRManager(renderer, effect, camera, params) {
   var hideButton = this.params.hideButton || false;
 
   // Record whether we have the canvas embeded in a DOM, or standalone canvas bound to browser window.
-  this.hasDOM = Util.isThereADOM();
+  this.hasDOM = Util.isThereALayout();
   params.hasDOM = this.hasDOM;
 
   this.renderer = renderer;
@@ -1825,7 +1864,7 @@ function WebVRManager(renderer, effect, camera, params) {
   window.addEventListener('orientationchange',
       this.onOrientationChange_.bind(this));
 
-  window.addEventListener('resize',
+  window.addEventListener('resize', 
       this.onResize_.bind(this));
 
   // Create the necessary elements for wake lock to work.
@@ -1840,6 +1879,7 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
+// TODO: Util should be standalone, used by several WebVRManager objects.
 WebVRManager.Util = Util;
 
 /**

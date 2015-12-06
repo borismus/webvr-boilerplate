@@ -41,14 +41,10 @@ Util.isIFrame = function() {
   }
 };
 
-// Get a random number for container ids, if not defined
-Util.getRandom = function(start, end) {
-  return Math.floor(Math.random() * end) + start;
-};
-
 // Set ID and classes on Player elements and settings dialog.
 // TODO: change name to Util.playerSelectors
 Util.containerClasses = {
+  prefix: 'webvr-',
   dom: 'webvr-dom-container',
   player: 'webvr-player-container',
   controls: 'webvr-controls-container',
@@ -62,6 +58,22 @@ Util.containerClasses = {
   placeholderId: 'webvr-placeholder-id'
 };
 
+// Get a unique, incrementing Id value for objects.
+// This implies that Util should be shared among multiple WebVRManager objects on the same page.
+Util.getUniqueId = (function(prefix) {
+  var i = Math.floor(Math.random() * 999) + 100;
+  var pfx = prefix;
+  function inc(pfx) {
+    if (!pfx) {
+      pfx = ''; 
+    } else {
+      pfx += '-';
+    }
+    return pfx + i++;
+  }
+  return inc;
+})();
+
 Util.hasClass = function(elem, selector) {
   if (elem.className.indexOf(selector) >= 0) {
     return true;
@@ -74,7 +86,7 @@ Util.addClass = function(elem, selector) {
     if (elem.className == '') {
       elem.className = selector;
     } else {
-      elem.className += ' '  + selector;
+      elem.className += ' ' + selector;
     }
   }
 };
@@ -108,7 +120,7 @@ Util.findChildrenByType = function(elem, types) {
 // Used to keep boilerplate default separate canvas embedded in page layout.
 // Note: this will return TRUE after the Player wraps a 'naked' canvas during initialization!
 // TODO: change name to isThereALayout()
-Util.isThereADOM = function() {
+Util.isThereALayout = function() {
   console.log('running istheradom');
   var n = this.getDOMChildren();
   if (n && n.length > 0) {
@@ -204,29 +216,6 @@ Util.swapNodes = function(elem1, elem2) {
   }
 };
 
-// Swap canvas out of the DOM to document.body, or return it.
-// TODO: the 'placeholder' elements will prevent the page from validating.
-// TODO: to move back button, we should shift this inside Player.
-Util.moveCanvas = function(canvas) {
-  if (this.isThereADOM()) {
-    var placeholder = document.getElementById(Util.containerClasses.placeholderId);
-    if (!placeholder) {
-      console.log('there is a DOM to swap, swapping');
-      //back button
-      placeholderButton = document.createElement('span');
-      placeholderButton.id = Util.containerClasses.backId;
-      document.body.appendChild(placeholderButton);
-      //canvas
-      placeholder = document.createElement('span');
-      placeholder.id = Util.containerClasses.placeholderId;
-      document.body.appendChild(placeholder);
-    }
-    // TODO: after moving to Player, swap placeholderButton to visibility at top-left of screen.
-    this.swapNodes(canvas, placeholder); //canvas swaps where placeholder was.
-  } else {
-    console.log('no extra DOM, don\'t need to swap canvas');
-  }
-};
 
 // Get more CSS-related properties for an element (non-integer).
 Util.getDOMStyles = function(elem) {
@@ -242,24 +231,6 @@ Util.getDOMStyles = function(elem) {
   return styles;
 };
 
-// Move our drawing canvas out of the DOM, and hide the DOM.
-Util.hideDOM = function(player, domContainerClass) {
-  var canvas = player.canvas;
-  console.log('in hideDOM with selector:' + domContainerClass);
-  this.moveCanvas(canvas);
-  document.getElementsByClassName(domContainerClass)[0].style.display = 'none';
-  return false;
-};
-
-// Return our drawing canvs to its DOM location, and show the DOM;
-Util.showDOM = function(player, domContainerClass) {
-  var canvas = player.canvas;
-  console.log('in showDOM with selector:' + domContainerClass);
-  this.moveCanvas(canvas);
-  document.getElementsByClassName(domContainerClass)[0].style.display = 'block';
-  return this.isThereADOM(); //might have changed if we are in editing program.
-};
-
 Util.isFullScreen = function() {
   if (document.fullscreen ||
     document.mozFullScreen ||
@@ -268,7 +239,7 @@ Util.isFullScreen = function() {
     return true;
   }
   return false;
-}
+};
 
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
