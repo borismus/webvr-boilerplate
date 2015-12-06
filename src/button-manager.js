@@ -23,22 +23,62 @@ var Util = require('./util.js');
  * Emits a 'click' event when it's clicked.
  * Buttons are wrapped in a control container.
  */
-function ButtonManager(player) {
+function ButtonManager(playerDOM, params) {
   this.loadIcons_();
 
-  // Assign IDs and classes to the Button elements.
-  this.uid = Util.getUniqueId(Util.containerClasses.controls);
+  this.fsTitle = 'Fullscreen mode';
+  this.vrTitle = 'Virtual reality mode';
+  this.backTitle = 'Back to previous mode';
+  this.settingsTitle = 'Configure viewer';
+
+  /** 
+   * Assign Button container ID.
+   * - if an ID was passed in params, use it
+   * - otherwise, look for the ID number in the parent Player DOM, and use it
+   * - otherwise, create our own unique ID.
+   */
+  if (params.id) {
+    this.uid = params.id + '-controls';
+  } else if (playerDOM.id) {
+    var IdNum = playerDOM.id.replace(/\D/g, '');
+    if(IdNum != '') {
+      this.uid = Util.containerClasses.controls + '-' + IdNum;
+    } else {
+      this.uid = playerDOM.id + '-controls';
+    }
+  } else {
+    this.uid = Util.getUniqueId(Util.containerClasses.controls);
+  }
+
   console.log("CONTROLS UID:" + this.uid);
 
-  // Make a container for the Buttons, a sibling to the display canvas (which can't have visible child elements).
-  // TODO: define standard layout for Buttons and caption.
-  this.dom = player.getElementsByClassName(Util.containerClasses.controls)[0];
-  if (!this.dom) {
-    // No Button container exists, make one.
-    this.dom = document.createElement('div');
-    this.dom.className = Util.containerClasses.controls;
-    this.dom.id = Util.containerClasses.controls + this.uid;
-    player.appendChild(this.dom);
+  /**
+   * Make a container for the Buttons if we need one.
+   * - look for the control container class in the parent Player, and if present, use it.
+   * - look for a <nav> element in the parent Player, and if present, use it.
+   * - look for the "fullscreen" control inside the Player in a non-standard way, 
+   *   and if present, use its parent.
+   * - If none of the above, create a new control container.
+   */
+  this.dom = playerDOM.getElementsByClassName(Util.containerClasses.controls)[0];
+  if(!this.dom) {
+    console.log("control container not found by classname");
+    this.dom = Util.findChildrenByType(playerDOM, 'nav')[0];
+    if(!this.dom) {
+      console.log("control container not found by <nav>");
+      this.dom = Util.findChildrenByTitle(playerDOM, this.fsTitle)[0];
+      if(!this.dom) {
+        console.log("assuming control container never made, creating");
+        this.dom = document.createElement('nav');
+        this.dom.className = Util.containerClasses.controls;
+        this.dom.id = this.uid;
+        playerDOM.appendChild(this.dom);
+      }
+      else {
+        console.log("non-standard control layout, some features may not work");
+        this.dom = this.dom[0].parentNode;
+      }
+    }
   }
 
   // Set the styles for the control container.
@@ -47,62 +87,86 @@ function ButtonManager(player) {
   this.dom.style.bottom = 0;
   this.dom.style.right = 0;
 
-  // Make the fullscreen button.
-  var fsButton = this.createButton();
-  fsButton.src = this.ICONS.fullscreen;
-  fsButton.className = Util.containerClasses.fullscreen;
-  fsButton.title = 'Fullscreen mode';
-  var s = fsButton.style;
-  s.bottom = 0;
-  s.right = 0;
+  /** 
+   * Create the buttons, if needed. Buttons can be created manually, 
+   * but only if their titles match the default button titles above.
+   * Note: browser will discard duplicate events, so even if we attached 
+   * an 'onclick' event in markup this will work.
+   * https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#Multiple_identical_event_listeners
+   */
+
+  // Make the fullscreen button, if needed.
+  var fsButton = Util.findChildrenByTitle(playerDOM, this.fsTitle)[0];
+  if(!fsButton) {
+    console.log("creating fullscreen")
+    var fsButton = this.createButton();
+    fsButton.src = this.ICONS.fullscreen;
+    fsButton.className = Util.containerClasses.fullscreen;
+    fsButton.title = this.fsTitle;
+    var s = fsButton.style;
+    s.bottom = 0;
+    s.right = 0;
+    this.dom.appendChild(fsButton);
+    this.fsButton = fsButton;
+
+    // Float in container makes it easier to handle multiple Button alignment.
+    // TODO: abstract button creation and positioning.
+    fsButton.style.float = 'right';
+  }
   fsButton.addEventListener('click', this.createClickHandler_('fs'));
-  this.dom.appendChild(fsButton);
-  this.fsButton = fsButton;
 
-  // Make the VR button.
-  var vrButton = this.createButton();
-  vrButton.src = this.ICONS.cardboard;
-  vrButton.className = Util.containerClasses.vr;
-  vrButton.title = 'Virtual reality mode';
-  var s = vrButton.style;
-  s.bottom = 0;
-  //s.right = '48px';
+  // Make the VR button, if needed.
+  var vrButton = Util.findChildrenByTitle(playerDOM, this.vrTitle)[0];
+  if(!vrButton) {
+    console.log("creating vr");
+    var vrButton = this.createButton();
+    vrButton.src = this.ICONS.cardboard;
+    vrButton.className = Util.containerClasses.vr;
+    vrButton.title = this.vrTitle;
+    var s = vrButton.style;
+    s.bottom = 0;
+    //s.right = '48px';
+    this.dom.appendChild(vrButton);
+    this.vrButton = vrButton;
+
+    // Float in container makes it easier to handle multiple Button alignment.
+    // TODO: abstract button creation and positioning
+    vrButton.style.float = 'right';
+  }
   vrButton.addEventListener('click', this.createClickHandler_('vr'));
-  this.dom.appendChild(vrButton);
-  this.vrButton = vrButton;
-
-  // Float in container makes it easier to handle multiple Button alignment.
-  // TODO: abstract button creation and positioning
-  vrButton.style.float = 'right';
 
   // Make the back button.
-  var backButton = this.createButton();
-  backButton.src = this.ICONS.back;
-  backButton.className = Util.containerClasses.backId;
-  backButton.title = 'Back to previous mode';
-  var s = backButton.style;
-  s.left = 0;
-  s.top = 0;
+  var backButton = Util.findChildrenByTitle(playerDOM, this.backTitle)[0];
+  if(!backButton) {
+    console.log("creating back button")
+    var backButton = this.createButton();
+    backButton.src = this.ICONS.back;
+    backButton.className = Util.containerClasses.backId;
+    backButton.title = this.backTitle;
+    var s = backButton.style;
+    s.left = 0;
+    s.top = 0;
+    this.dom.appendChild(backButton);
+    this.backButton = backButton;
+  }
   backButton.addEventListener('click', this.createClickHandler_('back'));
-  this.dom.appendChild(backButton);
-  this.backButton = backButton;
-
-  // Float in container makes it easier to handle multiple Button alignment.
-  // TODO: abstract button creation and positioning.
-  fsButton.style.float = 'right';
 
   // Make the settings button, but only for mobile.
-  var settingsButton = this.createButton();
-  settingsButton.title = 'Configure viewer';
-  var s = settingsButton.style;
-  s.left = '50%';
-  s.marginLeft = '-24px';
-  s.bottom = 0;
-  s.zIndex = 0;
-  settingsButton.src = this.ICONS.settings;
+  var settingsButton = Util.findChildrenByTitle(playerDOM, this.settingsTitle)[0];
+  if(!settingsButton) {
+    console.log("creating settings button")
+    var settingsButton = this.createButton();
+    settingsButton.title = this.settingsTitle;
+    var s = settingsButton.style;
+    s.left = '50%';
+    s.marginLeft = '-24px';
+    s.bottom = 0;
+    s.zIndex = 0;
+    settingsButton.src = this.ICONS.settings;
+    this.dom.appendChild(settingsButton);
+    this.settingsButton = settingsButton;
+  }
   settingsButton.addEventListener('click', this.createClickHandler_('settings'));
-  this.dom.appendChild(settingsButton);
-  this.settingsButton = settingsButton;
 
   this.isVisible = true;
 

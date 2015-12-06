@@ -49,8 +49,8 @@ function WebVRManager(renderer, effect, camera, params) {
   var hideButton = this.params.hideButton || false;
 
   // Record whether we have the canvas embeded in a DOM, or standalone canvas bound to browser window.
-  this.hasDOM = Util.isThereALayout();
-  params.hasDOM = this.hasDOM;
+  this.hasLayout = Util.isThereALayout();
+  params.hasLayout = this.hasLayout;
 
   this.renderer = renderer;
   this.effect = effect;
@@ -351,7 +351,7 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
 // http://www.rioki.org/2015/04/19/threejs-resize-and-canvas.html
 // TODO: throttle resize when window size is changed rapidly
 WebVRManager.prototype.onResize_ = function() {
-  var size = this.player.resize(this.hasDOM);
+  var size = this.player.resize(this.hasLayout);
   this.resize_(size.width, size.height);
 }
 

@@ -28,6 +28,10 @@ var Util = require('./util.js');
 function PlayerManager(canvas, params) {
   this.loadIcons_();
 
+  // Warning when HTML5 canvas not supported.
+  this.canvasWarn = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
+  this.captionDefault = 'WebVR Boilerplate Scene';
+
   // Assign IDs and classes to the Player elements.
   this.uid = Util.getUniqueId(Util.containerClasses.player);
   console.log("PLAYER UID:" + this.uid);
@@ -35,14 +39,10 @@ function PlayerManager(canvas, params) {
   // Save a canvas reference.
   this.canvas = canvas;
 
-  // Warning when HTML5 canvas not supported.
-  this.canvasWarn = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
-  this.captionDefault = 'WebVR Boilerplate Scene';
-
   // Save the size of canvas between redrawing.
   this.canvasSize = {};
 
-  // Compute default size for the Player.
+  // Compute default size for the Player, and any relative styles.
   this.initPlayer();
 
   // TODO: warning for VR not supported in <figcaption>
@@ -54,20 +54,25 @@ function PlayerManager(canvas, params) {
     this.dom.appendChild(canvas);
   }
   else {
+    // Canvas should be inside a <figure> tag.
     this.dom = canvas.parentNode;
   }
 
-  Util.addClass(this.dom, Util.containerClasses.player);
-
-  if(!canvas.id) {
-    canvas.id = this.uid;
+  // If our Player doesn't have an id, make one.
+  if(!this.dom.id) {
+    if(params.id) { 
+      this.dom.id = params.id;
+    } else {
+      this.dom.id = this.uid;
+    }
   }
 
-  // Set the Player id, if present, or create a random one.
-  if(params.id) { 
-    this.dom.id = params.id;
-  } else {
-    this.dom.id = this.uid;
+  // Add the Player class.
+  Util.addClass(this.dom, Util.containerClasses.player);
+
+  // If the canvas doesn't have an id, create one.
+  if(!canvas.id) {
+    canvas.id = this.uid + '-canvas';
   }
 
   // Additional Player styles (needed to position controls).
@@ -75,17 +80,17 @@ function PlayerManager(canvas, params) {
   this.dom.style.display = 'block';
   this.dom.style.width = this.canvas.style.width; //Player is same width as canvas.
   this.dom.style.height = this.canvas.style.height;
-  //this.dom.style.height = this.canvas.style.height; //Speed up document reflow after swap.
+  //this.dom.style.height = this.canvas.style.height; //TODO: Speed up document reflow after swap?.
 
   // Set the error message if web browser doesn't support canvas.
   canvas.textContent == (canvas.textContent || this.canvasWarn);
 
   // Set ARIA describedby attribute.
   // From: https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
-  this.dom.setAttribute('aria-describedby', this.dom.id + '-caption');
+  this.dom.setAttribute('aria-describedby', this.uid + '-caption');
 
   // Add Buttons (positioned absolutely inside Player container).
-  this.controls = new ButtonManager(this.dom);
+  this.controls = new ButtonManager(this.dom, params);
 
   // Add <figcaption>, with id matching ARIA 'describedby' attribute.
   // Can be hidden, or used as an 'info' button after CSS styling.
@@ -117,9 +122,10 @@ PlayerManager.prototype.initPlayer = function() {
 }
 
 // Build a caption for the Player.
+// TODO: conditional, give show/hide option in params
 PlayerManager.prototype.createCaption = function(params) {
   var figCaption = Util.findChildrenByType(this.dom, 'figcaption');
-  if(figCaption[0]) {
+  if(figCaption && figCaption[0]) {
     figCaption = figCaption[0];
   } else {
     figCaption = document.createElement('figcaption');

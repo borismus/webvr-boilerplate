@@ -57,22 +57,62 @@ var Util = require('./util.js');
  * Emits a 'click' event when it's clicked.
  * Buttons are wrapped in a control container.
  */
-function ButtonManager(player) {
+function ButtonManager(playerDOM, params) {
   this.loadIcons_();
 
-  // Assign IDs and classes to the Button elements.
-  this.uid = Util.getUniqueId(Util.containerClasses.controls);
+  this.fsTitle = 'Fullscreen mode';
+  this.vrTitle = 'Virtual reality mode';
+  this.backTitle = 'Back to previous mode';
+  this.settingsTitle = 'Configure viewer';
+
+  /** 
+   * Assign Button container ID.
+   * - if an ID was passed in params, use it
+   * - otherwise, look for the ID number in the parent Player DOM, and use it
+   * - otherwise, create our own unique ID.
+   */
+  if (params.id) {
+    this.uid = params.id + '-controls';
+  } else if (playerDOM.id) {
+    var IdNum = playerDOM.id.replace(/\D/g, '');
+    if(IdNum != '') {
+      this.uid = Util.containerClasses.controls + '-' + IdNum;
+    } else {
+      this.uid = playerDOM.id + '-controls';
+    }
+  } else {
+    this.uid = Util.getUniqueId(Util.containerClasses.controls);
+  }
+
   console.log("CONTROLS UID:" + this.uid);
 
-  // Make a container for the Buttons, a sibling to the display canvas (which can't have visible child elements).
-  // TODO: define standard layout for Buttons and caption.
-  this.dom = player.getElementsByClassName(Util.containerClasses.controls)[0];
-  if (!this.dom) {
-    // No Button container exists, make one.
-    this.dom = document.createElement('div');
-    this.dom.className = Util.containerClasses.controls;
-    this.dom.id = Util.containerClasses.controls + this.uid;
-    player.appendChild(this.dom);
+  /**
+   * Make a container for the Buttons if we need one.
+   * - look for the control container class in the parent Player, and if present, use it.
+   * - look for a <nav> element in the parent Player, and if present, use it.
+   * - look for the "fullscreen" control inside the Player in a non-standard way, 
+   *   and if present, use its parent.
+   * - If none of the above, create a new control container.
+   */
+  this.dom = playerDOM.getElementsByClassName(Util.containerClasses.controls)[0];
+  if(!this.dom) {
+    console.log("control container not found by classname");
+    this.dom = Util.findChildrenByType(playerDOM, 'nav')[0];
+    if(!this.dom) {
+      console.log("control container not found by <nav>");
+      this.dom = Util.findChildrenByTitle(playerDOM, this.fsTitle)[0];
+      if(!this.dom) {
+        console.log("assuming control container never made, creating");
+        this.dom = document.createElement('nav');
+        this.dom.className = Util.containerClasses.controls;
+        this.dom.id = this.uid;
+        playerDOM.appendChild(this.dom);
+      }
+      else {
+        console.log("non-standard control layout, some features may not work");
+        this.dom = this.dom[0].parentNode;
+      }
+    }
   }
 
   // Set the styles for the control container.
@@ -81,62 +121,86 @@ function ButtonManager(player) {
   this.dom.style.bottom = 0;
   this.dom.style.right = 0;
 
-  // Make the fullscreen button.
-  var fsButton = this.createButton();
-  fsButton.src = this.ICONS.fullscreen;
-  fsButton.className = Util.containerClasses.fullscreen;
-  fsButton.title = 'Fullscreen mode';
-  var s = fsButton.style;
-  s.bottom = 0;
-  s.right = 0;
+  /** 
+   * Create the buttons, if needed. Buttons can be created manually, 
+   * but only if their titles match the default button titles above.
+   * Note: browser will discard duplicate events, so even if we attached 
+   * an 'onclick' event in markup this will work.
+   * https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#Multiple_identical_event_listeners
+   */
+
+  // Make the fullscreen button, if needed.
+  var fsButton = Util.findChildrenByTitle(playerDOM, this.fsTitle)[0];
+  if(!fsButton) {
+    console.log("creating fullscreen")
+    var fsButton = this.createButton();
+    fsButton.src = this.ICONS.fullscreen;
+    fsButton.className = Util.containerClasses.fullscreen;
+    fsButton.title = this.fsTitle;
+    var s = fsButton.style;
+    s.bottom = 0;
+    s.right = 0;
+    this.dom.appendChild(fsButton);
+    this.fsButton = fsButton;
+
+    // Float in container makes it easier to handle multiple Button alignment.
+    // TODO: abstract button creation and positioning.
+    fsButton.style.float = 'right';
+  }
   fsButton.addEventListener('click', this.createClickHandler_('fs'));
-  this.dom.appendChild(fsButton);
-  this.fsButton = fsButton;
 
-  // Make the VR button.
-  var vrButton = this.createButton();
-  vrButton.src = this.ICONS.cardboard;
-  vrButton.className = Util.containerClasses.vr;
-  vrButton.title = 'Virtual reality mode';
-  var s = vrButton.style;
-  s.bottom = 0;
-  //s.right = '48px';
+  // Make the VR button, if needed.
+  var vrButton = Util.findChildrenByTitle(playerDOM, this.vrTitle)[0];
+  if(!vrButton) {
+    console.log("creating vr");
+    var vrButton = this.createButton();
+    vrButton.src = this.ICONS.cardboard;
+    vrButton.className = Util.containerClasses.vr;
+    vrButton.title = this.vrTitle;
+    var s = vrButton.style;
+    s.bottom = 0;
+    //s.right = '48px';
+    this.dom.appendChild(vrButton);
+    this.vrButton = vrButton;
+
+    // Float in container makes it easier to handle multiple Button alignment.
+    // TODO: abstract button creation and positioning
+    vrButton.style.float = 'right';
+  }
   vrButton.addEventListener('click', this.createClickHandler_('vr'));
-  this.dom.appendChild(vrButton);
-  this.vrButton = vrButton;
-
-  // Float in container makes it easier to handle multiple Button alignment.
-  // TODO: abstract button creation and positioning
-  vrButton.style.float = 'right';
 
   // Make the back button.
-  var backButton = this.createButton();
-  backButton.src = this.ICONS.back;
-  backButton.className = Util.containerClasses.backId;
-  backButton.title = 'Back to previous mode';
-  var s = backButton.style;
-  s.left = 0;
-  s.top = 0;
+  var backButton = Util.findChildrenByTitle(playerDOM, this.backTitle)[0];
+  if(!backButton) {
+    console.log("creating back button")
+    var backButton = this.createButton();
+    backButton.src = this.ICONS.back;
+    backButton.className = Util.containerClasses.backId;
+    backButton.title = this.backTitle;
+    var s = backButton.style;
+    s.left = 0;
+    s.top = 0;
+    this.dom.appendChild(backButton);
+    this.backButton = backButton;
+  }
   backButton.addEventListener('click', this.createClickHandler_('back'));
-  this.dom.appendChild(backButton);
-  this.backButton = backButton;
-
-  // Float in container makes it easier to handle multiple Button alignment.
-  // TODO: abstract button creation and positioning.
-  fsButton.style.float = 'right';
 
   // Make the settings button, but only for mobile.
-  var settingsButton = this.createButton();
-  settingsButton.title = 'Configure viewer';
-  var s = settingsButton.style;
-  s.left = '50%';
-  s.marginLeft = '-24px';
-  s.bottom = 0;
-  s.zIndex = 0;
-  settingsButton.src = this.ICONS.settings;
+  var settingsButton = Util.findChildrenByTitle(playerDOM, this.settingsTitle)[0];
+  if(!settingsButton) {
+    console.log("creating settings button")
+    var settingsButton = this.createButton();
+    settingsButton.title = this.settingsTitle;
+    var s = settingsButton.style;
+    s.left = '50%';
+    s.marginLeft = '-24px';
+    s.bottom = 0;
+    s.zIndex = 0;
+    settingsButton.src = this.ICONS.settings;
+    this.dom.appendChild(settingsButton);
+    this.settingsButton = settingsButton;
+  }
   settingsButton.addEventListener('click', this.createClickHandler_('settings'));
-  this.dom.appendChild(settingsButton);
-  this.settingsButton = settingsButton;
 
   this.isVisible = true;
 
@@ -808,6 +872,10 @@ var Util = require('./util.js');
 function PlayerManager(canvas, params) {
   this.loadIcons_();
 
+  // Warning when HTML5 canvas not supported.
+  this.canvasWarn = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
+  this.captionDefault = 'WebVR Boilerplate Scene';
+
   // Assign IDs and classes to the Player elements.
   this.uid = Util.getUniqueId(Util.containerClasses.player);
   console.log("PLAYER UID:" + this.uid);
@@ -815,14 +883,10 @@ function PlayerManager(canvas, params) {
   // Save a canvas reference.
   this.canvas = canvas;
 
-  // Warning when HTML5 canvas not supported.
-  this.canvasWarn = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
-  this.captionDefault = 'WebVR Boilerplate Scene';
-
   // Save the size of canvas between redrawing.
   this.canvasSize = {};
 
-  // Compute default size for the Player.
+  // Compute default size for the Player, and any relative styles.
   this.initPlayer();
 
   // TODO: warning for VR not supported in <figcaption>
@@ -834,20 +898,25 @@ function PlayerManager(canvas, params) {
     this.dom.appendChild(canvas);
   }
   else {
+    // Canvas should be inside a <figure> tag.
     this.dom = canvas.parentNode;
   }
 
-  Util.addClass(this.dom, Util.containerClasses.player);
-
-  if(!canvas.id) {
-    canvas.id = this.uid;
+  // If our Player doesn't have an id, make one.
+  if(!this.dom.id) {
+    if(params.id) { 
+      this.dom.id = params.id;
+    } else {
+      this.dom.id = this.uid;
+    }
   }
 
-  // Set the Player id, if present, or create a random one.
-  if(params.id) { 
-    this.dom.id = params.id;
-  } else {
-    this.dom.id = this.uid;
+  // Add the Player class.
+  Util.addClass(this.dom, Util.containerClasses.player);
+
+  // If the canvas doesn't have an id, create one.
+  if(!canvas.id) {
+    canvas.id = this.uid + '-canvas';
   }
 
   // Additional Player styles (needed to position controls).
@@ -855,17 +924,17 @@ function PlayerManager(canvas, params) {
   this.dom.style.display = 'block';
   this.dom.style.width = this.canvas.style.width; //Player is same width as canvas.
   this.dom.style.height = this.canvas.style.height;
-  //this.dom.style.height = this.canvas.style.height; //Speed up document reflow after swap.
+  //this.dom.style.height = this.canvas.style.height; //TODO: Speed up document reflow after swap?.
 
   // Set the error message if web browser doesn't support canvas.
   canvas.textContent == (canvas.textContent || this.canvasWarn);
 
   // Set ARIA describedby attribute.
   // From: https://dev.opera.com/articles/accessible-html5-video-with-javascripted-captions/
-  this.dom.setAttribute('aria-describedby', this.dom.id + '-caption');
+  this.dom.setAttribute('aria-describedby', this.uid + '-caption');
 
   // Add Buttons (positioned absolutely inside Player container).
-  this.controls = new ButtonManager(this.dom);
+  this.controls = new ButtonManager(this.dom, params);
 
   // Add <figcaption>, with id matching ARIA 'describedby' attribute.
   // Can be hidden, or used as an 'info' button after CSS styling.
@@ -897,9 +966,10 @@ PlayerManager.prototype.initPlayer = function() {
 }
 
 // Build a caption for the Player.
+// TODO: conditional, give show/hide option in params
 PlayerManager.prototype.createCaption = function(params) {
   var figCaption = Util.findChildrenByType(this.dom, 'figcaption');
-  if(figCaption[0]) {
+  if(figCaption && figCaption[0]) {
     figCaption = figCaption[0];
   } else {
     figCaption = document.createElement('figcaption');
@@ -1246,8 +1316,9 @@ Util.isIFrame = function() {
 Util.containerClasses = {
   prefix: 'webvr-',
   dom: 'webvr-dom-container',
-  player: 'webvr-player-container',
-  controls: 'webvr-controls-container',
+  player: 'webvr-player',
+  caption: 'webvr-player-caption',
+  controls: 'webvr-controls',
   back: 'webvr-button-back',
   backId: 'webvr-button-back-id',
   fullscreen: 'webvr-button-fullscreen',
@@ -1315,6 +1386,20 @@ Util.findChildrenByType = function(elem, types) {
   }
   return arr;
 };
+
+// Need something more general than Element.querySelector.
+Util.findChildrenByTitle = function(elem, titleStr) {
+  var arr = [];
+  var children = elem.children;
+  var len = children.length;
+  for (var i = 0; i < len; i++) {
+    console.log("title:" + children[i].title + " str:" + titleStr);
+    if(children[i].title == titleStr) {
+      arr.push(children[i]);
+    }
+  }
+  return arr;
+}
 
 // Check to see if there are any tags other than <canvas>, <script>, <img> in document.body.
 // Used to keep boilerplate default separate canvas embedded in page layout.
@@ -1777,8 +1862,8 @@ function WebVRManager(renderer, effect, camera, params) {
   var hideButton = this.params.hideButton || false;
 
   // Record whether we have the canvas embeded in a DOM, or standalone canvas bound to browser window.
-  this.hasDOM = Util.isThereALayout();
-  params.hasDOM = this.hasDOM;
+  this.hasLayout = Util.isThereALayout();
+  params.hasLayout = this.hasLayout;
 
   this.renderer = renderer;
   this.effect = effect;
@@ -1879,6 +1964,7 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
+
 // TODO: Util should be standalone, used by several WebVRManager objects.
 WebVRManager.Util = Util;
 
@@ -1912,6 +1998,7 @@ WebVRManager.prototype.getViewer = function() {
 };
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
+  //TODO: when would we need to resize, other than browser window changing size?
   /////////////this.resizeIfNeeded_(camera);
 
   if (this.isVRMode()) {
@@ -2077,7 +2164,7 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
 // http://www.rioki.org/2015/04/19/threejs-resize-and-canvas.html
 // TODO: throttle resize when window size is changed rapidly
 WebVRManager.prototype.onResize_ = function() {
-  var size = this.player.resize(this.hasDOM);
+  var size = this.player.resize(this.hasLayout);
   this.resize_(size.width, size.height);
 }
 

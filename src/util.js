@@ -46,8 +46,9 @@ Util.isIFrame = function() {
 Util.containerClasses = {
   prefix: 'webvr-',
   dom: 'webvr-dom-container',
-  player: 'webvr-player-container',
-  controls: 'webvr-controls-container',
+  player: 'webvr-player',
+  caption: 'webvr-player-caption',
+  controls: 'webvr-controls',
   back: 'webvr-button-back',
   backId: 'webvr-button-back-id',
   fullscreen: 'webvr-button-fullscreen',
@@ -115,6 +116,20 @@ Util.findChildrenByType = function(elem, types) {
   }
   return arr;
 };
+
+// Need something more general than Element.querySelector.
+Util.findChildrenByTitle = function(elem, titleStr) {
+  var arr = [];
+  var children = elem.children;
+  var len = children.length;
+  for (var i = 0; i < len; i++) {
+    console.log("title:" + children[i].title + " str:" + titleStr);
+    if(children[i].title == titleStr) {
+      arr.push(children[i]);
+    }
+  }
+  return arr;
+}
 
 // Check to see if there are any tags other than <canvas>, <script>, <img> in document.body.
 // Used to keep boilerplate default separate canvas embedded in page layout.
