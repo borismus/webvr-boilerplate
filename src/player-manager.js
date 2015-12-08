@@ -78,6 +78,7 @@ function PlayerManager(canvas, params) {
   // Additional Player styles (needed to position controls).
   this.dom.style.position = 'relative';
   this.dom.style.display = 'block';
+  this.dom.style.padding = '0px';
   this.dom.style.width = this.canvas.style.width; //Player is same width as canvas.
   this.dom.style.height = this.canvas.style.height;
   //this.dom.style.height = this.canvas.style.height; //TODO: Speed up document reflow after swap?.
@@ -201,6 +202,7 @@ PlayerManager.prototype.resize = function(hasDOM) {
     height = window.innerHeight;
   } else {
     if (hasDOM) {
+      console.log("isFullScreen returns FALSE, but canvas width:" + this.canvas.width + ' height:' + this.canvas.height);
       // Player size is fixed.
       // TODO: enable a relative sizing option for responsive design layouts.
       width = this.getWidth();
@@ -250,15 +252,9 @@ PlayerManager.prototype.moveCanvas = function() {
       placeholder.id = Util.containerClasses.placeholderId;
       document.body.appendChild(placeholder);
     }
-    // Placeholder for back button
-    var placeholderBkButton = document.getElementById(Util.containerClasses.backId);
-    if (!placeholderBkButton) {
-      placeholderBkButton = document.createElement('span');
-      placeholderBkButton.id = Util.containerClasses.backId;
-      document.body.appendChild(placeholderBkButton);
-    }
     // TODO: after moving to Player, swap placeholderButton to visibility at top-left of screen.
-    Util.swapNodes(this.canvas, placeholder); //canvas swaps where placeholder was.
+    //Util.swapNodes(this.dom, placeholder); //canvas swaps where placeholder was.
+    Util.swapNodes(placeholder, this.dom);
   } else {
     console.log('no extra DOM, don\'t need to swap canvas');
   }
@@ -267,28 +263,40 @@ PlayerManager.prototype.moveCanvas = function() {
 // Move our drawing canvas out of the DOM, and hide the DOM.
 PlayerManager.prototype.hideDOM = function() {
   console.log('in hideDOM with selector:' + this.dom.id);
-  this.moveCanvas();
-  document.getElementById(this.dom.id).style.display = 'none';
+  //document.getElementsByClassName('Util.containerClasses.dom')[0].style.display = 'none';
+  this.dom.style.position = 'absolute';
+  this.dom.style.top = '0px';
+  this.dom.style.left = '0px';
+  //remember our former (relative) positioning
+  this.saveTop = this.dom.style.top;
+  this.saveLeft = this.dom.style.left;
+  //hide controls
+  this.controls.dom.style.display = 'none';
+  ////////////this.moveCanvas();
   return false;
 };
 
 // Return our drawing canvs to its DOM location, and show the DOM;
 PlayerManager.prototype.showDOM = function() {
   console.log('in showDOM with selector:' + this.dom.id);
-  this.moveCanvas();
-  document.getElementById(this.dom.id).style.display = 'block';
-  return this.isThereALayout(); //might have changed if we are in editing program.
+  //////////this.moveCanvas();
+  this.dom.style.position = 'relative';
+  //return to our former relative positioning
+  this.dom.style.top = this.saveTop;
+  this.dom.style.left = this.saveLeft;
+  this.controls.dom.style.display = 'block';
+  return false; //0this.isThereALayout(); //might have changed if we are in editing program.
 };
 
 // Run on entering fullscreen.
 PlayerManager.prototype.enterFullScreen = function() {
-  console.log('player entering fullscreen')
+  console.log('Player.enterFullScreen()');
   return this.hideDOM();
 }
 
 // Run on exiting fullscreen.
 PlayerManager.prototype.exitFullScreen = function() {
-  console.log('player exiting fullscreen');
+  console.log('Player.exitFullScreen()');
   return this.showDOM();
 }
 

@@ -123,7 +123,7 @@ Util.findChildrenByTitle = function(elem, titleStr) {
   var children = elem.children;
   var len = children.length;
   for (var i = 0; i < len; i++) {
-    console.log("title:" + children[i].title + " str:" + titleStr);
+    //console.log("title:" + children[i].title + " str:" + titleStr);
     if(children[i].title == titleStr) {
       arr.push(children[i]);
     }
@@ -136,7 +136,7 @@ Util.findChildrenByTitle = function(elem, titleStr) {
 // Note: this will return TRUE after the Player wraps a 'naked' canvas during initialization!
 // TODO: change name to isThereALayout()
 Util.isThereALayout = function() {
-  console.log('running istheradom');
+  console.log('Util.isThereALayout()');
   var n = this.getDOMChildren();
   if (n && n.length > 0) {
     //these three tags are used by default WebVR boilerplate

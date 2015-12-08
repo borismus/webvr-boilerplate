@@ -48,6 +48,9 @@ function WebVRManager(renderer, effect, camera, params) {
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
 
+  this.oldWidth = 0;
+  this.oldHeight = 0;
+
   // Record whether we have the canvas embeded in a DOM, or standalone canvas bound to browser window.
   this.hasLayout = Util.isThereALayout();
   params.hasLayout = this.hasLayout;
@@ -296,6 +299,8 @@ WebVRManager.prototype.onBackClick_ = function() {
   } else {
     this.anyModeToNormal_();
     this.setMode_(Modes.NORMAL);
+    //TODO: this mode change already happened, WITHOUT changing the button in the control panel.
+    //TODO: fix this so we don't have to call .setMode again!!!!!!!
   }
 };
 
@@ -335,6 +340,7 @@ WebVRManager.prototype.vrToMagicWindow_ = function() {
 }
 
 WebVRManager.prototype.anyModeToNormal_ = function() {
+  console.log("anyModeToNormal")
   //this.effect.setFullScreen(false);
   this.exitFullscreen_();
   //this.releaseOrientationLock_();
@@ -347,11 +353,33 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
   //this.onResize_();
 };
 
+// TODO: throttle event
+// https://developer.mozilla.org/en-US/docs/Web/Events/resize
+
 // Moved all resizes to window resize callback.
 // http://www.rioki.org/2015/04/19/threejs-resize-and-canvas.html
 // TODO: throttle resize when window size is changed rapidly
-WebVRManager.prototype.onResize_ = function() {
+// Note: this runs BEFORE WebVRManager.exitFullScreen()
+// -manager.onfullscreenchange
+// -manger.resize
+// -player.resize (but screen is still fullscreen)
+// -manager.exitfullscreen
+// -Mode change 2 => 1
+// -manager.resize
+// -player.resize (now screen is small again)
+// NOTE: EDGE MIGHT BE DIFFERENT
+WebVRManager.prototype.onResize_ = function(e) {
+  //note: what does IE8 use? http://www.w3schools.com/jsref/event_currenttarget.asp
+  console.log("in resize, canvas width:" + this.renderer.domElement.width + ' oldwidth:' + this.oldWidth + ' height:' + this.renderer.domElement.height + ' oldheight: ' + this.oldHeight);
+  console.log("...and window.innerWidth:" + window.innerWidth + ' window.innerHeight:' + window.innerHeight);
   var size = this.player.resize(this.hasLayout);
+  if(!Util.isFullScreen()) {
+    //set on the first of TWO resize events
+    if(this.mode != Modes.NORMAL) {
+      this.anyModeToNormal_();
+      this.setMode_(Modes.NORMAL);
+    }
+  }
   this.resize_(size.width, size.height);
 }
 
@@ -362,6 +390,8 @@ WebVRManager.prototype.resize_ = function(width, height) {
   this.effect.setSize(width, height);
   this.renderer.setSize(width, height);
   //this.player.setSize(width, height);
+  this.oldWidth = width;
+  this.oldHeight = height;
 }
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {
@@ -382,11 +412,15 @@ WebVRManager.prototype.updateRotateInstructions_ = function() {
 
 WebVRManager.prototype.onFullscreenChange_ = function(e) {
   // If we leave full-screen, go back to normal mode.
+  // Note: only seems necessary for FF
+  // Note: try with VR, may be needed there for webkit
+  /*
   if (document.webkitFullscreenElement === null ||
-      document.mozFullScreenElement === null) {
+     document.mozFullScreenElement === null) {
     this.anyModeToNormal_();
     this.setMode_(Modes.NORMAL);
   }
+  */
   console.log("full screen change event happened")
 };
 
@@ -430,20 +464,31 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   // Needs to be placed before fullscreen entry.
   this.player.enterFullScreen();
 
+  if (this.player.dom.requestFullscreen) {
+    this.player.dom.requestFullscreen();
+  } else if (this.player.dom.mozRequestFullScreen) {
+    this.player.dom.mozRequestFullScreen({vrDisplay: this.hmd});
+  } else if (this.player.dom.webkitRequestFullscreen) {
+    this.player.dom.webkitRequestFullscreen({vrDisplay: this.hmd});
+  } else if (this.player.dom.msRequestFullscreen) { //Internet Explorer 9
+    this.player.dom.msRequestFullscreen();
+  }
+  /*
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
     canvas.mozRequestFullScreen({vrDisplay: this.hmd});
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
-  } else if (docElm.msRequestFullscreen) { //Internet Explorer 9
-    docElm.msRequestFullscreen();
+  } else if (canvas.msRequestFullscreen) { //Internet Explorer 9
+    canvas.msRequestFullscreen();
   }
+  */
   // We aren't necessarily fullscreen yet! Trap change with window resize event.
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {
-
+  console.log('WebVRManager.exitFullscreen()');
   var canvas = this.renderer.domElement;
   if (document.exitFullscreen) {
     document.exitFullscreen();
@@ -483,6 +528,7 @@ WebVRManager.prototype.setCardboardFov_ = function(fov) {
   });
 };
 
+/*
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {
   this.emit('viewerchange', viewer);
 
@@ -492,6 +538,7 @@ WebVRManager.prototype.onViewerChanged_ = function(viewer) {
   // And update the camera FOV.
   this.setCardboardFov_(viewer.fov);
 };
+*/
 
 /**
  * Sets the FOV of the CardboardHMDVRDevice. These changes are ultimately

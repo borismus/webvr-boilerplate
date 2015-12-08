@@ -109,7 +109,7 @@ function ButtonManager(playerDOM, params) {
         playerDOM.appendChild(this.dom);
       }
       else {
-        console.log("non-standard control layout, some features may not work");
+        console.error("non-standard control layout, some features may not work");
         this.dom = this.dom[0].parentNode;
       }
     }
@@ -178,9 +178,11 @@ function ButtonManager(playerDOM, params) {
     backButton.className = Util.containerClasses.backId;
     backButton.title = this.backTitle;
     var s = backButton.style;
+    s.position = 'fixed';
     s.left = 0;
     s.top = 0;
-    this.dom.appendChild(backButton);
+    //////////this.dom.appendChild(backButton);
+    playerDOM.appendChild(backButton);
     this.backButton = backButton;
   }
   backButton.addEventListener('click', this.createClickHandler_('back'));
@@ -922,6 +924,7 @@ function PlayerManager(canvas, params) {
   // Additional Player styles (needed to position controls).
   this.dom.style.position = 'relative';
   this.dom.style.display = 'block';
+  this.dom.style.padding = '0px';
   this.dom.style.width = this.canvas.style.width; //Player is same width as canvas.
   this.dom.style.height = this.canvas.style.height;
   //this.dom.style.height = this.canvas.style.height; //TODO: Speed up document reflow after swap?.
@@ -1045,6 +1048,7 @@ PlayerManager.prototype.resize = function(hasDOM) {
     height = window.innerHeight;
   } else {
     if (hasDOM) {
+      console.log("isFullScreen returns FALSE, but canvas width:" + this.canvas.width + ' height:' + this.canvas.height);
       // Player size is fixed.
       // TODO: enable a relative sizing option for responsive design layouts.
       width = this.getWidth();
@@ -1094,15 +1098,9 @@ PlayerManager.prototype.moveCanvas = function() {
       placeholder.id = Util.containerClasses.placeholderId;
       document.body.appendChild(placeholder);
     }
-    // Placeholder for back button
-    var placeholderBkButton = document.getElementById(Util.containerClasses.backId);
-    if (!placeholderBkButton) {
-      placeholderBkButton = document.createElement('span');
-      placeholderBkButton.id = Util.containerClasses.backId;
-      document.body.appendChild(placeholderBkButton);
-    }
     // TODO: after moving to Player, swap placeholderButton to visibility at top-left of screen.
-    Util.swapNodes(this.canvas, placeholder); //canvas swaps where placeholder was.
+    //Util.swapNodes(this.dom, placeholder); //canvas swaps where placeholder was.
+    Util.swapNodes(placeholder, this.dom);
   } else {
     console.log('no extra DOM, don\'t need to swap canvas');
   }
@@ -1111,28 +1109,40 @@ PlayerManager.prototype.moveCanvas = function() {
 // Move our drawing canvas out of the DOM, and hide the DOM.
 PlayerManager.prototype.hideDOM = function() {
   console.log('in hideDOM with selector:' + this.dom.id);
-  this.moveCanvas();
-  document.getElementById(this.dom.id).style.display = 'none';
+  //document.getElementsByClassName('Util.containerClasses.dom')[0].style.display = 'none';
+  this.dom.style.position = 'absolute';
+  this.dom.style.top = '0px';
+  this.dom.style.left = '0px';
+  //remember our former (relative) positioning
+  this.saveTop = this.dom.style.top;
+  this.saveLeft = this.dom.style.left;
+  //hide controls
+  this.controls.dom.style.display = 'none';
+  ////////////this.moveCanvas();
   return false;
 };
 
 // Return our drawing canvs to its DOM location, and show the DOM;
 PlayerManager.prototype.showDOM = function() {
   console.log('in showDOM with selector:' + this.dom.id);
-  this.moveCanvas();
-  document.getElementById(this.dom.id).style.display = 'block';
-  return this.isThereALayout(); //might have changed if we are in editing program.
+  //////////this.moveCanvas();
+  this.dom.style.position = 'relative';
+  //return to our former relative positioning
+  this.dom.style.top = this.saveTop;
+  this.dom.style.left = this.saveLeft;
+  this.controls.dom.style.display = 'block';
+  return false; //0this.isThereALayout(); //might have changed if we are in editing program.
 };
 
 // Run on entering fullscreen.
 PlayerManager.prototype.enterFullScreen = function() {
-  console.log('player entering fullscreen')
+  console.log('Player.enterFullScreen()');
   return this.hideDOM();
 }
 
 // Run on exiting fullscreen.
 PlayerManager.prototype.exitFullScreen = function() {
-  console.log('player exiting fullscreen');
+  console.log('Player.exitFullScreen()');
   return this.showDOM();
 }
 
@@ -1393,7 +1403,7 @@ Util.findChildrenByTitle = function(elem, titleStr) {
   var children = elem.children;
   var len = children.length;
   for (var i = 0; i < len; i++) {
-    console.log("title:" + children[i].title + " str:" + titleStr);
+    //console.log("title:" + children[i].title + " str:" + titleStr);
     if(children[i].title == titleStr) {
       arr.push(children[i]);
     }
@@ -1406,7 +1416,7 @@ Util.findChildrenByTitle = function(elem, titleStr) {
 // Note: this will return TRUE after the Player wraps a 'naked' canvas during initialization!
 // TODO: change name to isThereALayout()
 Util.isThereALayout = function() {
-  console.log('running istheradom');
+  console.log('Util.isThereALayout()');
   var n = this.getDOMChildren();
   if (n && n.length > 0) {
     //these three tags are used by default WebVR boilerplate
@@ -1861,6 +1871,9 @@ function WebVRManager(renderer, effect, camera, params) {
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
 
+  this.oldWidth = 0;
+  this.oldHeight = 0;
+
   // Record whether we have the canvas embeded in a DOM, or standalone canvas bound to browser window.
   this.hasLayout = Util.isThereALayout();
   params.hasLayout = this.hasLayout;
@@ -2109,6 +2122,8 @@ WebVRManager.prototype.onBackClick_ = function() {
   } else {
     this.anyModeToNormal_();
     this.setMode_(Modes.NORMAL);
+    //TODO: this mode change already happened, WITHOUT changing the button in the control panel.
+    //TODO: fix this so we don't have to call .setMode again!!!!!!!
   }
 };
 
@@ -2148,6 +2163,7 @@ WebVRManager.prototype.vrToMagicWindow_ = function() {
 }
 
 WebVRManager.prototype.anyModeToNormal_ = function() {
+  console.log("anyModeToNormal")
   //this.effect.setFullScreen(false);
   this.exitFullscreen_();
   //this.releaseOrientationLock_();
@@ -2160,11 +2176,33 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
   //this.onResize_();
 };
 
+// TODO: throttle event
+// https://developer.mozilla.org/en-US/docs/Web/Events/resize
+
 // Moved all resizes to window resize callback.
 // http://www.rioki.org/2015/04/19/threejs-resize-and-canvas.html
 // TODO: throttle resize when window size is changed rapidly
-WebVRManager.prototype.onResize_ = function() {
+// Note: this runs BEFORE WebVRManager.exitFullScreen()
+// -manager.onfullscreenchange
+// -manger.resize
+// -player.resize (but screen is still fullscreen)
+// -manager.exitfullscreen
+// -Mode change 2 => 1
+// -manager.resize
+// -player.resize (now screen is small again)
+// NOTE: EDGE MIGHT BE DIFFERENT
+WebVRManager.prototype.onResize_ = function(e) {
+  //note: what does IE8 use? http://www.w3schools.com/jsref/event_currenttarget.asp
+  console.log("in resize, canvas width:" + this.renderer.domElement.width + ' oldwidth:' + this.oldWidth + ' height:' + this.renderer.domElement.height + ' oldheight: ' + this.oldHeight);
+  console.log("...and window.innerWidth:" + window.innerWidth + ' window.innerHeight:' + window.innerHeight);
   var size = this.player.resize(this.hasLayout);
+  if(!Util.isFullScreen()) {
+    //set on the first of TWO resize events
+    if(this.mode != Modes.NORMAL) {
+      this.anyModeToNormal_();
+      this.setMode_(Modes.NORMAL);
+    }
+  }
   this.resize_(size.width, size.height);
 }
 
@@ -2175,6 +2213,8 @@ WebVRManager.prototype.resize_ = function(width, height) {
   this.effect.setSize(width, height);
   this.renderer.setSize(width, height);
   //this.player.setSize(width, height);
+  this.oldWidth = width;
+  this.oldHeight = height;
 }
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {
@@ -2195,11 +2235,15 @@ WebVRManager.prototype.updateRotateInstructions_ = function() {
 
 WebVRManager.prototype.onFullscreenChange_ = function(e) {
   // If we leave full-screen, go back to normal mode.
+  // Note: only seems necessary for FF
+  // Note: try with VR, may be needed there for webkit
+  /*
   if (document.webkitFullscreenElement === null ||
-      document.mozFullScreenElement === null) {
+     document.mozFullScreenElement === null) {
     this.anyModeToNormal_();
     this.setMode_(Modes.NORMAL);
   }
+  */
   console.log("full screen change event happened")
 };
 
@@ -2243,20 +2287,31 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   // Needs to be placed before fullscreen entry.
   this.player.enterFullScreen();
 
+  if (this.player.dom.requestFullscreen) {
+    this.player.dom.requestFullscreen();
+  } else if (this.player.dom.mozRequestFullScreen) {
+    this.player.dom.mozRequestFullScreen({vrDisplay: this.hmd});
+  } else if (this.player.dom.webkitRequestFullscreen) {
+    this.player.dom.webkitRequestFullscreen({vrDisplay: this.hmd});
+  } else if (this.player.dom.msRequestFullscreen) { //Internet Explorer 9
+    this.player.dom.msRequestFullscreen();
+  }
+  /*
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
     canvas.mozRequestFullScreen({vrDisplay: this.hmd});
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
-  } else if (docElm.msRequestFullscreen) { //Internet Explorer 9
-    docElm.msRequestFullscreen();
+  } else if (canvas.msRequestFullscreen) { //Internet Explorer 9
+    canvas.msRequestFullscreen();
   }
+  */
   // We aren't necessarily fullscreen yet! Trap change with window resize event.
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {
-
+  console.log('WebVRManager.exitFullscreen()');
   var canvas = this.renderer.domElement;
   if (document.exitFullscreen) {
     document.exitFullscreen();
@@ -2296,6 +2351,7 @@ WebVRManager.prototype.setCardboardFov_ = function(fov) {
   });
 };
 
+/*
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {
   this.emit('viewerchange', viewer);
 
@@ -2305,6 +2361,7 @@ WebVRManager.prototype.onViewerChanged_ = function(viewer) {
   // And update the camera FOV.
   this.setCardboardFov_(viewer.fov);
 };
+*/
 
 /**
  * Sets the FOV of the CardboardHMDVRDevice. These changes are ultimately

@@ -75,7 +75,7 @@ function ButtonManager(playerDOM, params) {
         playerDOM.appendChild(this.dom);
       }
       else {
-        console.log("non-standard control layout, some features may not work");
+        console.error("non-standard control layout, some features may not work");
         this.dom = this.dom[0].parentNode;
       }
     }
@@ -144,9 +144,11 @@ function ButtonManager(playerDOM, params) {
     backButton.className = Util.containerClasses.backId;
     backButton.title = this.backTitle;
     var s = backButton.style;
+    s.position = 'fixed';
     s.left = 0;
     s.top = 0;
-    this.dom.appendChild(backButton);
+    //////////this.dom.appendChild(backButton);
+    playerDOM.appendChild(backButton);
     this.backButton = backButton;
   }
   backButton.addEventListener('click', this.createClickHandler_('back'));
