@@ -41,6 +41,7 @@ var iOSDevices = {
   })
 };
 
+// TODO: Add Nexus 5X, Nexus 6P, Nexus 6.
 var AndroidDevices = {
   Nexus5: new Device({
     userAgentRegExp: /Nexus 5/,
@@ -79,17 +80,23 @@ var Viewers = {
     id: 'CardboardV1',
     label: 'Cardboard I/O 2014',
     fov: 40,
-    ipdMm: 60,
+    ipd: 0.060,
     baselineLensCenterMm: 37.26,
-    distortionCoefficients: [0.441, 0.156]
+    distortionCoefficients: [0.441, 0.156],
+    inverseCoefficients: [-0.4410035, 0.42756155, -0.4804439, 0.5460139,
+      -0.58821183, 0.5733938, -0.48303202, 0.33299083, -0.17573841,
+      0.0651772, -0.01488963, 0.001559834]
   }),
   CardboardV2: new CardboardViewer({
     id: 'CardboardV2',
     label: 'Cardboard I/O 2015',
     fov: 60,
-    ipdMm: 64,
+    ipd: 0.064,
     baselineLensCenterMm: 37.26,
-    distortionCoefficients: [0.34, 0.55]
+    distortionCoefficients: [0.34, 0.55],
+    inverseCoefficients: [-0.33836704, -0.18162185, 0.862655, -1.2462051,
+      1.0560602, -0.58208317, 0.21609078, -0.05444823, 0.009177956,
+      -9.904169E-4, 6.183535E-5, -1.6981803E-6]
   })
 };
 
@@ -103,11 +110,15 @@ var DEFAULT_RIGHT_CENTER = {x: 0.5, y: 0.5};
  */
 function DeviceInfo() {
   this.device = this.determineDevice_();
-  this.enclosure = Viewers.CardboardV1;
+  this.viewer = Viewers.CardboardV1;
 }
 
 DeviceInfo.prototype.getDevice = function() {
   return this.device;
+};
+
+DeviceInfo.prototype.setViewer = function(viewer) {
+  this.viewer = viewer;
 };
 
 /**
@@ -117,9 +128,10 @@ DeviceInfo.prototype.getLeftEyeCenter = function() {
   if (!this.device) {
     return DEFAULT_LEFT_CENTER;
   }
-  // Get parameters from the enclosure.
-  var eyeToMid = this.enclosure.ipdMm / 2;
-  var eyeToBase = this.enclosure.baselineLensCenterMm;
+  // Get parameters from the viewer.
+  var ipdMm = this.viewer.ipd * 1000;
+  var eyeToMid = ipdMm / 2;
+  var eyeToBase = this.viewer.baselineLensCenterMm;
 
   // Get parameters from the phone.
   var halfWidthMm = this.device.heightMm / 2;
@@ -210,12 +222,15 @@ function CardboardViewer(params) {
   this.fov = params.fov;
   // Distortion coefficients.
   this.distortionCoefficients = params.distortionCoefficients;
-  // IPD in millimeters.
-  this.ipdMm = params.ipdMm;
+  // Inverse distortion coefficients.
+  // TODO: Calculate these from distortionCoefficients in the future.
+  this.inverseCoefficients = params.inverseCoefficients;
+  // Interpupillary distance in meters.
+  this.ipd = params.ipd;
   // Distance between baseline and lens center.
   this.baselineLensCenterMm = params.baselineLensCenterMm;
 }
 
-// Export enclosure information.
+// Export viewer information.
 DeviceInfo.Viewers = Viewers;
 module.exports = DeviceInfo;
