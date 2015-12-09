@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-var PlayerManager = require('./player-manager.js');
 var ButtonManager = require('./button-manager.js');
 var CardboardDistorter = require('./cardboard-distorter.js');
 var DeviceInfo = require('./device-info.js');
@@ -40,7 +39,7 @@ var Wakelock = require('./wakelock.js');
  * - Wake lock
  * - Orientation lock (mobile only)
  */
-function WebVRManager(renderer, effect, camera, params) {
+function WebVRManager(renderer, effect, params) {
   this.params = params || {};
 
   this.mode = Modes.UNKNOWN;
@@ -48,27 +47,15 @@ function WebVRManager(renderer, effect, camera, params) {
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
 
-  this.oldWidth = 0;
-  this.oldHeight = 0;
+  this.deviceInfo = new DeviceInfo();
 
-  // Record whether we have the canvas embeded in a DOM, or standalone canvas bound to browser window.
-  this.hasLayout = Util.isThereALayout();
-  params.hasLayout = this.hasLayout;
-
+  // Save the THREE.js renderer and effect for later.
   this.renderer = renderer;
   this.effect = effect;
-  this.camera = camera;
-  this.distorter = new CardboardDistorter(renderer);
-
-  // Player wraps the canvas.
-  this.player = new PlayerManager(renderer.domElement, params);
-  this.button = this.player.controls;
-
+  this.distorter = new CardboardDistorter(renderer, this.deviceInfo);
+  this.button = new ButtonManager();
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
-
-  // Wrap naked <canvas> and DOM elements to make a Player, if not already in markup.
-  Util.wrapDOM();
 
   console.log('Using the %s viewer.', this.getViewer().label);
 
@@ -80,15 +67,16 @@ function WebVRManager(renderer, effect, camera, params) {
     this.startMode = startModeParam;
   }
 
-  // Set the correct viewer and listen for changes.
-  this.onViewerChanged_(this.getViewer());
+  // Set the correct viewer profile, but only if this is Cardboard.
+  if (Util.isMobile()) {
+    this.onViewerChanged_(this.getViewer());
+  }
+  // Listen for changes to the viewer.
   this.viewerSelector.on('change', this.onViewerChanged_.bind(this));
 
   if (hideButton) {
     this.button.setVisibility(false);
   }
-
-  var deviceInfo = new DeviceInfo();
 
   // Check if the browser is compatible with WebVR.
   this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
@@ -100,7 +88,7 @@ function WebVRManager(renderer, effect, camera, params) {
       this.isVRCompatible = true;
       // Only enable distortion if we are dealing using the polyfill, we have a
       // perfect device match, and it's not prevented via configuration.
-      if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && deviceInfo.getDevice() &&
+      if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && this.deviceInfo.getDevice() &&
           !WebVRConfig.PREVENT_DISTORTION) {
         this.distorter.setActive(true);
       }
@@ -139,9 +127,6 @@ function WebVRManager(renderer, effect, camera, params) {
   window.addEventListener('orientationchange',
       this.onOrientationChange_.bind(this));
 
-  window.addEventListener('resize', 
-      this.onResize_.bind(this));
-
   // Create the necessary elements for wake lock to work.
   this.wakelock = new Wakelock();
 
@@ -154,9 +139,6 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
-
-// TODO: Util should be standalone, used by several WebVRManager objects.
-WebVRManager.Util = Util;
 
 /**
  * Promise returns true if there is at least one HMD device available.
@@ -188,8 +170,7 @@ WebVRManager.prototype.getViewer = function() {
 };
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
-  //TODO: when would we need to resize, other than browser window changing size?
-  /////////////this.resizeIfNeeded_(camera);
+  this.resizeIfNeeded_(camera);
 
   if (this.isVRMode()) {
     this.distorter.preRender();
@@ -204,6 +185,7 @@ WebVRManager.prototype.render = function(scene, camera, timestamp) {
     }
   }
 };
+
 
 WebVRManager.prototype.setMode_ = function(mode) {
   var oldMode = this.mode;
@@ -299,8 +281,6 @@ WebVRManager.prototype.onBackClick_ = function() {
   } else {
     this.anyModeToNormal_();
     this.setMode_(Modes.NORMAL);
-    //TODO: this mode change already happened, WITHOUT changing the button in the control panel.
-    //TODO: fix this so we don't have to call .setMode again!!!!!!!
   }
 };
 
@@ -335,12 +315,10 @@ WebVRManager.prototype.vrToMagicWindow_ = function() {
   this.distorter.unpatch();
 
   // Android bug: when returning from VR, resize the effect.
-  // TODO: check if reSize event captures this.
-  //this.onResize_();
+  this.resize_();
 }
 
 WebVRManager.prototype.anyModeToNormal_ = function() {
-  console.log("anyModeToNormal")
   //this.effect.setFullScreen(false);
   this.exitFullscreen_();
   //this.releaseOrientationLock_();
@@ -349,50 +327,22 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
   this.distorter.unpatch();
 
   // Android bug: when returning from VR, resize the effect.
-  // TODO: check if reSize event captures this.
-  //this.onResize_();
+  this.resize_();
 };
 
-// TODO: throttle event
-// https://developer.mozilla.org/en-US/docs/Web/Events/resize
-
-// Moved all resizes to window resize callback.
-// http://www.rioki.org/2015/04/19/threejs-resize-and-canvas.html
-// TODO: throttle resize when window size is changed rapidly
-// Note: this runs BEFORE WebVRManager.exitFullScreen()
-// -manager.onfullscreenchange
-// -manger.resize
-// -player.resize (but screen is still fullscreen)
-// -manager.exitfullscreen
-// -Mode change 2 => 1
-// -manager.resize
-// -player.resize (now screen is small again)
-// NOTE: EDGE MIGHT BE DIFFERENT
-WebVRManager.prototype.onResize_ = function(e) {
-  //note: what does IE8 use? http://www.w3schools.com/jsref/event_currenttarget.asp
-  console.log("in resize, canvas width:" + this.renderer.domElement.width + ' oldwidth:' + this.oldWidth + ' height:' + this.renderer.domElement.height + ' oldheight: ' + this.oldHeight);
-  console.log("...and window.innerWidth:" + window.innerWidth + ' window.innerHeight:' + window.innerHeight);
-  var size = this.player.resize(this.hasLayout);
-  if(!Util.isFullScreen()) {
-    //set on the first of TWO resize events
-    if(this.mode != Modes.NORMAL) {
-      this.anyModeToNormal_();
-      this.setMode_(Modes.NORMAL);
-    }
+WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
+  // Only resize the canvas if it needs to be resized.
+  var size = this.renderer.getSize();
+  if (size.width != window.innerWidth || size.height != window.innerHeight) {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    this.resize_()
   }
-  this.resize_(size.width, size.height);
-}
+};
 
-// Resize the canvas and render, given a width and height.
-WebVRManager.prototype.resize_ = function(width, height) {
-  this.camera.aspect = width / height;
-  this.camera.updateProjectionMatrix();
-  this.effect.setSize(width, height);
-  this.renderer.setSize(width, height);
-  //this.player.setSize(width, height);
-  this.oldWidth = width;
-  this.oldHeight = height;
-}
+WebVRManager.prototype.resize_ = function() {
+  this.effect.setSize(window.innerWidth, window.innerHeight);
+};
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {
   this.updateRotateInstructions_();
@@ -412,16 +362,11 @@ WebVRManager.prototype.updateRotateInstructions_ = function() {
 
 WebVRManager.prototype.onFullscreenChange_ = function(e) {
   // If we leave full-screen, go back to normal mode.
-  // Note: only seems necessary for FF
-  // Note: try with VR, may be needed there for webkit
-  /*
   if (document.webkitFullscreenElement === null ||
-     document.mozFullScreenElement === null) {
+      document.mozFullScreenElement === null) {
     this.anyModeToNormal_();
     this.setMode_(Modes.NORMAL);
   }
-  */
-  console.log("full screen change event happened")
 };
 
 WebVRManager.prototype.requestPointerLock_ = function() {
@@ -458,99 +403,53 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 };
 
 WebVRManager.prototype.requestFullscreen_ = function() {
-  //var canvas = document.body;
-  var canvas = this.renderer.domElement;
-
-  // Needs to be placed before fullscreen entry.
-  this.player.enterFullScreen();
-
-  if (this.player.dom.requestFullscreen) {
-    this.player.dom.requestFullscreen();
-  } else if (this.player.dom.mozRequestFullScreen) {
-    this.player.dom.mozRequestFullScreen({vrDisplay: this.hmd});
-  } else if (this.player.dom.webkitRequestFullscreen) {
-    this.player.dom.webkitRequestFullscreen({vrDisplay: this.hmd});
-  } else if (this.player.dom.msRequestFullscreen) { //Internet Explorer 9
-    this.player.dom.msRequestFullscreen();
-  }
-  /*
+  var canvas = document.body;
+  //var canvas = this.renderer.domElement;
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
     canvas.mozRequestFullScreen({vrDisplay: this.hmd});
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
-  } else if (canvas.msRequestFullscreen) { //Internet Explorer 9
-    canvas.msRequestFullscreen();
   }
-  */
-  // We aren't necessarily fullscreen yet! Trap change with window resize event.
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {
-  console.log('WebVRManager.exitFullscreen()');
-  var canvas = this.renderer.domElement;
   if (document.exitFullscreen) {
     document.exitFullscreen();
   } else if (document.mozCancelFullScreen) {
     document.mozCancelFullScreen();
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
-  } else if (document.msExitFullscreen) { //Internet Explorer 9
-    document.msExitFullscreen();
   }
-  // TODO: position doesn't matter, get redraws before rendere adapts to changed screen size.
-  this.player.exitFullScreen();
 };
 
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {
-  this.emit('viewerchange', viewer);
+  this.deviceInfo.setViewer(viewer);
 
   // Set the proper coefficients.
   this.distorter.setDistortionCoefficients(viewer.distortionCoefficients);
 
   // And update the camera FOV.
-  this.setCardboardFov_(viewer.fov);
+  this.setHMDVRDeviceParams_(viewer);
+
+  // Notify anyone interested in this event.
+  this.emit('viewerchange', viewer);
 };
 
 /**
- * Sets the FOV of the CardboardHMDVRDevice. These changes are ultimately
- * handled by VREffect.
+ * Sets parameters on CardboardHMDVRDevice. These changes are ultimately handled
+ * by VREffect.
  */
-WebVRManager.prototype.setCardboardFov_ = function(fov) {
+WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
   this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
-    if (hmd) {
-      hmd.fov.upDegrees = fov;
-      hmd.fov.downDegrees = fov;
-      hmd.fov.leftDegrees = fov;
-      hmd.fov.rightDegrees = fov;
+    // Set these properties if this HMDVRDevice supports them.
+    if (hmd && hmd.setFieldOfView) {
+      hmd.setFieldOfView(viewer.fov);
     }
-  });
-};
-
-/*
-WebVRManager.prototype.onViewerChanged_ = function(viewer) {
-  this.emit('viewerchange', viewer);
-
-  // Set the proper coefficients.
-  this.distorter.setDistortionCoefficients(viewer.distortionCoefficients);
-
-  // And update the camera FOV.
-  this.setCardboardFov_(viewer.fov);
-};
-*/
-
-/**
- * Sets the FOV of the CardboardHMDVRDevice. These changes are ultimately
- * handled by VREffect.
- */
-WebVRManager.prototype.setCardboardFov_ = function(fov) {
-  this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
-    if (hmd) {
-      hmd.fov.upDegrees = fov;
-      hmd.fov.downDegrees = fov;
-      hmd.fov.leftDegrees = fov;
-      hmd.fov.rightDegrees = fov;
+    // Note: setInterpupillaryDistance is not part of the WebVR standard.
+    if (hmd && hmd.setInterpupillaryDistance) {
+      hmd.setInterpupillaryDistance(viewer.ipd);
     }
   });
 };

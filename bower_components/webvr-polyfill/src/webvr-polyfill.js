@@ -46,9 +46,7 @@ WebVRPolyfill.prototype.enablePolyfill = function() {
     //this.devices.push(new OrientationPositionSensorVRDevice());
     this.devices.push(new FusionPositionSensorVRDevice());
   } else {
-    if (!WebVRConfig.MOUSE_KEYBOARD_CONTROLS_DISABLED) {
-      this.devices.push(new MouseKeyboardPositionSensorVRDevice());
-    }
+    this.devices.push(new MouseKeyboardPositionSensorVRDevice());
     // Uncomment to add positional tracking via webcam.
     //this.devices.push(new WebcamPositionSensorVRDevice());
   }

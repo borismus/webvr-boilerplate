@@ -9,27 +9,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <style>
-/* reset */
-body, header, section, footer, figure, h1 { /*often have default margin in browser stylesheets*/
-  margin:0;
-  border:0;
-  padding:0;
-}
-/* basic body styles */
 body {
   width: 100%;
   height: 100%;
   background-color: #000;
   color: #fff;
-  margin: 0;
+  margin: 0px;
   padding: 0;
   overflow: hidden;
-}
-figure {
-
-}
-figcaption {
-  display:none!important;
 }
 </style>
 </head>
@@ -139,8 +126,9 @@ var material = new THREE.MeshBasicMaterial({
 var skybox = new THREE.Mesh(geometry, material);
 scene.add(skybox);
 
+
 // Create a VR manager helper to enter and exit VR mode.
-var manager = new WebVRManager(renderer, effect, camera, {hideButton: false});
+var manager = new WebVRManager(renderer, effect, {hideButton: false});
 
 // Create 3D objects.
 var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);

@@ -89,13 +89,6 @@ FusionPositionSensorVRDevice.prototype.getOrientation = function() {
   }
   out.multiply(this.predictedQ);
   out.multiply(this.worldToScreenQ);
-  // Handle the yaw-only case.
-  if (WebVRConfig.YAW_ONLY) {
-    // Make a quaternion that only turns around the Y-axis.
-    out.x = 0;
-    out.z = 0;
-    out.normalize();
-  }
   return out;
 };
 

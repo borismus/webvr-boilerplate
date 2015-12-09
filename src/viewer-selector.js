@@ -29,7 +29,7 @@ var VIEWER_KEY = 'WEBVR_CARDBOARD_VIEWER';
 function ViewerSelector(options) {
   // Try to load the selected key from local storage. If none exists, use the
   // default key.
-  this.selectedKey = localStorage[VIEWER_KEY] || DEFAULT_VIEWER;
+  this.selectedKey = localStorage.getItem(VIEWER_KEY) || DEFAULT_VIEWER;
   this.dialog = this.createDialog_(options);
   this.options = options;
   document.body.appendChild(this.dialog);
@@ -68,9 +68,10 @@ ViewerSelector.prototype.onSave_ = function() {
   }
 
   this.emit('change', this.options[this.selectedKey]);
+
   // Attempt to save the viewer profile, but fails in private mode.
   try {
-    localStorage[VIEWER_KEY] = this.selectedKey;
+    localStorage.setItem(VIEWER_KEY, this.selectedKey);
   } catch(error) {
     console.error('Failed to save viewer profile: %s', error);
   }

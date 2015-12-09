@@ -14,9 +14,6 @@
  */
 
 var BarrelDistortion = require('./distortion/barrel-distortion-fragment.js');
-var DeviceInfo = require('./device-info.js');
-
-var deviceInfo = new DeviceInfo();
 
 
 function ShaderPass(shader) {
@@ -54,7 +51,7 @@ function createRenderTarget(renderer) {
   return new THREE.WebGLRenderTarget(width, height, parameters);
 }
 
-function CardboardDistorter(renderer) {
+function CardboardDistorter(renderer, deviceInfo) {
   var left = deviceInfo.getLeftEyeCenter();
   var right = deviceInfo.getRightEyeCenter();
 

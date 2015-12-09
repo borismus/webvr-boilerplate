@@ -50,9 +50,4 @@ are supported:
       //PREDICTION_TIME_S: 0.050, // Default: 0.050s.
       // Flag to disable touch panner. In case you have your own touch controls
       //TOUCH_PANNER_DISABLED: true, // Default: false.
-      // Enable yaw panning only, disabling roll and pitch. This can be useful
-      // for panoramas with nothing interesting above or below.
-      //YAW_ONLY: true, // Default: false.
-      // To disable keyboard and mouse controls. If you implement your own.
-      //MOUSE_KEYBOARD_CONTROLS_DISABLED: true // Default: false
     }

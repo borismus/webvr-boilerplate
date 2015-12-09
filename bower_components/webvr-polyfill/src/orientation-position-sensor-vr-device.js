@@ -16,6 +16,7 @@ var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
 var THREE = require('./three-math.js');
 var TouchPanner = require('./touch-panner.js');
 var Util = require('./util.js');
+
 WEBVR_YAW_ONLY = false;
 
 /**
