@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /**
  * Responsible for showing the vertical alignment UI that separates left and
  * right eye images.
@@ -31,7 +31,7 @@ Aligner.prototype.hide = function() {
 
 module.exports = Aligner;
 
-},{}],2:[function(_dereq_,module,exports){
+},{}],2:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,10 +47,10 @@ module.exports = Aligner;
  * limitations under the License.
  */
 
-var Aligner = _dereq_('./aligner.js');
-var Emitter = _dereq_('./emitter.js');
-var Modes = _dereq_('./modes.js');
-var Util = _dereq_('./util.js');
+var Aligner = require('./aligner.js');
+var Emitter = require('./emitter.js');
+var Modes = require('./modes.js');
+var Util = require('./util.js');
 
 /**
  * Everything having to do with the WebVR button.
@@ -215,7 +215,7 @@ ButtonManager.prototype.loadIcons_ = function() {
 
 module.exports = ButtonManager;
 
-},{"./aligner.js":1,"./emitter.js":6,"./modes.js":8,"./util.js":10}],3:[function(_dereq_,module,exports){
+},{"./aligner.js":1,"./emitter.js":6,"./modes.js":8,"./util.js":11}],3:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -231,7 +231,7 @@ module.exports = ButtonManager;
  * limitations under the License.
  */
 
-var BarrelDistortion = _dereq_('./distortion/barrel-distortion-fragment.js');
+var BarrelDistortion = require('./distortion/barrel-distortion-fragment.js');
 
 
 function ShaderPass(shader) {
@@ -355,7 +355,7 @@ CardboardDistorter.prototype.setDistortionCoefficients = function(coefficients) 
 
 module.exports = CardboardDistorter;
 
-},{"./distortion/barrel-distortion-fragment.js":5}],4:[function(_dereq_,module,exports){
+},{"./distortion/barrel-distortion-fragment.js":5}],4:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -371,7 +371,7 @@ module.exports = CardboardDistorter;
  * limitations under the License.
  */
 
-var Util = _dereq_('./util.js');
+var Util = require('./util.js');
 
 // Display width, display height and bevel measurements done on real phones.
 // Resolutions from http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions
@@ -593,7 +593,7 @@ function CardboardViewer(params) {
 DeviceInfo.Viewers = Viewers;
 module.exports = DeviceInfo;
 
-},{"./util.js":10}],5:[function(_dereq_,module,exports){
+},{"./util.js":11}],5:[function(require,module,exports){
 var BarrelDistortionFragment = {
   type: 'fragment',
 
@@ -650,7 +650,7 @@ var BarrelDistortionFragment = {
 
 module.exports = BarrelDistortionFragment;
 
-},{}],6:[function(_dereq_,module,exports){
+},{}],6:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -694,7 +694,7 @@ Emitter.prototype.on = function(eventName, callback) {
 
 module.exports = Emitter;
 
-},{}],7:[function(_dereq_,module,exports){
+},{}],7:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -710,12 +710,12 @@ module.exports = Emitter;
  * limitations under the License.
  */
 
-var WebVRManager = _dereq_('./webvr-manager.js');
+var WebVRManager = require('./webvr-manager.js');
 
 window.WebVRConfig = window.WebVRConfig || {};
 window.WebVRManager = WebVRManager;
 
-},{"./webvr-manager.js":13}],8:[function(_dereq_,module,exports){
+},{"./webvr-manager.js":14}],8:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -743,7 +743,7 @@ var Modes = {
 
 module.exports = Modes;
 
-},{}],9:[function(_dereq_,module,exports){
+},{}],9:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -759,7 +759,94 @@ module.exports = Modes;
  * limitations under the License.
  */
 
-var Util = _dereq_('./util.js');
+var Emitter = require('./emitter.js');
+var Modes = require('./modes.js');
+var ButtonManager = require('./button-manager.js');
+var Util = require('./util.js');
+
+/**
+ * The Player is a wrapper for a VR-enabled canvas,
+ * plus its controls. It is implemented as an html5
+ * <figure> element with a <figcaption> describing
+ * the VR scene. It also stores the last known style
+ * of its canvas, for loop updates.
+ */
+function PlayerManager(canvas, effect, params) {
+
+  this.playerClasses = {
+    prefix: 'webvr',
+    player: 'player',
+    canvas: 'canvas',
+    caption: 'caption',
+    controls: 'controls-',
+    back: 'button-back',
+    fullscreen: 'button-fullscreen',
+    vr: 'button-vr',
+  };
+
+  // Warning when HTML5 canvas not supported.
+  this.canvasWarn = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
+  this.captionDefault = 'WebVR Boilerplate Player Scene';
+
+  this.loadIcons_();
+
+  // Save a local reference to the canvas
+  this.canvas = canvas;
+
+  // Assign IDs and classes to the Player elements.
+  this.uid = Util.getUniqueId(this.playerClasses.player);
+  console.log("PLAYER UID:" + this.uid);
+
+};
+
+PlayerManager.prototype = new Emitter();
+
+PlayerManager.prototype.onInit_ = function() {
+  console.log("init event from manager, for Player");
+};
+
+PlayerManager.prototype.onResized_ = function() {
+  console.log("resize event from manager, for Player");
+};
+
+// Run on entering fullscreen.
+PlayerManager.prototype.requestFullscreen_ = function() {
+  console.log('Player.enterFullScreen()');
+};
+
+// Run on exiting fullscreen.
+PlayerManager.prototype.exitFullscreen_ = function() {
+  console.log('Player.exitFullScreen()');
+};
+
+PlayerManager.prototype.onViewerChanged_ = function() {
+  console.log('Player.onViewerChanged');
+};
+
+  // Preload additional non-Button Player icons, as needed.
+PlayerManager.prototype.loadIcons_ = function() {
+  this.ICONS = {};
+};
+
+module.exports = PlayerManager;
+
+},{"./button-manager.js":2,"./emitter.js":6,"./modes.js":8,"./util.js":11}],10:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+var Util = require('./util.js');
 
 function RotateInstructions() {
   this.loadIcon_();
@@ -867,7 +954,7 @@ RotateInstructions.prototype.loadIcon_ = function() {
 
 module.exports = RotateInstructions;
 
-},{"./util.js":10}],10:[function(_dereq_,module,exports){
+},{"./util.js":11}],11:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -911,6 +998,21 @@ Util.isIFrame = function() {
   }
 };
 
+// Get a unique, incrementing Id value for objects.
+Util.getUniqueId = (function(prefix) {
+  var i = Math.floor(Math.random() * 999) + 100;
+  var pfx = prefix;
+  function inc(pfx) {
+    if (!pfx) {
+      pfx = '';
+    } else {
+      pfx += '-';
+    }
+    return pfx + i++;
+  }
+  return inc;
+})();
+
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
   var delimiter = (url.indexOf('?') < 0 ? '?' : '&');
@@ -933,7 +1035,7 @@ Util.isLandscapeMode = function() {
 
 module.exports = Util;
 
-},{}],11:[function(_dereq_,module,exports){
+},{}],12:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -949,8 +1051,8 @@ module.exports = Util;
  * limitations under the License.
  */
 
-var Emitter = _dereq_('./emitter.js');
-var Util = _dereq_('./util.js');
+var Emitter = require('./emitter.js');
+var Util = require('./util.js');
 
 var DEFAULT_VIEWER = 'CardboardV1';
 var VIEWER_KEY = 'WEBVR_CARDBOARD_VIEWER';
@@ -1120,7 +1222,7 @@ ViewerSelector.prototype.createButton_ = function(label, onclick) {
 
 module.exports = ViewerSelector;
 
-},{"./emitter.js":6,"./util.js":10}],12:[function(_dereq_,module,exports){
+},{"./emitter.js":6,"./util.js":11}],13:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1136,7 +1238,7 @@ module.exports = ViewerSelector;
  * limitations under the License.
  */
 
-var Util = _dereq_('./util.js');
+var Util = require('./util.js');
 
 /**
  * Android and iOS compatible wakelock implementation.
@@ -1196,7 +1298,7 @@ function getWakeLock() {
 
 module.exports = getWakeLock();
 
-},{"./util.js":10}],13:[function(_dereq_,module,exports){
+},{"./util.js":11}],14:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1212,15 +1314,16 @@ module.exports = getWakeLock();
  * limitations under the License.
  */
 
-var ButtonManager = _dereq_('./button-manager.js');
-var CardboardDistorter = _dereq_('./cardboard-distorter.js');
-var DeviceInfo = _dereq_('./device-info.js');
-var Emitter = _dereq_('./emitter.js');
-var Modes = _dereq_('./modes.js');
-var RotateInstructions = _dereq_('./rotate-instructions.js');
-var Util = _dereq_('./util.js');
-var ViewerSelector = _dereq_('./viewer-selector.js');
-var Wakelock = _dereq_('./wakelock.js');
+var ButtonManager = require('./button-manager.js');
+var PlayerManager = require('./player-manager.js');
+var CardboardDistorter = require('./cardboard-distorter.js');
+var DeviceInfo = require('./device-info.js');
+var Emitter = require('./emitter.js');
+var Modes = require('./modes.js');
+var RotateInstructions = require('./rotate-instructions.js');
+var Util = require('./util.js');
+var ViewerSelector = require('./viewer-selector.js');
+var Wakelock = require('./wakelock.js');
 
 /**
  * Helper for getting in and out of VR mode.
@@ -1242,6 +1345,9 @@ function WebVRManager(renderer, effect, params) {
   this.params = params || {};
 
   this.mode = Modes.UNKNOWN;
+
+  // Create a Player to wrap our rendered domElement in.
+  this.player = new PlayerManager(renderer, effect, params);
 
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
@@ -1306,11 +1412,23 @@ function WebVRManager(renderer, effect, params) {
       default:
         this.setMode_(Modes.NORMAL);
     }
+
+    // Button events.
     this.button.on('fs', this.onFSClick_.bind(this));
     this.button.on('vr', this.onVRClick_.bind(this));
     this.button.on('back', this.onBackClick_.bind(this));
     this.button.on('settings', this.onSettingsClick_.bind(this));
+
+    // Player events.
+    this.on('initialized', this.player.onInit_.bind(this.player));
+    this.on('resized', this.player.onResized_.bind(this.player));
+    this.on('enterfullscreen', this.player.requestFullscreen_.bind(this.player));
+    this.on('exitfullscreen', this.player.exitFullScreen_.bind(this.player));
+
+
+    // Emit initialization event.
     this.emit('initialized');
+
   }.bind(this));
 
   // Save the input device for later sending timing data.
@@ -1338,6 +1456,7 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
+WebVRManager.PlayerManager = PlayerManager;
 
 /**
  * Promise returns true if there is at least one HMD device available.
@@ -1535,7 +1654,8 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   if (size.width != window.innerWidth || size.height != window.innerHeight) {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    this.resize_()
+    this.resize_();
+    this.emit('resized');
   }
 };
 
@@ -1602,8 +1722,8 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 };
 
 WebVRManager.prototype.requestFullscreen_ = function() {
-  var canvas = document.body;
-  //var canvas = this.renderer.domElement;
+  //var canvas = document.body;
+  var canvas = this.renderer.domElement;
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
@@ -1611,6 +1731,7 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
   }
+  this.emit('enterfullscreen');
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {
@@ -1621,6 +1742,7 @@ WebVRManager.prototype.exitFullscreen_ = function() {
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
   }
+  this.emit('exitfullscreen');
 };
 
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {
@@ -1655,4 +1777,4 @@ WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
 
 module.exports = WebVRManager;
 
-},{"./button-manager.js":2,"./cardboard-distorter.js":3,"./device-info.js":4,"./emitter.js":6,"./modes.js":8,"./rotate-instructions.js":9,"./util.js":10,"./viewer-selector.js":11,"./wakelock.js":12}]},{},[7]);
+},{"./button-manager.js":2,"./cardboard-distorter.js":3,"./device-info.js":4,"./emitter.js":6,"./modes.js":8,"./player-manager.js":9,"./rotate-instructions.js":10,"./util.js":11,"./viewer-selector.js":12,"./wakelock.js":13}]},{},[7]);

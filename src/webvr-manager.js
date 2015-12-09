@@ -14,6 +14,7 @@
  */
 
 var ButtonManager = require('./button-manager.js');
+var PlayerManager = require('./player-manager.js');
 var CardboardDistorter = require('./cardboard-distorter.js');
 var DeviceInfo = require('./device-info.js');
 var Emitter = require('./emitter.js');
@@ -43,6 +44,9 @@ function WebVRManager(renderer, effect, params) {
   this.params = params || {};
 
   this.mode = Modes.UNKNOWN;
+
+  // Create a Player to wrap our rendered domElement in.
+  this.player = new PlayerManager(renderer, effect, params);
 
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
@@ -107,11 +111,23 @@ function WebVRManager(renderer, effect, params) {
       default:
         this.setMode_(Modes.NORMAL);
     }
+
+    // Button events.
     this.button.on('fs', this.onFSClick_.bind(this));
     this.button.on('vr', this.onVRClick_.bind(this));
     this.button.on('back', this.onBackClick_.bind(this));
     this.button.on('settings', this.onSettingsClick_.bind(this));
+
+    // Player events.
+    this.on('initialized', this.player.onInit_.bind(this.player));
+    this.on('resized', this.player.onResized_.bind(this.player));
+    this.on('enterfullscreen', this.player.requestFullscreen_.bind(this.player));
+    this.on('exitfullscreen', this.player.exitFullScreen_.bind(this.player));
+
+
+    // Emit initialization event.
     this.emit('initialized');
+
   }.bind(this));
 
   // Save the input device for later sending timing data.
@@ -139,6 +155,7 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
+WebVRManager.PlayerManager = PlayerManager;
 
 /**
  * Promise returns true if there is at least one HMD device available.
@@ -336,7 +353,8 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   if (size.width != window.innerWidth || size.height != window.innerHeight) {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    this.resize_()
+    this.resize_();
+    this.emit('resized');
   }
 };
 
@@ -403,8 +421,8 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 };
 
 WebVRManager.prototype.requestFullscreen_ = function() {
-  var canvas = document.body;
-  //var canvas = this.renderer.domElement;
+  //var canvas = document.body;
+  var canvas = this.renderer.domElement;
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
@@ -412,6 +430,7 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
   }
+  this.emit('enterfullscreen');
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {
@@ -422,6 +441,7 @@ WebVRManager.prototype.exitFullscreen_ = function() {
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
   }
+  this.emit('exitfullscreen');
 };
 
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {
