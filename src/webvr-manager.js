@@ -120,12 +120,14 @@ function WebVRManager(renderer, effect, params) {
 
     // Player events.
     this.on('initialized', this.player.onInit_.bind(this.player));
+    this.on('modechange', this.player.onModeChange_.bind(this.player));
     this.on('resized', this.player.onResized_.bind(this.player));
     this.on('enterfullscreen', this.player.requestFullscreen_.bind(this.player));
-    this.on('exitfullscreen', this.player.exitFullScreen_.bind(this.player));
+    this.on('exitfullscreen', this.player.exitFullscreen_.bind(this.player));
 
 
     // Emit initialization event.
+    // NOTE: this event doesn't go anywhere
     this.emit('initialized');
 
   }.bind(this));

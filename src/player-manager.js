@@ -56,7 +56,11 @@ function PlayerManager(canvas, effect, params) {
 PlayerManager.prototype = new Emitter();
 
 PlayerManager.prototype.onInit_ = function() {
-  console.log("init event from manager, for Player");
+  console.log("Player:init event from manager");
+};
+
+PlayerManager.prototype.onModeChange_ = function(oldMode, newMode) {
+  console.log('Player:modechange from manager, old:' + oldMode + ' new:' + newMode);
 };
 
 PlayerManager.prototype.onResized_ = function() {

@@ -668,13 +668,14 @@ module.exports = BarrelDistortionFragment;
 
 function Emitter() {
   this.callbacks = {};
-}
+};
 
 Emitter.prototype.emit = function(eventName) {
+  console.log('emitting:' + eventName);
   var callbacks = this.callbacks[eventName];
   if (!callbacks) {
-    //console.log('No valid callback specified.');
-    return;
+    console.log('No valid callback specified.');
+    return false;
   }
   var args = [].slice.call(arguments)
   // Eliminate the first param (the callback).
@@ -682,6 +683,7 @@ Emitter.prototype.emit = function(eventName) {
   for (var i = 0; i < callbacks.length; i++) {
     callbacks[i].apply(this, args);
   }
+  return true;
 };
 
 Emitter.prototype.on = function(eventName, callback) {
@@ -802,7 +804,11 @@ function PlayerManager(canvas, effect, params) {
 PlayerManager.prototype = new Emitter();
 
 PlayerManager.prototype.onInit_ = function() {
-  console.log("init event from manager, for Player");
+  console.log("Player:init event from manager");
+};
+
+PlayerManager.prototype.onModeChange_ = function(oldMode, newMode) {
+  console.log('Player:modechange from manager, old:' + oldMode + ' new:' + newMode);
 };
 
 PlayerManager.prototype.onResized_ = function() {
@@ -1421,12 +1427,14 @@ function WebVRManager(renderer, effect, params) {
 
     // Player events.
     this.on('initialized', this.player.onInit_.bind(this.player));
+    this.on('modechange', this.player.onModeChange_.bind(this.player));
     this.on('resized', this.player.onResized_.bind(this.player));
     this.on('enterfullscreen', this.player.requestFullscreen_.bind(this.player));
-    this.on('exitfullscreen', this.player.exitFullScreen_.bind(this.player));
+    this.on('exitfullscreen', this.player.exitFullscreen_.bind(this.player));
 
 
     // Emit initialization event.
+    // NOTE: this event doesn't go anywhere
     this.emit('initialized');
 
   }.bind(this));

@@ -151,12 +151,7 @@ scene.add(skybox);
 
 // Create a VR manager helper to enter and exit VR mode.
 // TODO: define list of parameters. Need additional params for canvas to function inside DOM.
-var manager = new WebVRManager(renderer, effect, camera);
-
-//callbacks for manager functions
-manager.on('initialized', function() { console.log('init event, bound outside manager')});
-//we can any any event we want later
-//manager.on('squoaked', function() { console.log('hi');}.bind(window));
+window.manager = new WebVRManager(renderer, effect, camera); // TODO: remove
 
 // Create 3D objects.
 var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
@@ -181,19 +176,25 @@ function animate(timestamp) {
   manager.render(scene, camera, timestamp);
 
   requestAnimationFrame(animate);
-}
-
-// Kick off animation loop
-animate();
+};
 
 // Reset the position sensor when 'z' pressed.
 function onKey(event) {
   if (event.keyCode == 90) { // z
     controls.resetSensor();
   }
-}
+};
 
-window.addEventListener('keydown', onKey, true);
+//callbacks for manager functions
+manager.on('initialized', function() { 
+  console.log('manager initialized event received (in dom_test.html())');
+  window.addEventListener('keydown', onKey, true);
+  animate();
+  }.bind(window)
+);
+
+// Note: we can fire any any event we want later
+// manager.on('squoaked', function() { console.log('hi');}.bind(window));
 
 }); //end of DOMContentLoaded
 
