@@ -68,14 +68,22 @@ PlayerManager.prototype.onResized_ = function(newCWidth, newCHeight) {
 };
 
 // Run on entering fullscreen.
-PlayerManager.prototype.requestFullscreen_ = function() {
-  console.log('Player.enterFullScreen()');
+PlayerManager.prototype.enterFullscreen_ = function() {
+  console.log('Player.enterFullscreen()');
 };
+
+PlayerManager.prototype.reachFullscreen_ = function() {
+  console.log('Player.reachFullscreen()');
+}
 
 // Run on exiting fullscreen.
 PlayerManager.prototype.exitFullscreen_ = function() {
-  console.log('Player.exitFullScreen()');
+  console.log('Player.exitFullscreen()');
 };
+
+PlayerManager.prototype.reachNormalscreen_ = function() {
+  console.log('Player.reachNormalscreen');
+}
 
 PlayerManager.prototype.onViewerChanged_ = function() {
   console.log('Player.onViewerChanged');

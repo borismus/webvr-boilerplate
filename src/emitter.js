@@ -21,7 +21,7 @@ Emitter.prototype.emit = function(eventName) {
   console.log('emitting:' + eventName);
   var callbacks = this.callbacks[eventName];
   if (!callbacks) {
-    console.log('No valid callback specified.');
+    console.log('No valid callback specified for ' + eventName + '.');
     return false;
   }
   var args = [].slice.call(arguments)

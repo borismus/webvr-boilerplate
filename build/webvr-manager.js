@@ -674,7 +674,7 @@ Emitter.prototype.emit = function(eventName) {
   console.log('emitting:' + eventName);
   var callbacks = this.callbacks[eventName];
   if (!callbacks) {
-    console.log('No valid callback specified.');
+    console.log('No valid callback specified for ' + eventName + '.');
     return false;
   }
   var args = [].slice.call(arguments)
@@ -816,14 +816,22 @@ PlayerManager.prototype.onResized_ = function(newCWidth, newCHeight) {
 };
 
 // Run on entering fullscreen.
-PlayerManager.prototype.requestFullscreen_ = function() {
-  console.log('Player.enterFullScreen()');
+PlayerManager.prototype.enterFullscreen_ = function() {
+  console.log('Player.enterFullscreen()');
 };
+
+PlayerManager.prototype.reachFullscreen_ = function() {
+  console.log('Player.reachFullscreen()');
+}
 
 // Run on exiting fullscreen.
 PlayerManager.prototype.exitFullscreen_ = function() {
-  console.log('Player.exitFullScreen()');
+  console.log('Player.exitFullscreen()');
 };
+
+PlayerManager.prototype.reachNormalscreen_ = function() {
+  console.log('Player.reachNormalscreen');
+}
 
 PlayerManager.prototype.onViewerChanged_ = function() {
   console.log('Player.onViewerChanged');
@@ -1018,6 +1026,20 @@ Util.getUniqueId = (function(prefix) {
   }
   return inc;
 })();
+
+// Listen for end of reflow event.
+// http://stackoverflow.com/questions/23553328/listening-browser-reflow-event
+Util.listenReflow = function(target, callback) {
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      console.log('mutation type:' + mutation.type + ' name:' + mutation.attributeName + ' target:' + mutation.target);
+      callback();
+    });
+  });
+  var config = { attributes: true, childList: true, characterData: true };
+  // pass in the target node, as well as the observer options
+  observer.observe(target, config);
+};
 
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
@@ -1352,6 +1374,9 @@ function WebVRManager(renderer, effect, params) {
 
   this.mode = Modes.UNKNOWN;
 
+  // DEBUG: Listen for reflows
+  Util.listenReflow(renderer.domElement, function() { console.log('got a reflow');});
+
   // Create a Player to wrap our rendered domElement in.
   this.player = new PlayerManager(renderer, effect, params);
 
@@ -1429,12 +1454,13 @@ function WebVRManager(renderer, effect, params) {
     this.on('initialized', this.player.onInit_.bind(this.player));
     this.on('modechange', this.player.onModeChange_.bind(this.player));
     this.on('resized', this.player.onResized_.bind(this.player));
-    this.on('enterfullscreen', this.player.requestFullscreen_.bind(this.player));
+    this.on('enterfullscreen', this.player.enterFullscreen_.bind(this.player));
+    this.on('reachfullscreen', this.player.reachFullscreen_.bind(this.player));
     this.on('exitfullscreen', this.player.exitFullscreen_.bind(this.player));
-
+    this.on('reachnormalscreen', this.player.reachNormalscreen_.bind(this.player));
 
     // Emit initialization event.
-    // NOTE: this event doesn't go anywhere
+    // Used by pages with layout DOM containing the Player.
     this.emit('initialized');
 
   }.bind(this));
@@ -1655,17 +1681,40 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
   this.resize_();
 };
 
+// DEBUG: also test standard resize event.
+window.addEventListener('resize', function(e) {
+  var newCWidth = parseInt(getComputedStyle(manager.renderer.domElement).width);
+  var newCHeight = parseInt(getComputedStyle(manager.renderer.domElement).height);
+  console.log('standard window resize event, canvas width:' + newCWidth + ' window width:' + window.innerWidth + ' canvas height:' + newCHeight + ' window.innerHeight:' + window.innerHeight);
+
+});
+
 WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   // Only resize the canvas if it needs to be resized.
   var size = this.renderer.getSize();
 
-  if(this.oldWWidth != window.innerWidth || this.oldWHeight != window.innerHeight) {
+  //console.log('this.oldWidth:' + this.oldWidth + ' width:' + window.innerWidth + ' this.oldHeight:' + this.oldHeight + ' height:' + window.innerHeight);
+  //if(this.oldWWidth != window.innerWidth || this.oldWHeight != window.innerHeight) {
+  if((this.oldWidth - window.innerWidth) != 0 || (this.oldHeight - window.innerHeight) != 0) {
     //check the canvas via getComputedStyle - this will handle canvas size changes in CSS
-    var newCWidth = getComputedStyle(this.renderer.domElement).width;
-    var newCHeight = getComputedStyle(this.renderer.domElement).height;
+    console.log('getting computed style...');
+    // Get the newly computed style
+    var newCWidth = parseInt(getComputedStyle(this.renderer.domElement).width);
+    var newCHeight = parseInt(getComputedStyle(this.renderer.domElement).height);
+    camera.aspect = newCWidth / newCHeight;
+    camera.updateProjectionMatrix();
+    this.renderer.setSize(newCWidth, newCHeight);
+    this.effect.setSize(newCWidth, newCHeight);
+
+    console.log('in css change, canvas width:' + newCWidth + ' window width:' + window.innerWidth + ' canvas height:' + newCHeight + ' window.innerHeight:' + window.innerHeight);
+    this.oldWidth = window.innerWidth;
+    this.oldHeight = window.innerHeight;
+    this.emit('resized', newCWidth, newCHeight);
   }
 
+/*
   if (size.width != window.innerWidth || size.height != window.innerHeight) {
+    console.log('in window size change');
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     this.resize_();
@@ -1676,15 +1725,17 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
 
     // Emit the changed size of the canvas
     size = this.renderer.getSize();
-    this.emit('resized', newCWidth, newCHeight);
+    //this.emit('resized', newCWidth, newCHeight);
   }
+  */
 };
 
-/** 
+/**
  * Detect a resize via window, but actually change the canvas
  */
 WebVRManager.prototype.resize_ = function() {
-  this.effect.setSize(window.innerWidth, window.innerHeight);
+  this.effect.setSize(this.renderer.domElement.width, this.renderer.domElement.height);
+  //this.effect.setSize(window.innerWidth, window.innerHeight);
 };
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {

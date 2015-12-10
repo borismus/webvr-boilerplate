@@ -56,6 +56,20 @@ Util.getUniqueId = (function(prefix) {
   return inc;
 })();
 
+// Listen for end of reflow event.
+// http://stackoverflow.com/questions/23553328/listening-browser-reflow-event
+Util.listenReflow = function(target, callback) {
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      console.log('mutation type:' + mutation.type + ' name:' + mutation.attributeName + ' target:' + mutation.target);
+      callback();
+    });
+  });
+  var config = { attributes: true, childList: true, characterData: true };
+  // pass in the target node, as well as the observer options
+  observer.observe(target, config);
+};
+
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
   var delimiter = (url.indexOf('?') < 0 ? '?' : '&');

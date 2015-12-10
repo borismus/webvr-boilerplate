@@ -30,10 +30,14 @@ header, section, footer {
 /* debugging only */
 canvas {
   border: 1px solid yellow;
-  width:80%;
-  height:80%;
+/* have to use the !important to override local style set by three.js*/
+width:80%!important;
+height:80%!important;
+/*width:640px;*/
+/*height:480px;*/
   /* width:80%!important; can't do this with THREE.js, must use renderer.setSize() */;
 }
+
 /* style the Player */
 figure {
 
@@ -100,25 +104,20 @@ document.addEventListener('DOMContentLoaded', function() {
   // TODO: we used .getComputedStyle here!
     var newCWidth = getComputedStyle(renderer.domElement).width;
     var newCHeight = getComputedStyle(renderer.domElement).height;
-    console.log('initial canvas width:' + newCWidth + ' window width:' + window.innerWidth + ' height:' + newCHeight + ' window height:' + window.innerHeight);
-
+    console.log('Initial canvas width from CSS:' + newCWidth + ' window width:' + window.innerWidth + ' height:' + newCHeight + ' window height:' + window.innerHeight);
+    console.log('Initial canvas width attribute:' + renderer.domElement.width)
   var canvasStyle = {
-    width:newCWidth,
-    height:newCHeight
+    width:parseInt(newCWidth),
+    height:parseInt(newCHeight)
   };
 
   // Append the canvas element created by the renderer to document body element.
   if(renderer.domElement.id || renderer.domElement.className) {
     //nothing
+    console.log('Using existing canvas.');
   } else {
     document.body.appendChild(renderer.domElement);
   }
-
-  //Test settings for canvas with a fixed size (rather than bound to window size).
-  //TODO: make relative option (can't do this with CSS styesheet alone).
-
-//canvasStyle.width = window.innerWidth;
-//canvasStyle.height = window.innerHeight;
 
 // Create a three.js scene.
 var scene = new THREE.Scene();
@@ -155,7 +154,6 @@ var skybox = new THREE.Mesh(geometry, material);
 scene.add(skybox);
 
 // Create a VR manager helper to enter and exit VR mode.
-// TODO: define list of parameters. Need additional params for canvas to function inside DOM.
 window.manager = new WebVRManager(renderer, effect, camera); // TODO: remove
 
 // Create 3D objects.
@@ -191,8 +189,8 @@ function onKey(event) {
 };
 
 //callbacks for manager functions
-manager.on('initialized', function() { 
-  console.log('manager initialized event received (in dom_test.html())');
+manager.on('initialized', function() {
+  console.log('manager initialized event received by window (in dom_test.html())');
   window.addEventListener('keydown', onKey, true);
   animate();
   }.bind(window)
