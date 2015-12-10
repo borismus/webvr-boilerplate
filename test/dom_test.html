@@ -1,3 +1,4 @@
+<!doctype html>
 <!--
   Test swapping a canvas embedded in an existing web page layout into
   fullscreen and Fullscreen VR mode.
@@ -78,8 +79,7 @@ figcaption {
       </footer>
     </main>
   </div>
-</body>
-
+<!--scripts at bottom of body-->
 <script src="../bower_components/threejs/build/three.js"></script>
 <script src="../bower_components/threejs/examples/js/controls/VRControls.js"></script>
 <script src="../bower_components/threejs/examples/js/effects/VREffect.js"></script>
@@ -97,9 +97,14 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   renderer.setPixelRatio(window.devicePixelRatio);
 
+  // TODO: we used .getComputedStyle here!
+    var newCWidth = getComputedStyle(renderer.domElement).width;
+    var newCHeight = getComputedStyle(renderer.domElement).height;
+    console.log('initial canvas width:' + newCWidth + ' window width:' + window.innerWidth + ' height:' + newCHeight + ' window height:' + window.innerHeight);
+
   var canvasStyle = {
-    width:1200,
-    height:800
+    width:newCWidth,
+    height:newCHeight
   };
 
   // Append the canvas element created by the renderer to document body element.
@@ -199,3 +204,5 @@ manager.on('initialized', function() {
 }); //end of DOMContentLoaded
 
 </script>
+</body>
+</html>

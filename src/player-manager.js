@@ -63,8 +63,8 @@ PlayerManager.prototype.onModeChange_ = function(oldMode, newMode) {
   console.log('Player:modechange from manager, old:' + oldMode + ' new:' + newMode);
 };
 
-PlayerManager.prototype.onResized_ = function() {
-  console.log("resize event from manager, for Player");
+PlayerManager.prototype.onResized_ = function(newCWidth, newCHeight) {
+  console.log('resize event from manager, for Player, new canvas width:' + newCWidth + ' height:' + newCHeight);
 };
 
 // Run on entering fullscreen.

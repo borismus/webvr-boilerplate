@@ -811,8 +811,8 @@ PlayerManager.prototype.onModeChange_ = function(oldMode, newMode) {
   console.log('Player:modechange from manager, old:' + oldMode + ' new:' + newMode);
 };
 
-PlayerManager.prototype.onResized_ = function() {
-  console.log("resize event from manager, for Player");
+PlayerManager.prototype.onResized_ = function(newCWidth, newCHeight) {
+  console.log('resize event from manager, for Player, new canvas width:' + newCWidth + ' height:' + newCHeight);
 };
 
 // Run on entering fullscreen.
@@ -1512,7 +1512,6 @@ WebVRManager.prototype.render = function(scene, camera, timestamp) {
   }
 };
 
-
 WebVRManager.prototype.setMode_ = function(mode) {
   var oldMode = this.mode;
   if (mode == this.mode) {
@@ -1659,14 +1658,31 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
 WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   // Only resize the canvas if it needs to be resized.
   var size = this.renderer.getSize();
+
+  if(this.oldWWidth != window.innerWidth || this.oldWHeight != window.innerHeight) {
+    //check the canvas via getComputedStyle - this will handle canvas size changes in CSS
+    var newCWidth = getComputedStyle(this.renderer.domElement).width;
+    var newCHeight = getComputedStyle(this.renderer.domElement).height;
+  }
+
   if (size.width != window.innerWidth || size.height != window.innerHeight) {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     this.resize_();
-    this.emit('resized');
+
+    // Save the current window size.
+    this.oldWWidth = window.innerWidth;
+    this.oldWHeight = window.innerHeight;
+
+    // Emit the changed size of the canvas
+    size = this.renderer.getSize();
+    this.emit('resized', newCWidth, newCHeight);
   }
 };
 
+/** 
+ * Detect a resize via window, but actually change the canvas
+ */
 WebVRManager.prototype.resize_ = function() {
   this.effect.setSize(window.innerWidth, window.innerHeight);
 };
