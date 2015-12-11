@@ -56,12 +56,34 @@ Util.getUniqueId = (function(prefix) {
   return inc;
 })();
 
+// Find child elements by their tag name.
+Util.getChildrenByTagName = function(elem, types) {
+  var typeStr;
+  var arr = [];
+  if (Array.isArray(types)) {
+    typeStr = types.toString();
+  } else {
+    typeStr = types;
+  }
+  typeStr = typeStr.toUpperCase();
+  var children = elem.children;
+  var len = children.length;
+  for (var i = 0; i < len; i++) {
+    if (typeStr.indexOf(children[i].tagName) >= 0) {
+      arr.push(children[i]);
+    }
+  }
+  return arr;
+};
+
 // Listen for end of reflow event.
+// https://gist.github.com/paulirish/5d52fb081b3570c81e3a
 // http://stackoverflow.com/questions/23553328/listening-browser-reflow-event
 Util.listenReflow = function(target, callback) {
   var observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
-      console.log('mutation type:' + mutation.type + ' name:' + mutation.attributeName + ' target:' + mutation.target);
+      //console.log('mutation type:' + mutation.type + ' name:' + mutation.attributeName + ' target:' + mutation.target);
+      console.log('for attribute ' + mutation.attributeName + ', oldvalue:' + mutation.oldValue + ' newValue:' + target.getAttribute(mutation.attributeName));
       callback();
     });
   });

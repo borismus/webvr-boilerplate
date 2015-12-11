@@ -773,7 +773,7 @@ var Util = require('./util.js');
  * the VR scene. It also stores the last known style
  * of its canvas, for loop updates.
  */
-function PlayerManager(canvas, effect, params) {
+function PlayerManager(renderer, params) {
 
   this.playerClasses = {
     prefix: 'webvr',
@@ -792,16 +792,78 @@ function PlayerManager(canvas, effect, params) {
 
   this.loadIcons_();
 
-  // Save a local reference to the canvas
-  this.canvas = canvas;
+  // Save a local reference to the canvas (note: ThreeJS can also render to SVG)
+  this.canvas = renderer.domElement;
+
+  // Save a local reference to params
+  this.params = params || {};
 
   // Assign IDs and classes to the Player elements.
   this.uid = Util.getUniqueId(this.playerClasses.player);
   console.log("PLAYER UID:" + this.uid);
 
+  // Initialize the Player container.
+  this.initFigure(this.canvas);
+
 };
 
 PlayerManager.prototype = new Emitter();
+
+PlayerManager.prototype.initFigure = function(canvas) {
+  // If our canvas isn't wrapped in a Player <figure> container, add it.
+  if(canvas.parentNode.tagName != 'FIGURE') {
+    this.dom = document.createElement('figure');
+    canvas.parentNode.appendChild(this.dom);
+    this.dom.appendChild(canvas);
+  }
+  else {
+    // Canvas should be inside a <figure> tag.
+    this.dom = canvas.parentNode;
+  }
+
+  // Set default Player styles (all controls and captions overlay canvas).
+  this.dom.style.position = 'relative';
+  //this.dom.style.width = this.canvas.style.width;
+  //this.dom.style.height = this.canvas.style.height;
+
+  // Set the ARIA attribute for figure caption.
+  this.dom.setAttribute('aria-describedby', this.uid + '-caption');
+
+  this.initButtons();
+  this.initCaption();
+
+};
+
+PlayerManager.prototype.initButtons = function() {
+
+};
+
+PlayerManager.prototype.initCaption = function() {
+  var figCaption = Util.getChildrenByTagName(this.dom, 'figcaption');
+  if(figCaption && figCaption[0]) {
+    figCaption = figCaption[0];
+  } else {
+    figCaption = document.createElement('figcaption');
+    this.dom.appendChild(figCaption);
+  }
+  // Set the default styles.
+  figCaption.style.position = 'absolute';
+  figCaption.style.width = '100%';
+  figCaption.style.bottom = '48px';
+  figCaption.style.textAlign = 'center';
+
+  // Link caption to its parent figure (required by ARIA).
+  figCaption.id = this.dom.getAttribute('aria-describedby');
+
+  // Add a caption, if supplied, otherwise default.
+  if(this.params.caption) {
+    figCaption.textContent = this.params.caption;
+  } else {
+    if(figCaption.textContent == '') {
+      figCaption.textContent = this.captionDefault;
+    }
+  }
+};
 
 PlayerManager.prototype.onInit_ = function() {
   console.log("Player:init event from manager");
@@ -1027,12 +1089,34 @@ Util.getUniqueId = (function(prefix) {
   return inc;
 })();
 
+// Find child elements by their tag name.
+Util.getChildrenByTagName = function(elem, types) {
+  var typeStr;
+  var arr = [];
+  if (Array.isArray(types)) {
+    typeStr = types.toString();
+  } else {
+    typeStr = types;
+  }
+  typeStr = typeStr.toUpperCase();
+  var children = elem.children;
+  var len = children.length;
+  for (var i = 0; i < len; i++) {
+    if (typeStr.indexOf(children[i].tagName) >= 0) {
+      arr.push(children[i]);
+    }
+  }
+  return arr;
+};
+
 // Listen for end of reflow event.
+// https://gist.github.com/paulirish/5d52fb081b3570c81e3a
 // http://stackoverflow.com/questions/23553328/listening-browser-reflow-event
 Util.listenReflow = function(target, callback) {
   var observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
-      console.log('mutation type:' + mutation.type + ' name:' + mutation.attributeName + ' target:' + mutation.target);
+      //console.log('mutation type:' + mutation.type + ' name:' + mutation.attributeName + ' target:' + mutation.target);
+      console.log('for attribute ' + mutation.attributeName + ', oldvalue:' + mutation.oldValue + ' newValue:' + target.getAttribute(mutation.attributeName));
       callback();
     });
   });
@@ -1378,7 +1462,7 @@ function WebVRManager(renderer, effect, params) {
   Util.listenReflow(renderer.domElement, function() { console.log('got a reflow');});
 
   // Create a Player to wrap our rendered domElement in.
-  this.player = new PlayerManager(renderer, effect, params);
+  this.player = new PlayerManager(renderer, params);
 
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
@@ -1689,6 +1773,7 @@ window.addEventListener('resize', function(e) {
 
 });
 
+// From the animate loop, check if the canvas needs to be resized.
 WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   // Only resize the canvas if it needs to be resized.
   var size = this.renderer.getSize();
@@ -1711,31 +1796,11 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
     this.oldHeight = window.innerHeight;
     this.emit('resized', newCWidth, newCHeight);
   }
-
-/*
-  if (size.width != window.innerWidth || size.height != window.innerHeight) {
-    console.log('in window size change');
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    this.resize_();
-
-    // Save the current window size.
-    this.oldWWidth = window.innerWidth;
-    this.oldWHeight = window.innerHeight;
-
-    // Emit the changed size of the canvas
-    size = this.renderer.getSize();
-    //this.emit('resized', newCWidth, newCHeight);
-  }
-  */
 };
 
-/**
- * Detect a resize via window, but actually change the canvas
- */
+// Resize effect in cases where it needs independent resizing
 WebVRManager.prototype.resize_ = function() {
   this.effect.setSize(this.renderer.domElement.width, this.renderer.domElement.height);
-  //this.effect.setSize(window.innerWidth, window.innerHeight);
 };
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {

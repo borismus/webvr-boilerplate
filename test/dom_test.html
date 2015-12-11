@@ -30,19 +30,22 @@ header, section, footer {
 /* debugging only */
 canvas {
   border: 1px solid yellow;
+  /*width:100%;*/
+  /*height:100%;*/
 /* have to use the !important to override local style set by three.js*/
 width:80%!important;
 height:80%!important;
 /*width:640px;*/
 /*height:480px;*/
-  /* width:80%!important; can't do this with THREE.js, must use renderer.setSize() */;
 }
 
-/* style the Player */
+/* Style the Player */
 figure {
-
+  border:1px solid red; /*DEBUG:*/
+  /*width:80%;*/
+  /*height:80%;*/
 }
-/* style the player description */
+/* Style the player description */
 figcaption {
 
 }
@@ -53,8 +56,6 @@ figcaption {
 }
 /* test canvas */
 #webvr-test-canvas {
-  width:80%;
-  height:80%;
 }
 /* controls in the Player */
 .webvr-controls {

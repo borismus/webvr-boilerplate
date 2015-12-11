@@ -25,7 +25,7 @@ var Util = require('./util.js');
  * the VR scene. It also stores the last known style
  * of its canvas, for loop updates.
  */
-function PlayerManager(canvas, effect, params) {
+function PlayerManager(renderer, params) {
 
   this.playerClasses = {
     prefix: 'webvr',
@@ -44,16 +44,77 @@ function PlayerManager(canvas, effect, params) {
 
   this.loadIcons_();
 
-  // Save a local reference to the canvas
-  this.canvas = canvas;
+  // Save a local reference to the canvas (note: ThreeJS can also render to SVG)
+  this.canvas = renderer.domElement;
+
+  // Save a local reference to params
+  this.params = params || {};
 
   // Assign IDs and classes to the Player elements.
   this.uid = Util.getUniqueId(this.playerClasses.player);
   console.log("PLAYER UID:" + this.uid);
 
+  // Initialize the Player container.
+  this.initFigure(this.canvas);
 };
 
 PlayerManager.prototype = new Emitter();
+
+PlayerManager.prototype.initFigure = function(canvas) {
+  // If our canvas isn't wrapped in a Player <figure> container, add it.
+  if(canvas.parentNode.tagName != 'FIGURE') {
+    this.dom = document.createElement('figure');
+    canvas.parentNode.appendChild(this.dom);
+    this.dom.appendChild(canvas);
+  }
+  else {
+    // Canvas should be inside a <figure> tag.
+    this.dom = canvas.parentNode;
+  }
+
+  // Set default Player styles (all controls and captions overlay canvas).
+  this.dom.style.position = 'relative';
+  //this.dom.style.width = this.canvas.style.width;
+  //this.dom.style.height = this.canvas.style.height;
+
+  // Set the ARIA attribute for figure caption.
+  this.dom.setAttribute('aria-describedby', this.uid + '-caption');
+
+  this.initButtons();
+  this.initCaption();
+
+};
+
+PlayerManager.prototype.initButtons = function() {
+
+};
+
+PlayerManager.prototype.initCaption = function() {
+  var figCaption = Util.getChildrenByTagName(this.dom, 'figcaption');
+  if(figCaption && figCaption[0]) {
+    figCaption = figCaption[0];
+  } else {
+    figCaption = document.createElement('figcaption');
+    this.dom.appendChild(figCaption);
+  }
+  // Set the default styles.
+  figCaption.style.position = 'absolute';
+  figCaption.style.width = '100%';
+  figCaption.style.bottom = '48px';
+  figCaption.style.textAlign = 'center';
+
+  // Link caption to its parent figure (required by ARIA).
+  figCaption.id = this.dom.getAttribute('aria-describedby');
+
+  // Add a caption, if supplied, otherwise default.
+  if(this.params.caption) {
+    figCaption.textContent = this.params.caption;
+  } else {
+    if(figCaption.textContent == '') {
+      figCaption.textContent = this.captionDefault;
+    }
+  }
+};
 
 PlayerManager.prototype.onInit_ = function() {
   console.log("Player:init event from manager");
