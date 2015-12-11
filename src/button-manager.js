@@ -22,45 +22,63 @@ var Util = require('./util.js');
  * Everything having to do with the WebVR button.
  * Emits a 'click' event when it's clicked.
  */
-function ButtonManager() {
+function ButtonManager(uid) {
   this.loadIcons_();
+
+  this.buttonWidth = 24;
+  this.buttonHeight = 24;
+
+  // Create a wrapper element for the Buttons.
+  this.dom = document.createElement('nav');
+  //this.dom.style.width = this.buttonWidth + 'px';
+  this.dom.style.position = 'absolute';
+  this.dom.style.width = '150px';
+  this.dom.style.height = this.buttonHeight + 'px';
+  this.dom.style.bottom = '0px';
+  this.dom.style.right = '0px';
+
+  // Attach buttons to the wrapper, and store an object reference.
 
   // Make the fullscreen button.
   var fsButton = this.createButton();
   fsButton.src = this.ICONS.fullscreen;
   fsButton.title = 'Fullscreen mode';
+  this.dom.appendChild(fsButton);
   var s = fsButton.style;
   s.bottom = 0;
   s.right = 0;
   fsButton.addEventListener('click', this.createClickHandler_('fs'));
-  document.body.appendChild(fsButton);
   this.fsButton = fsButton;
+
+  // DEBUG!!!!!!!!!!!!!
+  Util.listenReflow(this.fsButton, function() { console.log('got a reflow');});
 
   // Make the VR button.
   var vrButton = this.createButton();
   vrButton.src = this.ICONS.cardboard;
   vrButton.title = 'Virtual reality mode';
+  this.dom.appendChild(vrButton);
   var s = vrButton.style;
   s.bottom = 0;
   s.right = '48px';
   vrButton.addEventListener('click', this.createClickHandler_('vr'));
-  document.body.appendChild(vrButton);
   this.vrButton = vrButton;
 
   // Make the back button.
   var backButton = this.createButton();
   backButton.title = 'Back to previous mode';
+  this.dom.appendChild(backButton);
   var s = backButton.style;
   s.left = 0;
   s.top = 0;
   backButton.src = this.ICONS.back;
   backButton.addEventListener('click', this.createClickHandler_('back'));
-  document.body.appendChild(backButton);
   this.backButton = backButton;
 
   // Make the settings button, but only for mobile.
   var settingsButton = this.createButton();
   settingsButton.title = 'Configure viewer';
+  this.dom.appendChild(settingsButton);
   var s = settingsButton.style;
   s.left = '50%';
   s.marginLeft = '-24px';
@@ -68,14 +86,14 @@ function ButtonManager() {
   s.zIndex = 0;
   settingsButton.src = this.ICONS.settings;
   settingsButton.addEventListener('click', this.createClickHandler_('settings'));
-  document.body.appendChild(settingsButton);
   this.settingsButton = settingsButton;
 
   this.isVisible = true;
 
   this.aligner = new Aligner();
-
+  return this;
 }
+
 ButtonManager.prototype = new Emitter();
 
 ButtonManager.prototype.createButton = function() {
@@ -109,6 +127,7 @@ ButtonManager.prototype.createButton = function() {
   button.addEventListener('mouseleave', function(e) {
     s.filter = s.webkitFilter = '';
   });
+
   return button;
 };
 
@@ -116,6 +135,7 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
   if (!this.isVisible) {
     return;
   }
+  console.log('coming into ButtonManager.setMode with mode:' + mode);
   switch (mode) {
     case Modes.NORMAL:
       this.fsButton.style.display = 'block';

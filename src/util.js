@@ -41,7 +41,12 @@ Util.isIFrame = function() {
   }
 };
 
-// Get a unique, incrementing Id value for objects.
+// See if we're running with layout other than a WebVR Player.
+Util.hasLayout = function(canvas) {
+
+};
+
+// Get a unique, incrementing Id value for any object on the page.
 Util.getUniqueId = (function(prefix) {
   var i = Math.floor(Math.random() * 999) + 100;
   var pfx = prefix;
@@ -56,24 +61,95 @@ Util.getUniqueId = (function(prefix) {
   return inc;
 })();
 
-// Find child elements by their tag name.
+Util.hasClass = function(elem, selector) {
+  if (elem.className.indexOf(selector) >= 0) {
+    return true;
+  }
+  return false;
+};
+
+Util.addClass = function(elem, selector) {
+  if (!this.hasClass(elem, selector)) {
+    if (elem.className == '') {
+      elem.className = selector;
+    } else {
+      elem.className += ' ' + selector;
+    }
+  }
+};
+
+// Get all current DOM children (not descendants) of document.body.
+Util.getDOMChildren = function(selector) {
+  if(document.querySelectorAll) {
+      return document.querySelectorAll(selector);
+  } else {
+    var childNodes = element.childNodes,
+        children = [],
+        i = childNodes.length;
+
+    while (i--) {
+        if (childNodes[i].nodeType == 1) {
+            children.unshift(childNodes[i]);
+        }
+    }
+    return children;
+  }
+};
+
+// Find child elements by their tag name, given a string with tag names.
 Util.getChildrenByTagName = function(elem, types) {
-  var typeStr;
-  var arr = [];
+  var typeStr,
+      arr = [];
   if (Array.isArray(types)) {
     typeStr = types.toString();
   } else {
     typeStr = types;
   }
   typeStr = typeStr.toUpperCase();
-  var children = elem.children;
-  var len = children.length;
+  var children = elem.children,
+      len = children.length;
   for (var i = 0; i < len; i++) {
     if (typeStr.indexOf(children[i].tagName) >= 0) {
       arr.push(children[i]);
     }
   }
   return arr;
+};
+
+// Check to see if there is additional DOM layout, other than WebVR elements.
+Util.isThereALayout = function(classPrefix) {
+  var n = this.getDOMChildren('body > *'),
+      len = n.length;
+  for(var i = 0; i < len; i++) {
+    // Check if there are elements without a specific class prefix (e.g. 'webvr-') applied.
+    if(classPrefix && n.className.indexOf(classPrefix) < 0) {
+      return true;
+    }
+    // Look for tags not part of default WebVR Boilerplate.
+    var t = n[i].tagName;
+    if (t != 'CANVAS' && t != 'SCRIPT' && t != 'IMG', t != 'FIGURE') {
+      return true;
+    }
+  }
+  return false;
+};
+
+// Check if an element fills the screen.
+Util.isFullScreen = function() {
+  if (document.fullscreen ||
+    document.mozFullScreen ||
+    document.webkitIsFullScreen ||
+    document.msFullscreenElement) {
+    return true;
+  }
+  if(elem) {
+    var width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
+    var height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));
+    if(width >= screen.availWidth && height >= screen.availHeight) {
+      return true;
+    }
+  }
+  return false;
 };
 
 // Listen for end of reflow event.
@@ -83,7 +159,7 @@ Util.listenReflow = function(target, callback) {
   var observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
       //console.log('mutation type:' + mutation.type + ' name:' + mutation.attributeName + ' target:' + mutation.target);
-      console.log('for attribute ' + mutation.attributeName + ', oldvalue:' + mutation.oldValue + ' newValue:' + target.getAttribute(mutation.attributeName));
+      console.log('for tag:' + target.tagName + ' attribute ' + mutation.attributeName + ', oldvalue:' + mutation.oldValue + ', newValue:' + target.getAttribute(mutation.attributeName));
       callback();
     });
   });

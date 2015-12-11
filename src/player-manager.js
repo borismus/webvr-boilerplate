@@ -56,6 +56,9 @@ function PlayerManager(renderer, params) {
 
   // Initialize the Player container.
   this.initFigure(this.canvas);
+  this.initButtons();
+  // Attach a Button panel to the Player, and save an object reference.
+  window.player = this;
 };
 
 PlayerManager.prototype = new Emitter();
@@ -86,7 +89,8 @@ PlayerManager.prototype.initFigure = function(canvas) {
 };
 
 PlayerManager.prototype.initButtons = function() {
-
+  this.buttons = new ButtonManager();
+  this.dom.appendChild(this.buttons.dom);
 };
 
 PlayerManager.prototype.initCaption = function() {
@@ -118,6 +122,14 @@ PlayerManager.prototype.initCaption = function() {
 
 PlayerManager.prototype.onInit_ = function() {
   console.log("Player:init event from manager");
+  // Check to see if there is layout. Otherwise, size canvas to size of window.
+  if(!Util.isThereALayout()) {
+    console.log('no layout');
+    this.canvas.style.width = '100%';
+    this.canvas.style.height = '100%';
+  } else {
+    console.log('we have a layout');
+  }
 };
 
 PlayerManager.prototype.onModeChange_ = function(oldMode, newMode) {
