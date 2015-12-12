@@ -804,7 +804,6 @@ function PlayerManager(renderer, params) {
 
   // Initialize the Player container.
   this.initFigure(this.canvas);
-
 };
 
 PlayerManager.prototype = new Emitter();
@@ -1778,6 +1777,7 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   // Only resize the canvas if it needs to be resized.
   var size = this.renderer.getSize();
 
+  //TODO: default to window.innerWidth and .innerHeight if there is no default CSS.
   //console.log('this.oldWidth:' + this.oldWidth + ' width:' + window.innerWidth + ' this.oldHeight:' + this.oldHeight + ' height:' + window.innerHeight);
   //if(this.oldWWidth != window.innerWidth || this.oldWHeight != window.innerHeight) {
   if((this.oldWidth - window.innerWidth) != 0 || (this.oldHeight - window.innerHeight) != 0) {
