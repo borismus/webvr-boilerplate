@@ -56,45 +56,63 @@ var Util = require('./util.js');
  * Everything having to do with the WebVR button.
  * Emits a 'click' event when it's clicked.
  */
-function ButtonManager() {
+function ButtonManager(uid) {
   this.loadIcons_();
+
+  this.buttonWidth = 24;
+  this.buttonHeight = 24;
+
+  // Create a wrapper element for the Buttons.
+  this.dom = document.createElement('nav');
+  //this.dom.style.width = this.buttonWidth + 'px';
+  this.dom.style.position = 'absolute';
+  this.dom.style.width = '150px';
+  this.dom.style.height = this.buttonHeight + 'px';
+  this.dom.style.bottom = '0px';
+  this.dom.style.right = '0px';
+
+  // Attach buttons to the wrapper, and store an object reference.
 
   // Make the fullscreen button.
   var fsButton = this.createButton();
   fsButton.src = this.ICONS.fullscreen;
   fsButton.title = 'Fullscreen mode';
+  this.dom.appendChild(fsButton);
   var s = fsButton.style;
   s.bottom = 0;
   s.right = 0;
   fsButton.addEventListener('click', this.createClickHandler_('fs'));
-  document.body.appendChild(fsButton);
   this.fsButton = fsButton;
+
+  // DEBUG!!!!!!!!!!!!!
+  Util.listenReflow(this.fsButton, function() { console.log('got a reflow');});
 
   // Make the VR button.
   var vrButton = this.createButton();
   vrButton.src = this.ICONS.cardboard;
   vrButton.title = 'Virtual reality mode';
+  this.dom.appendChild(vrButton);
   var s = vrButton.style;
   s.bottom = 0;
   s.right = '48px';
   vrButton.addEventListener('click', this.createClickHandler_('vr'));
-  document.body.appendChild(vrButton);
   this.vrButton = vrButton;
 
   // Make the back button.
   var backButton = this.createButton();
   backButton.title = 'Back to previous mode';
+  this.dom.appendChild(backButton);
   var s = backButton.style;
   s.left = 0;
   s.top = 0;
   backButton.src = this.ICONS.back;
   backButton.addEventListener('click', this.createClickHandler_('back'));
-  document.body.appendChild(backButton);
   this.backButton = backButton;
 
   // Make the settings button, but only for mobile.
   var settingsButton = this.createButton();
   settingsButton.title = 'Configure viewer';
+  this.dom.appendChild(settingsButton);
   var s = settingsButton.style;
   s.left = '50%';
   s.marginLeft = '-24px';
@@ -102,14 +120,14 @@ function ButtonManager() {
   s.zIndex = 0;
   settingsButton.src = this.ICONS.settings;
   settingsButton.addEventListener('click', this.createClickHandler_('settings'));
-  document.body.appendChild(settingsButton);
   this.settingsButton = settingsButton;
 
   this.isVisible = true;
 
   this.aligner = new Aligner();
-
+  return this;
 }
+
 ButtonManager.prototype = new Emitter();
 
 ButtonManager.prototype.createButton = function() {
@@ -143,6 +161,7 @@ ButtonManager.prototype.createButton = function() {
   button.addEventListener('mouseleave', function(e) {
     s.filter = s.webkitFilter = '';
   });
+
   return button;
 };
 
@@ -150,6 +169,7 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
   if (!this.isVisible) {
     return;
   }
+  console.log('coming into ButtonManager.setMode with mode:' + mode);
   switch (mode) {
     case Modes.NORMAL:
       this.fsButton.style.display = 'block';
@@ -804,6 +824,12 @@ function PlayerManager(renderer, params) {
 
   // Initialize the Player container.
   this.initFigure(this.canvas);
+<<<<<<< HEAD
+=======
+  this.initButtons();
+  // Attach a Button panel to the Player, and save an object reference.
+  window.player = this;
+>>>>>>> origin/master
 };
 
 PlayerManager.prototype = new Emitter();
@@ -834,7 +860,8 @@ PlayerManager.prototype.initFigure = function(canvas) {
 };
 
 PlayerManager.prototype.initButtons = function() {
-
+  this.buttons = new ButtonManager();
+  this.dom.appendChild(this.buttons.dom);
 };
 
 PlayerManager.prototype.initCaption = function() {
@@ -866,6 +893,14 @@ PlayerManager.prototype.initCaption = function() {
 
 PlayerManager.prototype.onInit_ = function() {
   console.log("Player:init event from manager");
+  // Check to see if there is layout. Otherwise, size canvas to size of window.
+  if(!Util.isThereALayout()) {
+    console.log('no layout');
+    this.canvas.style.width = '100%';
+    this.canvas.style.height = '100%';
+  } else {
+    console.log('we have a layout');
+  }
 };
 
 PlayerManager.prototype.onModeChange_ = function(oldMode, newMode) {
@@ -1073,7 +1108,12 @@ Util.isIFrame = function() {
   }
 };
 
-// Get a unique, incrementing Id value for objects.
+// See if we're running with layout other than a WebVR Player.
+Util.hasLayout = function(canvas) {
+
+};
+
+// Get a unique, incrementing Id value for any object on the page.
 Util.getUniqueId = (function(prefix) {
   var i = Math.floor(Math.random() * 999) + 100;
   var pfx = prefix;
@@ -1088,24 +1128,95 @@ Util.getUniqueId = (function(prefix) {
   return inc;
 })();
 
-// Find child elements by their tag name.
+Util.hasClass = function(elem, selector) {
+  if (elem.className.indexOf(selector) >= 0) {
+    return true;
+  }
+  return false;
+};
+
+Util.addClass = function(elem, selector) {
+  if (!this.hasClass(elem, selector)) {
+    if (elem.className == '') {
+      elem.className = selector;
+    } else {
+      elem.className += ' ' + selector;
+    }
+  }
+};
+
+// Get all current DOM children (not descendants) of document.body.
+Util.getDOMChildren = function(selector) {
+  if(document.querySelectorAll) {
+      return document.querySelectorAll(selector);
+  } else {
+    var childNodes = element.childNodes,
+        children = [],
+        i = childNodes.length;
+
+    while (i--) {
+        if (childNodes[i].nodeType == 1) {
+            children.unshift(childNodes[i]);
+        }
+    }
+    return children;
+  }
+};
+
+// Find child elements by their tag name, given a string with tag names.
 Util.getChildrenByTagName = function(elem, types) {
-  var typeStr;
-  var arr = [];
+  var typeStr,
+      arr = [];
   if (Array.isArray(types)) {
     typeStr = types.toString();
   } else {
     typeStr = types;
   }
   typeStr = typeStr.toUpperCase();
-  var children = elem.children;
-  var len = children.length;
+  var children = elem.children,
+      len = children.length;
   for (var i = 0; i < len; i++) {
     if (typeStr.indexOf(children[i].tagName) >= 0) {
       arr.push(children[i]);
     }
   }
   return arr;
+};
+
+// Check to see if there is additional DOM layout, other than WebVR elements.
+Util.isThereALayout = function(classPrefix) {
+  var n = this.getDOMChildren('body > *'),
+      len = n.length;
+  for(var i = 0; i < len; i++) {
+    // Check if there are elements without a specific class prefix (e.g. 'webvr-') applied.
+    if(classPrefix && n.className.indexOf(classPrefix) < 0) {
+      return true;
+    }
+    // Look for tags not part of default WebVR Boilerplate.
+    var t = n[i].tagName;
+    if (t != 'CANVAS' && t != 'SCRIPT' && t != 'IMG', t != 'FIGURE') {
+      return true;
+    }
+  }
+  return false;
+};
+
+// Check if an element fills the screen.
+Util.isFullScreen = function() {
+  if (document.fullscreen ||
+    document.mozFullScreen ||
+    document.webkitIsFullScreen ||
+    document.msFullscreenElement) {
+    return true;
+  }
+  if(elem) {
+    var width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
+    var height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));
+    if(width >= screen.availWidth && height >= screen.availHeight) {
+      return true;
+    }
+  }
+  return false;
 };
 
 // Listen for end of reflow event.
@@ -1115,7 +1226,7 @@ Util.listenReflow = function(target, callback) {
   var observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
       //console.log('mutation type:' + mutation.type + ' name:' + mutation.attributeName + ' target:' + mutation.target);
-      console.log('for attribute ' + mutation.attributeName + ', oldvalue:' + mutation.oldValue + ' newValue:' + target.getAttribute(mutation.attributeName));
+      console.log('for tag:' + target.tagName + ' attribute ' + mutation.attributeName + ', oldvalue:' + mutation.oldValue + ' newValue:' + target.getAttribute(mutation.attributeName));
       callback();
     });
   });
@@ -1458,7 +1569,7 @@ function WebVRManager(renderer, effect, params) {
   this.mode = Modes.UNKNOWN;
 
   // DEBUG: Listen for reflows
-  Util.listenReflow(renderer.domElement, function() { console.log('got a reflow');});
+  //Util.listenReflow(renderer.domElement, function() { console.log('got a reflow');});
 
   // Create a Player to wrap our rendered domElement in.
   this.player = new PlayerManager(renderer, params);
@@ -1473,6 +1584,7 @@ function WebVRManager(renderer, effect, params) {
   this.effect = effect;
   this.distorter = new CardboardDistorter(renderer, this.deviceInfo);
   this.button = new ButtonManager();
+
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
@@ -1765,12 +1877,14 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
 };
 
 // DEBUG: also test standard resize event.
+/*
 window.addEventListener('resize', function(e) {
   var newCWidth = parseInt(getComputedStyle(manager.renderer.domElement).width);
   var newCHeight = parseInt(getComputedStyle(manager.renderer.domElement).height);
   console.log('standard window resize event, canvas width:' + newCWidth + ' window width:' + window.innerWidth + ' canvas height:' + newCHeight + ' window.innerHeight:' + window.innerHeight);
 
 });
+*/
 
 // From the animate loop, check if the canvas needs to be resized.
 WebVRManager.prototype.resizeIfNeeded_ = function(camera) {

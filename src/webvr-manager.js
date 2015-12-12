@@ -46,7 +46,7 @@ function WebVRManager(renderer, effect, params) {
   this.mode = Modes.UNKNOWN;
 
   // DEBUG: Listen for reflows
-  Util.listenReflow(renderer.domElement, function() { console.log('got a reflow');});
+  //Util.listenReflow(renderer.domElement, function() { console.log('got a reflow');});
 
   // Create a Player to wrap our rendered domElement in.
   this.player = new PlayerManager(renderer, params);
@@ -61,6 +61,7 @@ function WebVRManager(renderer, effect, params) {
   this.effect = effect;
   this.distorter = new CardboardDistorter(renderer, this.deviceInfo);
   this.button = new ButtonManager();
+
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
@@ -353,12 +354,14 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
 };
 
 // DEBUG: also test standard resize event.
+/*
 window.addEventListener('resize', function(e) {
   var newCWidth = parseInt(getComputedStyle(manager.renderer.domElement).width);
   var newCHeight = parseInt(getComputedStyle(manager.renderer.domElement).height);
   console.log('standard window resize event, canvas width:' + newCWidth + ' window width:' + window.innerWidth + ' canvas height:' + newCHeight + ' window.innerHeight:' + window.innerHeight);
 
 });
+*/
 
 // From the animate loop, check if the canvas needs to be resized.
 WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
