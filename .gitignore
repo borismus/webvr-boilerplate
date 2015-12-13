@@ -5,3 +5,6 @@ Session.vim
 .netrwhist
 *~
 .DS_Store
+npm-debug.log
+node_modules
+gruntfile.js

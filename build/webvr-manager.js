@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /**
  * Responsible for showing the vertical alignment UI that separates left and
  * right eye images.
@@ -31,7 +31,7 @@ Aligner.prototype.hide = function() {
 
 module.exports = Aligner;
 
-},{}],2:[function(_dereq_,module,exports){
+},{}],2:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,76 +47,125 @@ module.exports = Aligner;
  * limitations under the License.
  */
 
-var Aligner = _dereq_('./aligner.js');
-var Emitter = _dereq_('./emitter.js');
-var Modes = _dereq_('./modes.js');
-var Util = _dereq_('./util.js');
+var Aligner = require('./aligner.js');
+var Emitter = require('./emitter.js');
+var Modes = require('./modes.js');
+var Util = require('./util.js');
 
 /**
  * Everything having to do with the WebVR button.
  * Emits a 'click' event when it's clicked.
  */
-function ButtonManager() {
+function ButtonManager(prefix, uid, params) {
   this.loadIcons_();
+
+  this.buttonClasses = {
+    button: '-button',      //prefix
+    panel: '-panel',        //panels with multiple buttons
+    back: '-back',          //back button
+    fs: '-fullscreen',      //fullscreen mode button
+    vr: '-vr',              //vr mode button
+    settings: '-settings'   //settings panel
+  };
+
+  // Constants for setting the corner of the button display.
+  this.buttonPositions = {
+    topLeft:0,
+    topRight:1,
+    bottomRight:2,
+    bottomLeft:3
+  };
+
+  // Default sizes.
+  this.buttonWidth = 24;
+  this.buttonHeight = 24;
+  this.buttonPadding = 12;
+
+  // Set a prefix.
+  this.prefix = prefix;
+
+  // Set a UID.
+  this.uid = uid;
+
+  // Create a wrapper element for the Buttons.
+  this.dom = document.createElement('nav');
+  this.dom.id = this.uid + this.buttonClasses.button + this.buttonClasses.panel;
+  Util.addClass(this.dom, prefix + this.buttonClasses.button + this.buttonClasses.panel);
+  var s = this.dom.style;
+  s.position = 'absolute';
+  s.width = '150px';
+  s.height = this.buttonHeight + this.buttonPadding + this.buttonPadding + 'px';
+  //s.bottom = '0px';
+  //s.right = '0px';
+  this.setPosition(this.buttonPositions.bottomRight);
+
+  // Attach buttons to the wrapper, and store an object reference.
 
   // Make the fullscreen button.
   var fsButton = this.createButton();
   fsButton.src = this.ICONS.fullscreen;
+  fsButton.id = this.uid + this.buttonClasses.button + this.buttonClasses.fs;
   fsButton.title = 'Fullscreen mode';
-  var s = fsButton.style;
+  this.dom.appendChild(fsButton);
+  s = fsButton.style;
   s.bottom = 0;
   s.right = 0;
   fsButton.addEventListener('click', this.createClickHandler_('fs'));
-  document.body.appendChild(fsButton);
   this.fsButton = fsButton;
+
+  // DEBUG!!!!!!!!!!!!!
+  //Util.listenReflow(this.fsButton, function() { console.log('got a reflow');});
 
   // Make the VR button.
   var vrButton = this.createButton();
   vrButton.src = this.ICONS.cardboard;
+  vrButton.id = this.uid + this.buttonClasses.button + this.buttonClasses.vr;
   vrButton.title = 'Virtual reality mode';
-  var s = vrButton.style;
+  this.dom.appendChild(vrButton);
+  s = vrButton.style;
   s.bottom = 0;
   s.right = '48px';
   vrButton.addEventListener('click', this.createClickHandler_('vr'));
-  document.body.appendChild(vrButton);
   this.vrButton = vrButton;
 
   // Make the back button.
   var backButton = this.createButton();
+  backButton.id = this.uid + this.buttonClasses.button + this.buttonClasses.back;
   backButton.title = 'Back to previous mode';
-  var s = backButton.style;
+  this.dom.appendChild(backButton);
+  s = backButton.style;
   s.left = 0;
   s.top = 0;
   backButton.src = this.ICONS.back;
   backButton.addEventListener('click', this.createClickHandler_('back'));
-  document.body.appendChild(backButton);
   this.backButton = backButton;
 
   // Make the settings button, but only for mobile.
   var settingsButton = this.createButton();
   settingsButton.title = 'Configure viewer';
-  var s = settingsButton.style;
+  this.dom.appendChild(settingsButton);
+  s = settingsButton.style;
   s.left = '50%';
   s.marginLeft = '-24px';
   s.bottom = 0;
   s.zIndex = 0;
   settingsButton.src = this.ICONS.settings;
   settingsButton.addEventListener('click', this.createClickHandler_('settings'));
-  document.body.appendChild(settingsButton);
   this.settingsButton = settingsButton;
 
   this.isVisible = true;
 
   this.aligner = new Aligner();
-
+  return this;
 }
+
 ButtonManager.prototype = new Emitter();
 
-ButtonManager.prototype.createButton = function() {
+ButtonManager.prototype.createButton = function(prefix) {
   var button = document.createElement('img');
-  button.className = 'webvr-button';
+  Util.addClass(button, this.prefix + this.buttonClasses.button);
   var s = button.style;
-  s.position = 'fixed';
+  //s.position = 'fixed';
   s.width = '24px'
   s.height = '24px';
   s.backgroundSize = 'cover';
@@ -129,6 +178,7 @@ ButtonManager.prototype.createButton = function() {
   s.padding = '12px';
   s.zIndex = 1;
   s.display = 'none';
+  s.float = 'right';
 
   // Prevent button from being selected and dragged.
   button.draggable = false;
@@ -143,6 +193,7 @@ ButtonManager.prototype.createButton = function() {
   button.addEventListener('mouseleave', function(e) {
     s.filter = s.webkitFilter = '';
   });
+
   return button;
 };
 
@@ -188,6 +239,36 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
   this.fsButton.style.display = oldValue;
 };
 
+// Move the control panel to one of the four corners.
+ButtonManager.prototype.setPosition = function(corner) {
+  // Assume position:absolute.
+  var p = this.buttonPositions;
+  switch(corner) {
+    case p.topLeft:
+      this.dom.style.top = '0px';
+      this.dom.style.left = '0px';
+      this.dom.style.bottom = this.dom.style.right = '';
+      break;
+    case p.topRight:
+      this.dom.style.top = '0px';
+      this.dom.style.right = '0px';
+      this.dom.style.left = this.dom.style.bottom = '';
+      break;
+    case p.bottomRight:
+      this.dom.style.bottom = '0px';
+      this.dom.style.right = '0px';
+      this.dom.style.top = this.dom.style.left = '';
+      break;
+    case p.bottomLeft:
+      this.dom.style.bottom = '0px';
+      this.dom.style.left = '0px';
+      this.dom.style.top = this.dom.style.right = '';
+      break;
+    default:
+      console.log('Unknown position for buttons:' + corner);
+  }
+};
+
 ButtonManager.prototype.setVisibility = function(isVisible) {
   this.isVisible = isVisible;
   this.fsButton.style.display = isVisible ? 'block' : 'none';
@@ -215,7 +296,7 @@ ButtonManager.prototype.loadIcons_ = function() {
 
 module.exports = ButtonManager;
 
-},{"./aligner.js":1,"./emitter.js":6,"./modes.js":8,"./util.js":10}],3:[function(_dereq_,module,exports){
+},{"./aligner.js":1,"./emitter.js":6,"./modes.js":8,"./util.js":11}],3:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -231,7 +312,7 @@ module.exports = ButtonManager;
  * limitations under the License.
  */
 
-var BarrelDistortion = _dereq_('./distortion/barrel-distortion-fragment.js');
+var BarrelDistortion = require('./distortion/barrel-distortion-fragment.js');
 
 
 function ShaderPass(shader) {
@@ -355,7 +436,7 @@ CardboardDistorter.prototype.setDistortionCoefficients = function(coefficients) 
 
 module.exports = CardboardDistorter;
 
-},{"./distortion/barrel-distortion-fragment.js":5}],4:[function(_dereq_,module,exports){
+},{"./distortion/barrel-distortion-fragment.js":5}],4:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -371,7 +452,7 @@ module.exports = CardboardDistorter;
  * limitations under the License.
  */
 
-var Util = _dereq_('./util.js');
+var Util = require('./util.js');
 
 // Display width, display height and bevel measurements done on real phones.
 // Resolutions from http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions
@@ -593,7 +674,7 @@ function CardboardViewer(params) {
 DeviceInfo.Viewers = Viewers;
 module.exports = DeviceInfo;
 
-},{"./util.js":10}],5:[function(_dereq_,module,exports){
+},{"./util.js":11}],5:[function(require,module,exports){
 var BarrelDistortionFragment = {
   type: 'fragment',
 
@@ -650,7 +731,7 @@ var BarrelDistortionFragment = {
 
 module.exports = BarrelDistortionFragment;
 
-},{}],6:[function(_dereq_,module,exports){
+},{}],6:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -668,13 +749,14 @@ module.exports = BarrelDistortionFragment;
 
 function Emitter() {
   this.callbacks = {};
-}
+};
 
 Emitter.prototype.emit = function(eventName) {
+  //console.log('emitting:' + eventName);
   var callbacks = this.callbacks[eventName];
   if (!callbacks) {
-    //console.log('No valid callback specified.');
-    return;
+    console.log('No valid callback specified for ' + eventName + '.');
+    return false;
   }
   var args = [].slice.call(arguments)
   // Eliminate the first param (the callback).
@@ -682,6 +764,7 @@ Emitter.prototype.emit = function(eventName) {
   for (var i = 0; i < callbacks.length; i++) {
     callbacks[i].apply(this, args);
   }
+  return true;
 };
 
 Emitter.prototype.on = function(eventName, callback) {
@@ -694,7 +777,7 @@ Emitter.prototype.on = function(eventName, callback) {
 
 module.exports = Emitter;
 
-},{}],7:[function(_dereq_,module,exports){
+},{}],7:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -710,12 +793,12 @@ module.exports = Emitter;
  * limitations under the License.
  */
 
-var WebVRManager = _dereq_('./webvr-manager.js');
+var WebVRManager = require('./webvr-manager.js');
 
 window.WebVRConfig = window.WebVRConfig || {};
 window.WebVRManager = WebVRManager;
 
-},{"./webvr-manager.js":13}],8:[function(_dereq_,module,exports){
+},{"./webvr-manager.js":14}],8:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -743,7 +826,7 @@ var Modes = {
 
 module.exports = Modes;
 
-},{}],9:[function(_dereq_,module,exports){
+},{}],9:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -759,7 +842,272 @@ module.exports = Modes;
  * limitations under the License.
  */
 
-var Util = _dereq_('./util.js');
+var Emitter = require('./emitter.js');
+var Modes = require('./modes.js');
+var ButtonManager = require('./button-manager.js');
+var Util = require('./util.js');
+
+/**
+ * The Player is a wrapper for a VR-enabled canvas,
+ * plus its controls. It is implemented as an html5
+ * <figure> element with a <figcaption> describing
+ * the VR scene. It also stores the last known style
+ * of its canvas, for loop updates.
+ */
+function PlayerManager(renderer, params) {
+
+  this.playerClasses = {
+    prefix: 'webvr',     //common prefix
+    player: '-player',   //player suffix
+    caption: '-caption', //<figcaption> suffix
+    canvas: '-canvas',    //canvas suffix
+  };
+
+  this.fullWin = false;
+  this.aspect = 0;
+
+  // Warning when HTML5 canvas not supported.
+  this.canvasWarn = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
+  this.captionDefault = 'WebVR Boilerplate Player Scene';
+
+  this.loadIcons_();
+
+  // Save a local reference to the canvas (note: ThreeJS can also render to SVG)
+  this.canvas = renderer.domElement;
+
+  // Save a local reference to params
+  this.params = params || {};
+
+  // Assign IDs and classes to the Player elements.
+  this.uid =  Util.getUniqueId(this.playerClasses.prefix + this.playerClasses.player);
+
+  // Initialize the Player container.
+  this.initFigure(this.canvas);
+  this.initButtons();
+
+  // Initialize internal Player elements.
+  this.initCaption();
+
+  /**
+   * Use the computed (not preset) size of the Player to set an aspect ratio.
+   * If the Player is in the DOM, we maintain this aspect ratio, and don't
+   * reculate it. If the Player fills the window (its parent is document.body)
+   * we recalculate the aspect ratio via window.innerWidth and window.innerHeight.
+   */
+  this.getAspect();
+
+  // Attach a Button panel to the Player, and save an object reference.
+  //window.player = this;
+};
+
+// Set player to emit events.
+PlayerManager.prototype = new Emitter();
+
+// Use the <figure> element for semantic wrapping.
+PlayerManager.prototype.initFigure = function(canvas) {
+
+  // If our canvas isn't wrapped in a Player <figure> container, add it.
+  if (canvas.parentNode.tagName != 'FIGURE') {
+    this.dom = document.createElement('figure');
+    canvas.parentNode.appendChild(this.dom);
+    this.dom.appendChild(canvas);
+  }
+  else {
+    // Canvas should be inside a <figure> tag.
+    this.dom = canvas.parentNode;
+  }
+  // Set the Player id and standard class.
+  if (!this.dom.id) {
+      this.dom.id = this.uid;
+  }
+  Util.addClass(this.dom, this.playerClasses.prefix + this.playerClasses.player);
+
+  // Set the Player canvas id and standard class
+  if (!canvas.id) {
+    canvas.id = this.uid + this.playerClasses.canvas;
+  }
+  Util.addClass(canvas, this.playerClasses.prefix + this.playerClasses.player + this.playerClasses.canvas);
+
+  // Set the ARIA attribute for figure caption.
+  this.dom.setAttribute('aria-describedby', this.uid + this.playerClasses.caption);
+
+  // Set the Player default CSS styles. By default, its width and height are
+  // controlled by CSS stylesheets.
+  var s = this.dom.style;
+
+  // If our parent is document.body, add styles causing the Player to fill the window.
+  if (this.isFullWin()) {
+    s.width = '100%';
+    s.height = '100%';
+  }
+
+  // Positioning of buttons.
+  s.position = 'relative';
+  s.margin = '0px';
+  s.padding = '0px';
+
+  // Set canvas to always fill the Player (all controls and captions overlay canvas).
+  var c = this.canvas.style;
+  c.margin = '0px';
+  c.padding = '0px';
+  c.width = '100%';
+  c.height = '100%';
+};
+
+// Create buttons using the ButtonManager.
+PlayerManager.prototype.initButtons = function() {
+  window.butt = ButtonManager;
+  this.buttons = new ButtonManager(this.playerClasses.prefix, this.uid, this.params);
+  this.dom.appendChild(this.buttons.dom);
+};
+
+// TODO: pure 3.js HUD.
+// http://www.evermade.fi/pure-three-js-hud/
+// http://www.sitepoint.com/bringing-vr-to-web-google-cardboard-three-js/
+// https://stemkoski.github.io/Three.js/#text3D
+PlayerManager.prototype.initCaption = function() {
+  var figCaption = Util.getChildrenByTagName(this.dom, 'figcaption');
+  if (figCaption && figCaption[0]) {
+    figCaption = figCaption[0];
+  } else {
+    figCaption = document.createElement('figcaption');
+    this.dom.appendChild(figCaption);
+  }
+
+  // Set the standard class.
+  Util.addClass(figCaption, this.playerClasses.prefix + this.playerClasses.player + this.playerClasses.caption);
+
+  // Set the default styles.
+  figCaption.style.position = 'absolute';
+  figCaption.style.width = '100%';
+  figCaption.style.bottom = '48px';
+  figCaption.style.textAlign = 'center';
+
+  // Link caption to its parent figure (required by ARIA).
+  figCaption.id = this.dom.getAttribute('aria-describedby');
+
+  // Add a caption, if supplied, otherwise default.
+  if (this.params.caption) {
+    figCaption.textContent = this.params.caption;
+  } else {
+    if (figCaption.textContent == '') {
+      figCaption.textContent = this.captionDefault;
+    }
+  }
+};
+
+PlayerManager.prototype.isFullWin = function() {
+  return(this.dom.parentNode == document.body);
+};
+
+// Get the dynamically-computed aspect ratio of the Player based on CSS.
+PlayerManager.prototype.getAspect = function() {
+    this.aspect = parseFloat(getComputedStyle(this.dom).getPropertyValue('width')) / parseFloat(getComputedStyle(this.dom).getPropertyValue('height'));
+};
+
+/**
+ * Get dynamically computed size and aspect ratio of the Player (allows
+ * responsive CSS styling). If the Player is running standalone, it sizes
+ * via window.innerWidth and window.innerHeight. If it is part of a DOM, it
+ * sets width based on its CSS computed style, and sets height by using the
+ * ORIGINAL aspect ratio used when the player is initialized.
+ */
+PlayerManager.prototype.getSize = function() {
+  //console.log('Player.getSize()');
+  if (this.isFullWin()) {
+    return {
+      aspect: window.innerWidth / window.innerHeight,
+      width: window.innerWidth,
+      height: window.innerHeight
+    };
+  } else if (Util.isFullScreen()) {
+    return {
+      aspect: window.innerWidth / window.innerHeight,
+      width: window.innerWidth,
+      height: window.innerHeight
+    };
+  } else {
+    var width = parseFloat(getComputedStyle(this.dom).getPropertyValue('width'));
+    return {
+      aspect: this.aspect, // Static, controlled by width
+      width: width,
+      height: width / this.aspect
+    };
+  }
+};
+
+// Set the Player size.
+PlayerManager.prototype.setSize = function(width, height) {
+  // Canvas property.
+  this.canvas.width = width;
+  this.canvas.height = height;
+  //CSS styles (the most important).
+  this.dom.style.width = width + 'px';
+  this.dom.style.height = height + 'px';
+}
+
+// Initializaiton event received from WebVRManager.
+PlayerManager.prototype.onInit_ = function() {
+  console.log("Player:init event received from manager");
+};
+
+// Mode change event received from WebVRManager.
+PlayerManager.prototype.onModeChange_ = function(oldMode, newMode) {
+  console.log('Player:modechange from manager, old:' + oldMode + ' new:' + newMode);
+};
+
+// Resized event received from WebVRManager.
+PlayerManager.prototype.onResized_ = function(newCWidth, newCHeight) {
+  //console.log('resize event from manager, for Player, new canvas width:' + newCWidth + ' height:' + newCHeight);
+  //console.log('current domElement width:' + this.canvas.style.width + ' height:' + this.canvas.style.height);
+};
+
+// Callback for entering fullscreen.
+PlayerManager.prototype.enterFullscreen_ = function() {
+  //console.log('Player.enterFullscreen()');
+  // Temporarily override any stylesheet-based CSS styles. Needed for webkit.
+  this.dom.style.width = '100%';
+  this.dom.style.height = '100%';
+  //swap position of back button
+};
+
+// Callback for exiting fullscreen.
+PlayerManager.prototype.exitFullscreen_ = function() {
+  //console.log('Player.exitFullscreen()');
+  // Restore CSS styles (remove overriding local styles).
+  this.dom.style.width = '';
+  this.dom.style.height = '';
+};
+
+// Viewer changed.
+PlayerManager.prototype.onViewerChanged_ = function() {
+  console.log('Player.onViewerChanged');
+};
+
+// Preload additional non-Button Player icons, as needed.
+PlayerManager.prototype.loadIcons_ = function() {
+  this.ICONS = {};
+};
+
+module.exports = PlayerManager;
+
+},{"./button-manager.js":2,"./emitter.js":6,"./modes.js":8,"./util.js":11}],10:[function(require,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+var Util = require('./util.js');
 
 function RotateInstructions() {
   this.loadIcon_();
@@ -867,7 +1215,7 @@ RotateInstructions.prototype.loadIcon_ = function() {
 
 module.exports = RotateInstructions;
 
-},{"./util.js":10}],10:[function(_dereq_,module,exports){
+},{"./util.js":11}],11:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -895,6 +1243,10 @@ Util.isMobile = function() {
   return check;
 };
 
+Util.isAndroid = function() {
+  return /Android/i.test(navigator.userAgent);
+};
+
 Util.isFirefox = function() {
   return /firefox/i.test(navigator.userAgent);
 };
@@ -909,6 +1261,141 @@ Util.isIFrame = function() {
   } catch (e) {
     return true;
   }
+};
+
+Util.setOverScroll = function(flag) {
+  if(flag) {
+    document.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    });
+  } else {
+
+  }
+};
+
+// Get a unique, incrementing Id value for any object on the page.
+Util.getUniqueId = (function(prefix) {
+  var i = Math.floor(Math.random() * 999) + 100;
+  var pfx = prefix || '';
+  function inc(pfx) {
+    if (!pfx) {
+      pfx = '';
+    } else {
+      pfx += '-';
+    }
+    return pfx + i++;
+  }
+  return inc;
+})();
+
+Util.hasClass = function(elem, selector) {
+  if (elem.className.indexOf(selector) >= 0) {
+    return true;
+  }
+  return false;
+};
+
+Util.addClass = function(elem, selector) {
+  if (!this.hasClass(elem, selector)) {
+    if (elem.className == '') {
+      elem.className = selector;
+    } else {
+      elem.className += ' ' + selector;
+    }
+  }
+};
+
+// Get all current DOM children (not descendants) of document.body.
+Util.getDOMChildren = function(selector) {
+  if (document.querySelectorAll) {
+      return document.querySelectorAll(selector);
+  } else {
+    var childNodes = element.childNodes,
+        children = [],
+        i = childNodes.length;
+
+    while (i--) {
+        if (childNodes[i].nodeType == 1) {
+            children.unshift(childNodes[i]);
+        }
+    }
+    return children;
+  }
+};
+
+// Find child elements by their tag name, given a string with tag names.
+Util.getChildrenByTagName = function(elem, types) {
+  var typeStr,
+      arr = [];
+  if (Array.isArray(types)) {
+    typeStr = types.toString();
+  } else {
+    typeStr = types;
+  }
+  typeStr = typeStr.toUpperCase();
+  var children = elem.children,
+      len = children.length;
+  for (var i = 0; i < len; i++) {
+    if (typeStr.indexOf(children[i].tagName) >= 0) {
+      arr.push(children[i]);
+    }
+  }
+  return arr;
+};
+
+// Swap two nodes in the DOM, preserving event handlers.
+// From: http://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript
+Util.swapNodes = function(elem1, elem2) {
+  if (elem1 && elem2) {
+    var p1 = elem1.parentNode;
+    var t1 = document.createElement('span');
+    p1.insertBefore(t1, elem1);
+
+    var p2 = elem2.parentNode;
+    var t2 = document.createElement('span');
+    p2.insertBefore(t2, elem2);
+
+    p1.insertBefore(elem2, t1);
+    p2.insertBefore(elem1, t2);
+
+    p1.removeChild(t1);
+    p2.removeChild(t2);
+  }
+};
+
+// Check if an element fills the screen.
+Util.isFullScreen = function(elem) {
+  if (document.fullscreen ||
+    document.mozFullScreen ||
+    document.webkitIsFullScreen ||
+    document.msFullscreenElement) {
+    return true;
+  }
+  // Hack for fullscreen element without fullscreen API.
+  if (elem) {
+    var width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
+    var height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));
+    if (width >= screen.width && height >= screen.height) {
+      return true;
+    }
+  }
+  return false;
+};
+
+// Listen for end of reflow event.
+// https://gist.github.com/paulirish/5d52fb081b3570c81e3a
+// http://stackoverflow.com/questions/23553328/listening-browser-reflow-event
+Util.listenReflow = function(target, callback) {
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      //console.log('mutation type:' + mutation.type + ' name:' + mutation.attributeName + ' target:' + mutation.target);
+      console.log('for tag:' + target.tagName + ' attribute ' + mutation.attributeName + ', oldvalue:' + mutation.oldValue + ', newValue:' + target.getAttribute(mutation.attributeName));
+      callback();
+    });
+  });
+  var config = { attributes: true, childList: true, characterData: true };
+  // pass in the target node, as well as the observer options
+  observer.observe(target, config);
 };
 
 Util.appendQueryParameter = function(url, key, value) {
@@ -933,7 +1420,7 @@ Util.isLandscapeMode = function() {
 
 module.exports = Util;
 
-},{}],11:[function(_dereq_,module,exports){
+},{}],12:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -949,8 +1436,8 @@ module.exports = Util;
  * limitations under the License.
  */
 
-var Emitter = _dereq_('./emitter.js');
-var Util = _dereq_('./util.js');
+var Emitter = require('./emitter.js');
+var Util = require('./util.js');
 
 var DEFAULT_VIEWER = 'CardboardV1';
 var VIEWER_KEY = 'WEBVR_CARDBOARD_VIEWER';
@@ -1120,7 +1607,7 @@ ViewerSelector.prototype.createButton_ = function(label, onclick) {
 
 module.exports = ViewerSelector;
 
-},{"./emitter.js":6,"./util.js":10}],12:[function(_dereq_,module,exports){
+},{"./emitter.js":6,"./util.js":11}],13:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1136,7 +1623,7 @@ module.exports = ViewerSelector;
  * limitations under the License.
  */
 
-var Util = _dereq_('./util.js');
+var Util = require('./util.js');
 
 /**
  * Android and iOS compatible wakelock implementation.
@@ -1196,7 +1683,7 @@ function getWakeLock() {
 
 module.exports = getWakeLock();
 
-},{"./util.js":10}],13:[function(_dereq_,module,exports){
+},{"./util.js":11}],14:[function(require,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1211,16 +1698,16 @@ module.exports = getWakeLock();
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-var ButtonManager = _dereq_('./button-manager.js');
-var CardboardDistorter = _dereq_('./cardboard-distorter.js');
-var DeviceInfo = _dereq_('./device-info.js');
-var Emitter = _dereq_('./emitter.js');
-var Modes = _dereq_('./modes.js');
-var RotateInstructions = _dereq_('./rotate-instructions.js');
-var Util = _dereq_('./util.js');
-var ViewerSelector = _dereq_('./viewer-selector.js');
-var Wakelock = _dereq_('./wakelock.js');
+ var PlayerManager = require('./player-manager.js');
+var ButtonManager = require('./button-manager.js');
+var CardboardDistorter = require('./cardboard-distorter.js');
+var DeviceInfo = require('./device-info.js');
+var Emitter = require('./emitter.js');
+var Modes = require('./modes.js');
+var RotateInstructions = require('./rotate-instructions.js');
+var Util = require('./util.js');
+var ViewerSelector = require('./viewer-selector.js');
+var Wakelock = require('./wakelock.js');
 
 /**
  * Helper for getting in and out of VR mode.
@@ -1243,6 +1730,13 @@ function WebVRManager(renderer, effect, params) {
 
   this.mode = Modes.UNKNOWN;
 
+  // DEBUG: Listen for reflows
+  //Util.listenReflow(renderer.domElement, function() { console.log('got a reflow');});
+
+  // Create a Player to wrap our rendered domElement in.
+  this.player = new PlayerManager(renderer, params);
+  this.button = this.player.buttons;
+
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
 
@@ -1252,7 +1746,6 @@ function WebVRManager(renderer, effect, params) {
   this.renderer = renderer;
   this.effect = effect;
   this.distorter = new CardboardDistorter(renderer, this.deviceInfo);
-  this.button = new ButtonManager();
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
@@ -1306,11 +1799,24 @@ function WebVRManager(renderer, effect, params) {
       default:
         this.setMode_(Modes.NORMAL);
     }
+
+    // Button events.
     this.button.on('fs', this.onFSClick_.bind(this));
     this.button.on('vr', this.onVRClick_.bind(this));
     this.button.on('back', this.onBackClick_.bind(this));
     this.button.on('settings', this.onSettingsClick_.bind(this));
+
+    // Player events.
+    this.on('initialized', this.player.onInit_.bind(this.player));
+    this.on('modechange', this.player.onModeChange_.bind(this.player));
+    this.on('resized', this.player.onResized_.bind(this.player));
+    this.on('enterfullscreen', this.player.enterFullscreen_.bind(this.player));
+    this.on('exitfullscreen', this.player.exitFullscreen_.bind(this.player));
+
+    // Emit initialization event.
+    // Used by pages with layout DOM containing the Player.
     this.emit('initialized');
+
   }.bind(this));
 
   // Save the input device for later sending timing data.
@@ -1338,6 +1844,7 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
+WebVRManager.PlayerManager = PlayerManager;
 
 /**
  * Promise returns true if there is at least one HMD device available.
@@ -1369,8 +1876,13 @@ WebVRManager.prototype.getViewer = function() {
 };
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
-  this.resizeIfNeeded_(camera);
-
+  this.camera = camera; // Could the supplied camera change?
+  /**
+   * Note: the Player will work if you check for resize here, but is faster
+   * using the browser window resize event. However, resize checks should
+   * be started after manager initialization (see index.html).
+   * this.resizeIfNeeded_(camera);
+  */
   if (this.isVRMode()) {
     this.distorter.preRender();
     this.effect.render(scene, camera);
@@ -1384,7 +1896,6 @@ WebVRManager.prototype.render = function(scene, camera, timestamp) {
     }
   }
 };
-
 
 WebVRManager.prototype.setMode_ = function(mode) {
   var oldMode = this.mode;
@@ -1529,18 +2040,38 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
   this.resize_();
 };
 
-WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
-  // Only resize the canvas if it needs to be resized.
-  var size = this.renderer.getSize();
-  if (size.width != window.innerWidth || size.height != window.innerHeight) {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    this.resize_()
-  }
+/**
+ * Listen for resize events independently of animate loop.
+ * Note: this function needs to be started in initialization!
+*/
+WebVRManager.prototype.listenResize = function() {
+  this.view = window;
+  this.view.addEventListener('resize', function(e) {
+    this.resizeIfNeeded_(this.camera);
+  }.bind(this), false);
 };
 
+
+/**
+ * From the animate loop, check if the canvas needs to be resized.
+ * The Player determines size and camera aspect, based on mode: magic window,
+ * fullscreen, or embedded within a DOM.
+ */
+WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
+  var size = this.player.getSize();
+  camera.aspect = size.aspect;
+  camera.updateProjectionMatrix();
+  this.renderer.setSize(size.width, size.height);
+  this.effect.setSize(size.width, size.height);
+  this.emit('resized', size.width, size.height);
+};
+
+// Resize effect in cases to handle Android bug.
 WebVRManager.prototype.resize_ = function() {
-  this.effect.setSize(window.innerWidth, window.innerHeight);
+  var size = this.player.getSize();
+  this.effect.setSize(size.width, size.height);
+  //below is wrong for FF desktop
+  //this.effect.setSize(this.renderer.domElement.width, this.renderer.domElement.height);
 };
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {
@@ -1601,9 +2132,10 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
   }
 };
 
+// Change from canvas to player
 WebVRManager.prototype.requestFullscreen_ = function() {
-  var canvas = document.body;
-  //var canvas = this.renderer.domElement;
+  // Resize the Player, not the canvas
+  canvas = this.player.dom;
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
@@ -1611,6 +2143,7 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
   }
+  this.emit('enterfullscreen');
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {
@@ -1621,6 +2154,7 @@ WebVRManager.prototype.exitFullscreen_ = function() {
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
   }
+  this.emit('exitfullscreen');
 };
 
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {
@@ -1655,4 +2189,4 @@ WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
 
 module.exports = WebVRManager;
 
-},{"./button-manager.js":2,"./cardboard-distorter.js":3,"./device-info.js":4,"./emitter.js":6,"./modes.js":8,"./rotate-instructions.js":9,"./util.js":10,"./viewer-selector.js":11,"./wakelock.js":12}]},{},[7]);
+},{"./button-manager.js":2,"./cardboard-distorter.js":3,"./device-info.js":4,"./emitter.js":6,"./modes.js":8,"./player-manager.js":9,"./rotate-instructions.js":10,"./util.js":11,"./viewer-selector.js":12,"./wakelock.js":13}]},{},[7]);

@@ -25,6 +25,10 @@ Util.isMobile = function() {
   return check;
 };
 
+Util.isAndroid = function() {
+  return /Android/i.test(navigator.userAgent);
+};
+
 Util.isFirefox = function() {
   return /firefox/i.test(navigator.userAgent);
 };
@@ -39,6 +43,141 @@ Util.isIFrame = function() {
   } catch (e) {
     return true;
   }
+};
+
+Util.setOverScroll = function(flag) {
+  if(flag) {
+    document.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    });
+  } else {
+
+  }
+};
+
+// Get a unique, incrementing Id value for any object on the page.
+Util.getUniqueId = (function(prefix) {
+  var i = Math.floor(Math.random() * 999) + 100;
+  var pfx = prefix || '';
+  function inc(pfx) {
+    if (!pfx) {
+      pfx = '';
+    } else {
+      pfx += '-';
+    }
+    return pfx + i++;
+  }
+  return inc;
+})();
+
+Util.hasClass = function(elem, selector) {
+  if (elem.className.indexOf(selector) >= 0) {
+    return true;
+  }
+  return false;
+};
+
+Util.addClass = function(elem, selector) {
+  if (!this.hasClass(elem, selector)) {
+    if (elem.className == '') {
+      elem.className = selector;
+    } else {
+      elem.className += ' ' + selector;
+    }
+  }
+};
+
+// Get all current DOM children (not descendants) of document.body.
+Util.getDOMChildren = function(selector) {
+  if (document.querySelectorAll) {
+      return document.querySelectorAll(selector);
+  } else {
+    var childNodes = element.childNodes,
+        children = [],
+        i = childNodes.length;
+
+    while (i--) {
+        if (childNodes[i].nodeType == 1) {
+            children.unshift(childNodes[i]);
+        }
+    }
+    return children;
+  }
+};
+
+// Find child elements by their tag name, given a string with tag names.
+Util.getChildrenByTagName = function(elem, types) {
+  var typeStr,
+      arr = [];
+  if (Array.isArray(types)) {
+    typeStr = types.toString();
+  } else {
+    typeStr = types;
+  }
+  typeStr = typeStr.toUpperCase();
+  var children = elem.children,
+      len = children.length;
+  for (var i = 0; i < len; i++) {
+    if (typeStr.indexOf(children[i].tagName) >= 0) {
+      arr.push(children[i]);
+    }
+  }
+  return arr;
+};
+
+// Swap two nodes in the DOM, preserving event handlers.
+// From: http://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript
+Util.swapNodes = function(elem1, elem2) {
+  if (elem1 && elem2) {
+    var p1 = elem1.parentNode;
+    var t1 = document.createElement('span');
+    p1.insertBefore(t1, elem1);
+
+    var p2 = elem2.parentNode;
+    var t2 = document.createElement('span');
+    p2.insertBefore(t2, elem2);
+
+    p1.insertBefore(elem2, t1);
+    p2.insertBefore(elem1, t2);
+
+    p1.removeChild(t1);
+    p2.removeChild(t2);
+  }
+};
+
+// Check if an element fills the screen.
+Util.isFullScreen = function(elem) {
+  if (document.fullscreen ||
+    document.mozFullScreen ||
+    document.webkitIsFullScreen ||
+    document.msFullscreenElement) {
+    return true;
+  }
+  // Hack for fullscreen element without fullscreen API.
+  if (elem) {
+    var width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
+    var height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));
+    if (width >= screen.width && height >= screen.height) {
+      return true;
+    }
+  }
+  return false;
+};
+
+// Listen for end of reflow event.
+// https://gist.github.com/paulirish/5d52fb081b3570c81e3a
+// http://stackoverflow.com/questions/23553328/listening-browser-reflow-event
+Util.listenReflow = function(target, callback) {
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      //console.log('mutation type:' + mutation.type + ' name:' + mutation.attributeName + ' target:' + mutation.target);
+      console.log('for tag:' + target.tagName + ' attribute ' + mutation.attributeName + ', oldvalue:' + mutation.oldValue + ', newValue:' + target.getAttribute(mutation.attributeName));
+      callback();
+    });
+  });
+  var config = { attributes: true, childList: true, characterData: true };
+  // pass in the target node, as well as the observer options
+  observer.observe(target, config);
 };
 
 Util.appendQueryParameter = function(url, key, value) {

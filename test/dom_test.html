@@ -1,0 +1,237 @@
+<!doctype html>
+<!--
+  Test swapping a canvas embedded in an existing web page layout into
+  fullscreen and Fullscreen VR mode.
+-->
+<head>
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+/* CSS reset */
+body, header, section, footer, figure, h1 {
+  margin:0;
+  border:0;
+  padding:0;
+}
+/* basic body styles */
+body {
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+/* semantic element styles */
+header, section, footer {
+  width:100%;
+  border-bottom: 1px solid green;
+}
+
+/*
+ * The following classes are automatically
+ * created by the Player. They can be changed
+ * by including the following object in initialization of
+ * the Player:
+ * Player.playerClasses = {
+     prefix: 'xxx', //applied to all Player elements.
+     player: 'xxx-yyy', //only applied to Player <figure> element.
+     caption: 'xxx-yyy' //only applied to the <figcaption> element.
+     canvas: 'xxx-yyy',// only applied to PLayer <canvas> element.
+     placeholder: 'xxx-yyy'
+   };
+ *
+/*
+ * webvr-boilerplate Player classes (created by Player)
+ * If the Player detects these selectors, it will use them instead
+ * of its default selector values in Player.playerClasses
+ */
+.webvr-player {
+  border: 1px dotted red;
+  width:80%;
+  height:100%;
+}
+
+/* optional caption for scene in Player */
+.webvr-player-caption {}
+
+/* 3D drawing canvas within the Player */
+.webvr-player-canvas {
+  /*border: 1px solid yellow;*/
+  /*width:100%;*/
+  /*height:100%;*/
+  /* have to use the !important to override local style set by three.js*/
+  /*width: 80%!important;*/
+  /*height: 80%!important;*/
+  /*width:640px;*/
+  /*height:480px;*/
+}
+
+.webvr-button-panel {
+  border: 1px dotted orange;
+}
+
+/* Individual buttons in the control panel */
+.webvr-button {}
+
+/* Should always be invisible */
+.webvr-placeholder {}
+
+
+/* a generic class */
+.bordered {
+  margin: 4px;
+}
+</style>
+</head>
+
+<body>
+  <div class="webvr-dom-container">
+    <header>
+      <h1>Page Header:WebVR in DOM</h1>
+    </header>
+    <main>
+        <section id="content">
+          <h2>Page Content Section</h2>
+          <!--markup for webvr player-->
+          <figure class="bordered">
+            <canvas id="webvr-test-canvas">WebVR not Supported, upgrade browser!</canvas>
+          </figure>
+      </section>
+      <footer>
+        <h2>Page Footer</h2>
+      </footer>
+    </main>
+  </div>
+<!--scripts at bottom of body-->
+<script src="../bower_components/threejs/build/three.js"></script>
+<script src="../bower_components/threejs/examples/js/controls/VRControls.js"></script>
+<script src="../bower_components/threejs/examples/js/effects/VREffect.js"></script>
+<script src="../bower_components/webvr-polyfill/build/webvr-polyfill.js"></script>
+<script src="../build/webvr-manager.js"></script>
+
+<script>
+// Wrap setup in DOMContentLoaded event so DOM can render, and CSS .getComputedStyle works
+document.addEventListener('DOMContentLoaded', function() {
+
+  // Setup three.js WebGL renderer
+  var renderer = new THREE.WebGLRenderer({
+    canvas:document.getElementById('webvr-test-canvas'),
+    antialias: true
+  });
+  renderer.setPixelRatio(window.devicePixelRatio);
+
+  // TODO: we used .getComputedStyle here!
+
+    var newCWidth = getComputedStyle(renderer.domElement).width;
+    var newCHeight = getComputedStyle(renderer.domElement).height;
+    console.log('Initial canvas width from CSS:' + newCWidth + ' window width:' + window.innerWidth + ' height:' + newCHeight + ' window height:' + window.innerHeight);
+    console.log('Initial canvas width attribute:' + renderer.domElement.width)
+  var canvasStyle = {
+    width:parseInt(newCWidth),
+    height:parseInt(newCHeight)
+  };
+
+  // Append the canvas element created by the renderer to document body element.
+  if (renderer.domElement.id || renderer.domElement.className) {
+    //nothing
+    console.log('Using existing canvas.');
+  } else {
+    document.body.appendChild(renderer.domElement);
+  }
+
+// Create a three.js scene.
+var scene = new THREE.Scene();
+
+// Create a three.js camera.
+var camera = new THREE.PerspectiveCamera(75, canvasStyle.width / canvasStyle.height, 0.1, 10000);
+
+// Apply VR headset positional data to camera.
+var controls = new THREE.VRControls(camera);
+
+// Apply VR stereo rendering to renderer.
+var effect = new THREE.VREffect(renderer);
+effect.setSize(canvasStyle.width, canvasStyle.height);
+// Adjust our element
+renderer.setSize(canvasStyle.width, canvasStyle.height); //TODO: IS THIS NEEDED?
+
+// Add a repeating grid as a skybox.
+var boxWidth = 5;
+var texture = THREE.ImageUtils.loadTexture(
+  '../img/box.png'
+);
+texture.wrapS = THREE.RepeatWrapping;
+texture.wrapT = THREE.RepeatWrapping;
+texture.repeat.set(boxWidth, boxWidth);
+
+var geometry = new THREE.BoxGeometry(boxWidth, boxWidth, boxWidth);
+var material = new THREE.MeshBasicMaterial({
+  map: texture,
+  color: 0x01BE00,
+  side: THREE.BackSide
+});
+
+var skybox = new THREE.Mesh(geometry, material);
+scene.add(skybox);
+
+// Create a VR manager helper to enter and exit VR mode.
+// Attch to 'window' because we are in a DOMContentLoaded callback.
+window.manager = new WebVRManager(renderer, effect, {hideButton: false});
+
+// Create 3D objects.
+var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+var material = new THREE.MeshNormalMaterial();
+var cube = new THREE.Mesh(geometry, material);
+
+// Position cube mesh
+cube.position.z = -1;
+
+// Add cube mesh to your three.js scene
+scene.add(cube);
+
+// Request animation frame loop function
+function animate(timestamp) {
+  // Apply rotation to cube mesh
+  cube.rotation.y += 0.01;
+
+  // Update VR headset position and apply to camera.
+  controls.update();
+
+  // Render the scene through the manager.
+  manager.render(scene, camera, timestamp);
+
+  requestAnimationFrame(animate);
+};
+
+// Reset the position sensor when 'z' pressed.
+function onKey(event) {
+  if (event.keyCode == 90) { // z
+    controls.resetSensor();
+  }
+};
+
+//callbacks for manager functions
+manager.on('initialized', function() {
+  console.log('manager initialized event received by window (in dom_test.html())');
+  window.addEventListener('keydown', onKey, true);
+
+  // Do ONE resize event to properly set up the scene, after manager is initialized.
+  manager.resizeIfNeeded_(camera);
+
+  // Begin listening for resize events (separate from animation loop).
+  manager.listenResize();
+
+  // Begin animating.
+  animate();
+
+  }.bind(window)
+);
+
+// Note: we can fire any any event we want later
+// manager.on('squoaked', function() { console.log('hi');}.bind(window));
+
+}); //end of DOMContentLoaded
+
+</script>
+</body>
+</html>

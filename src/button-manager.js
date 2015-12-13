@@ -22,67 +22,116 @@ var Util = require('./util.js');
  * Everything having to do with the WebVR button.
  * Emits a 'click' event when it's clicked.
  */
-function ButtonManager() {
+function ButtonManager(prefix, uid, params) {
   this.loadIcons_();
+
+  this.buttonClasses = {
+    button: '-button',      //prefix
+    panel: '-panel',        //panels with multiple buttons
+    back: '-back',          //back button
+    fs: '-fullscreen',      //fullscreen mode button
+    vr: '-vr',              //vr mode button
+    settings: '-settings'   //settings panel
+  };
+
+  // Constants for setting the corner of the button display.
+  this.buttonPositions = {
+    topLeft:0,
+    topRight:1,
+    bottomRight:2,
+    bottomLeft:3
+  };
+
+  // Default sizes.
+  this.buttonWidth = 24;
+  this.buttonHeight = 24;
+  this.buttonPadding = 12;
+
+  // Set a prefix.
+  this.prefix = prefix;
+
+  // Set a UID.
+  this.uid = uid;
+
+  // Create a wrapper element for the Buttons.
+  this.dom = document.createElement('nav');
+  this.dom.id = this.uid + this.buttonClasses.button + this.buttonClasses.panel;
+  Util.addClass(this.dom, prefix + this.buttonClasses.button + this.buttonClasses.panel);
+  var s = this.dom.style;
+  s.position = 'absolute';
+  s.width = '150px';
+  s.height = this.buttonHeight + this.buttonPadding + this.buttonPadding + 'px';
+  //s.bottom = '0px';
+  //s.right = '0px';
+  this.setPosition(this.buttonPositions.bottomRight);
+
+  // Attach buttons to the wrapper, and store an object reference.
 
   // Make the fullscreen button.
   var fsButton = this.createButton();
   fsButton.src = this.ICONS.fullscreen;
+  fsButton.id = this.uid + this.buttonClasses.button + this.buttonClasses.fs;
   fsButton.title = 'Fullscreen mode';
-  var s = fsButton.style;
+  this.dom.appendChild(fsButton);
+  s = fsButton.style;
   s.bottom = 0;
   s.right = 0;
   fsButton.addEventListener('click', this.createClickHandler_('fs'));
-  document.body.appendChild(fsButton);
   this.fsButton = fsButton;
+
+  // DEBUG!!!!!!!!!!!!!
+  //Util.listenReflow(this.fsButton, function() { console.log('got a reflow');});
 
   // Make the VR button.
   var vrButton = this.createButton();
   vrButton.src = this.ICONS.cardboard;
+  vrButton.id = this.uid + this.buttonClasses.button + this.buttonClasses.vr;
   vrButton.title = 'Virtual reality mode';
-  var s = vrButton.style;
+  this.dom.appendChild(vrButton);
+  s = vrButton.style;
   s.bottom = 0;
   s.right = '48px';
   vrButton.addEventListener('click', this.createClickHandler_('vr'));
-  document.body.appendChild(vrButton);
   this.vrButton = vrButton;
 
   // Make the back button.
   var backButton = this.createButton();
+  backButton.id = this.uid + this.buttonClasses.button + this.buttonClasses.back;
   backButton.title = 'Back to previous mode';
-  var s = backButton.style;
+  this.dom.appendChild(backButton);
+  s = backButton.style;
   s.left = 0;
   s.top = 0;
   backButton.src = this.ICONS.back;
   backButton.addEventListener('click', this.createClickHandler_('back'));
-  document.body.appendChild(backButton);
   this.backButton = backButton;
 
   // Make the settings button, but only for mobile.
   var settingsButton = this.createButton();
   settingsButton.title = 'Configure viewer';
-  var s = settingsButton.style;
+  this.dom.appendChild(settingsButton);
+  s = settingsButton.style;
   s.left = '50%';
   s.marginLeft = '-24px';
   s.bottom = 0;
   s.zIndex = 0;
   settingsButton.src = this.ICONS.settings;
   settingsButton.addEventListener('click', this.createClickHandler_('settings'));
-  document.body.appendChild(settingsButton);
   this.settingsButton = settingsButton;
 
   this.isVisible = true;
 
   this.aligner = new Aligner();
-
+  return this;
 }
+
 ButtonManager.prototype = new Emitter();
 
-ButtonManager.prototype.createButton = function() {
+ButtonManager.prototype.createButton = function(prefix) {
   var button = document.createElement('img');
-  button.className = 'webvr-button';
+  Util.addClass(button, this.prefix + this.buttonClasses.button);
   var s = button.style;
-  s.position = 'fixed';
+  //s.position = 'fixed';
   s.width = '24px'
   s.height = '24px';
   s.backgroundSize = 'cover';
@@ -95,6 +144,7 @@ ButtonManager.prototype.createButton = function() {
   s.padding = '12px';
   s.zIndex = 1;
   s.display = 'none';
+  s.float = 'right';
 
   // Prevent button from being selected and dragged.
   button.draggable = false;
@@ -109,6 +159,7 @@ ButtonManager.prototype.createButton = function() {
   button.addEventListener('mouseleave', function(e) {
     s.filter = s.webkitFilter = '';
   });
+
   return button;
 };
 
@@ -152,6 +203,36 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
   this.fsButton.style.display = 'inline-block';
   this.fsButton.offsetHeight;
   this.fsButton.style.display = oldValue;
+};
+
+// Move the control panel to one of the four corners.
+ButtonManager.prototype.setPosition = function(corner) {
+  // Assume position:absolute.
+  var p = this.buttonPositions;
+  switch(corner) {
+    case p.topLeft:
+      this.dom.style.top = '0px';
+      this.dom.style.left = '0px';
+      this.dom.style.bottom = this.dom.style.right = '';
+      break;
+    case p.topRight:
+      this.dom.style.top = '0px';
+      this.dom.style.right = '0px';
+      this.dom.style.left = this.dom.style.bottom = '';
+      break;
+    case p.bottomRight:
+      this.dom.style.bottom = '0px';
+      this.dom.style.right = '0px';
+      this.dom.style.top = this.dom.style.left = '';
+      break;
+    case p.bottomLeft:
+      this.dom.style.bottom = '0px';
+      this.dom.style.left = '0px';
+      this.dom.style.top = this.dom.style.right = '';
+      break;
+    default:
+      console.log('Unknown position for buttons:' + corner);
+  }
 };
 
 ButtonManager.prototype.setVisibility = function(isVisible) {

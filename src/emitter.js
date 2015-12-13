@@ -15,13 +15,14 @@
 
 function Emitter() {
   this.callbacks = {};
-}
+};
 
 Emitter.prototype.emit = function(eventName) {
+  //console.log('emitting:' + eventName);
   var callbacks = this.callbacks[eventName];
   if (!callbacks) {
-    //console.log('No valid callback specified.');
-    return;
+    console.log('No valid callback specified for ' + eventName + '.');
+    return false;
   }
   var args = [].slice.call(arguments)
   // Eliminate the first param (the callback).
@@ -29,6 +30,7 @@ Emitter.prototype.emit = function(eventName) {
   for (var i = 0; i < callbacks.length; i++) {
     callbacks[i].apply(this, args);
   }
+  return true;
 };
 
 Emitter.prototype.on = function(eventName, callback) {
