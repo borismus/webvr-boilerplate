@@ -24,6 +24,8 @@ var Util = require('./util.js');
  * <figure> element with a <figcaption> describing
  * the VR scene. It also stores the last known style
  * of its canvas, for loop updates.
+ *
+ * Note: Renderer must have a canvas element to use.
  */
 function PlayerManager(renderer, params) {
 

@@ -5,6 +5,13 @@
 -->
 <head>
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<!--handle iOS and android mobile
+http://www.html5rocks.com/en/mobile/fullscreen/ -->
+<!--ios fullscreen-->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<!--android fullscreen-->
+<meta name="mobile-web-app-capable" content="yes">
+<!--default styles-->
 <style>
 /* CSS reset */
 body, header, section, footer, figure, h1 {
@@ -45,11 +52,15 @@ header, section, footer {
  * webvr-boilerplate Player classes (created by Player)
  * If the Player detects these selectors, it will use them instead
  * of its default selector values in Player.playerClasses
+ * Tested:
+ * width:xxx%; height:100%;
+ * width:xxx%; height:auto;
+ * width:xxx px; height:yyy px;
  */
 .webvr-player {
   border: 1px dotted red;
   width:80%;
-  height:100%;
+  height:auto; /*100% ok*/
 }
 
 /* optional caption for scene in Player */
@@ -97,6 +108,9 @@ header, section, footer {
           <figure class="bordered">
             <canvas id="webvr-test-canvas">WebVR not Supported, upgrade browser!</canvas>
           </figure>
+          <figure class="bordered">
+            <canvas id="webvr-text-canvas" height="200" width="400">WebVR not supported, upgrade!</canvas>
+          </figure>
       </section>
       <footer>
         <h2>Page Footer</h2>
@@ -105,6 +119,14 @@ header, section, footer {
   </div>
 <!--scripts at bottom of body-->
 <script src="../bower_components/threejs/build/three.js"></script>
+<!--add TextGeometry-->
+<script src="../bower_components/threejs/examples/js/controls/OrbitControls.js"></script>
+<script src="../bower_components/threejs/examples/js/utils/FontUtils.js"></script>
+<script src="../bower_components/threejs/examples/js/geometries/TextGeometry.js"></script>
+<!--typeface.js fonts for scenes-->
+<script src="../bower_components/threejs/examples/fonts/optimer_regular.typeface.js"></script>
+<script src="../bower_components/threejs/examples/fonts/optimer_bold.typeface.js"></script>
+<!--add VR controls-->
 <script src="../bower_components/threejs/examples/js/controls/VRControls.js"></script>
 <script src="../bower_components/threejs/examples/js/effects/VREffect.js"></script>
 <script src="../bower_components/webvr-polyfill/build/webvr-polyfill.js"></script>
@@ -113,6 +135,13 @@ header, section, footer {
 <script>
 // Wrap setup in DOMContentLoaded event so DOM can render, and CSS .getComputedStyle works
 document.addEventListener('DOMContentLoaded', function() {
+
+  /**
+   * ===================================
+   * FIRST RENDERED SCREEN.
+   * SPINNING CUBE.
+   * ===================================
+   */
 
   // Setup three.js WebGL renderer
   var renderer = new THREE.WebGLRenderer({
@@ -227,8 +256,88 @@ manager.on('initialized', function() {
   }.bind(window)
 );
 
-// Note: we can fire any any event we want later
-// manager.on('squoaked', function() { console.log('hi');}.bind(window));
+/**
+ * ===================================
+ * SECOND RENDERED SCREEN.
+ * VECTOR TEXT.
+ * From: http://andrewray.me/threejs-examples/font-example/js/font-example.js
+ * ===================================
+ */
+ var textscene = new THREE.Scene();
+
+ // CAMERA
+ var SCREEN_WIDTH = 800, SCREEN_HEIGHT = 300;
+ var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+ textcamera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
+ textscene.add(camera);
+ textcamera.position.set(0,0,1000);
+ textcamera.lookAt(textscene.position);
+ textrenderer = new THREE.WebGLRenderer({antialias:true});
+ textrenderer = new THREE.WebGLRenderer({
+   canvas:document.getElementById('webvr-text-canvas'),
+   antialias: true
+ });
+ renderer.setPixelRatio(window.devicePixelRatio);
+ textrenderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+ // CONTROLS
+ textcontrols = new THREE.OrbitControls(textcamera, textrenderer.domElement);
+
+ // LIGHT
+ var textlight = new THREE.PointLight(0xffffff);
+ textlight.position.set(0,0,1000);
+ textscene.add(textlight);
+ var textmaterial = new THREE.MeshPhongMaterial({
+         color: 0xdddddd
+     });
+     var textGeom = new THREE.TextGeometry( 'WebVR Figure!', {
+         font: 'Optimer', weight: 'bold'// Must be lowercase!
+     });
+     var textMesh = new THREE.Mesh( textGeom, material );
+     // Do some optional calculations. This is only if you need to get the
+     // width of the generated text
+     textGeom.computeBoundingBox();
+     textGeom.textWidth = textGeom.boundingBox.max.x - textGeom.boundingBox.min.x;
+     textMesh.position.set( 0 * textGeom.textWidth, -100, 0);
+     textscene.add( textMesh );
+
+
+     // add 3D text beveled and sized
+       var material2 = new THREE.MeshPhongMaterial({
+           color: 0x00ff00
+       });
+       var textGeom2 = new THREE.TextGeometry( 'WebVR Figure!', {
+           size: 60, height: 20, curveSegments: 3,
+           font: 'Optimer', weight: 'bold',
+           bevelThickness: 3, bevelSize: 3, bevelEnabled: true
+       });
+       var textMesh2 = new THREE.Mesh( textGeom2, material2 );
+
+       textGeom2.computeBoundingBox();
+       var textWidth2 = textGeom2.boundingBox.max.x - textGeom2.boundingBox.min.x;
+
+       textMesh2.position.set( -1.0 * textWidth2, -100, 0 );
+       textscene.add( textMesh2 );
+
+       // Apply VR stereo rendering to renderer.
+       var texteffect = new THREE.VREffect(textrenderer);
+       texteffect.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+       // Create a VR manager helper to enter and exit VR mode.
+       // Attch to 'window' because we are in a DOMContentLoaded callback.
+       window.textmanager = new WebVRManager(textrenderer, texteffect, {hideButton: false});
+
+       function textrender() {
+           textrenderer.render( textscene, textcamera );
+       }
+
+       function textanimate() {
+           window.requestAnimationFrame( textanimate );
+           textrender();
+       }
+
+       textanimate();
+
 
 }); //end of DOMContentLoaded
 

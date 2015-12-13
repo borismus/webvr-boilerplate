@@ -76,7 +76,14 @@ function WebVRManager(renderer, effect, params) {
   // Set the correct viewer profile, but only if this is Cardboard.
   if (Util.isMobile()) {
     this.onViewerChanged_(this.getViewer());
+
+    //Prevent extra scrolling in iOS, Android.
+    Util.setOverScroll();
+
+    // Add meta tag for Android, iOS.
+
   }
+
   // Listen for changes to the viewer.
   this.viewerSelector.on('change', this.onViewerChanged_.bind(this));
 

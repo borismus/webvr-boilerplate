@@ -1,4 +1,4 @@
-/* 
+/*
  * basic ExpressJS server
  * @link http://expressjs.com/starter/static-files.html
  */

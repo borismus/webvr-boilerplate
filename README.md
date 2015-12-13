@@ -50,13 +50,16 @@ The polyfill and boilerplate are also available via bower. Easy install:
 
     bower install webvr-boilerplate
 
+Three.js configuration
+  https://github.com/mrdoob/three.js/wiki/build.py,-or-how-to-generate-a-compressed-Three.js-file
+
 ## Features and known issues
 
 Features:
 
 - Enter and exit VR mode (in WebVR and WebVR polyfill compatible environments).
 - Immersive fullscreen, orientation locking and sleep prevention.
-- Distortion correction, enabled in iOS only. 
+- Distortion correction, enabled in iOS only.
 - High quality head tracking with motion prediction thanks to webvr-polyfill.
 
 Bugs and known issues:
@@ -69,9 +72,9 @@ Bugs and known issues:
   so has been disabled. This will be resolved when the official wakelock API
   lands: <http://crbug.com/257511>
 
-## Configuration 
+## Configuration
 
-All configuration is done through the global `window.WebVRConfig` object. You 
+All configuration is done through the global `window.WebVRConfig` object. You
 can use the following properties:
 
 - `FORCE_DISTORTION` (Boolean): Set this to `true` to enable barrel distortion

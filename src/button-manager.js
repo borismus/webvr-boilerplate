@@ -163,6 +163,13 @@ ButtonManager.prototype.createButton = function(prefix) {
   return button;
 };
 
+/**
+ * TODO: using CSS pseudo-class to hide in fullscreen.
+ * sel:-webkit-full-screen { display: none; }
+ * sel:-moz-full-screen { display: none; }
+ * sel:-ms-fullscreen { display: none; }
+ * sel:fullscreen { display: none; }
+ */
 ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
   if (!this.isVisible) {
     return;
