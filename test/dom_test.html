@@ -27,41 +27,49 @@ header, section, footer {
   width:100%;
   border-bottom: 1px solid green;
 }
-/* debugging only */
-canvas {
-  border: 1px solid yellow;
+
+/*
+ * The following classes are automatically
+ * created by the Player. They can be changed
+ * by including the following object in initialization of
+ * the Player:
+ * playerClasses = {
+     prefix: 'xxx', //applied to all Player elements.
+     player: '-xxx', //only applied to Player <figure> element.
+     caption: '-xxx' //only applied to the <figcaption> element.
+     canvas: '-xxx',// only applied to PLayer <canvas> element.
+   };
+ *
+/* webvr-boilerplate Player classes (created by Player) */
+.webvr-player {
+  border: 1px dotted red;
+  width:80%;
+  height:100%;
+}
+
+.webvr-player-caption {}
+
+.webvr-player-canvas {
+  /*border: 1px solid yellow;*/
   /*width:100%;*/
   /*height:100%;*/
-/* have to use the !important to override local style set by three.js*/
-width:80%!important;
-height:80%!important;
-/*width:640px;*/
-/*height:480px;*/
+  /* have to use the !important to override local style set by three.js*/
+  /*width: 80%!important;*/
+  /*height: 80%!important;*/
+  /*width:640px;*/
+  /*height:480px;*/
 }
 
-/* Style the Player */
-figure {
-  border:1px solid red; /*DEBUG:*/
-  /*width:80%;*/
-  /*height:80%;*/
-}
-/* Style the player description */
-figcaption {
-
-}
-/* webvr-boilerplate specific styles */
-/* the Player */
-.webvr-player {
-
-}
-/* test canvas */
-#webvr-test-canvas {
-}
-/* controls in the Player */
-.webvr-controls {
-  border:1px solid red;
+.webvr-button-panel {
+  border: 1px dotted orange;
 }
 
+.webvr-button {}
+
+/* a generic class */
+.bordered {
+  margin: 4px;
+}
 </style>
 </head>
 
@@ -74,9 +82,8 @@ figcaption {
         <section id="content">
           <h2>Page Content Section</h2>
           <!--markup for webvr player-->
-          <figure class="webvr-player-666">
+          <figure class="bordered">
             <canvas id="webvr-test-canvas">WebVR not Supported, upgrade browser!</canvas>
-
           </figure>
       </section>
       <footer>
@@ -103,6 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
   renderer.setPixelRatio(window.devicePixelRatio);
 
   // TODO: we used .getComputedStyle here!
+
     var newCWidth = getComputedStyle(renderer.domElement).width;
     var newCHeight = getComputedStyle(renderer.domElement).height;
     console.log('Initial canvas width from CSS:' + newCWidth + ' window width:' + window.innerWidth + ' height:' + newCHeight + ' window height:' + window.innerHeight);
@@ -155,7 +163,8 @@ var skybox = new THREE.Mesh(geometry, material);
 scene.add(skybox);
 
 // Create a VR manager helper to enter and exit VR mode.
-window.manager = new WebVRManager(renderer, effect, camera); // TODO: remove
+// Attch to 'window' because we are in a DOMContentLoaded callback.
+window.manager = new WebVRManager(renderer, effect, {hideButton: false});
 
 // Create 3D objects.
 var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
@@ -193,7 +202,16 @@ function onKey(event) {
 manager.on('initialized', function() {
   console.log('manager initialized event received by window (in dom_test.html())');
   window.addEventListener('keydown', onKey, true);
+
+  // Do ONE resize event to properly set up the scene, after manager is initialized.
+  manager.resizeIfNeeded_(camera);
+
+  // Begin listening for resize events (separate from animation loop).
+  manager.listenResize();
+
+  // Begin animating.
   animate();
+
   }.bind(window)
 );
 

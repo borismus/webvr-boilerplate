@@ -56,43 +56,64 @@ var Util = require('./util.js');
  * Everything having to do with the WebVR button.
  * Emits a 'click' event when it's clicked.
  */
-function ButtonManager(uid) {
+function ButtonManager(prefix, uid, params) {
   this.loadIcons_();
 
+  this.buttonClasses = {
+    button: '-button',
+    panel: '-panel',
+    back: '-back',
+    fs: '-fullscreen',
+    vr: '-vr',
+    settings: '-settings'
+  };
+
+  // Default sizes.
   this.buttonWidth = 24;
   this.buttonHeight = 24;
+  this.buttonPadding = 12;
+
+  // Set a prefix
+  this.prefix = prefix;
+
+  // Set a UID.
+  this.uid = uid;
 
   // Create a wrapper element for the Buttons.
   this.dom = document.createElement('nav');
-  //this.dom.style.width = this.buttonWidth + 'px';
-  this.dom.style.position = 'absolute';
-  this.dom.style.width = '150px';
-  this.dom.style.height = this.buttonHeight + 'px';
-  this.dom.style.bottom = '0px';
-  this.dom.style.right = '0px';
+  this.dom.id = this.uid + this.buttonClasses.button + this.buttonClasses.panel;
+  Util.addClass(this.dom, prefix + this.buttonClasses.button + this.buttonClasses.panel);
+  var s = this.dom.style;
+  s.position = 'absolute';
+  s.width = '150px';
+  s.height = this.buttonHeight + this.buttonPadding + this.buttonPadding + 'px';
+  s.bottom = '0px';
+  s.right = '0px';
 
   // Attach buttons to the wrapper, and store an object reference.
 
   // Make the fullscreen button.
   var fsButton = this.createButton();
   fsButton.src = this.ICONS.fullscreen;
+  fsButton.id = this.uid + this.buttonClasses.button + this.buttonClasses.fs;
   fsButton.title = 'Fullscreen mode';
   this.dom.appendChild(fsButton);
-  var s = fsButton.style;
+  s = fsButton.style;
   s.bottom = 0;
   s.right = 0;
   fsButton.addEventListener('click', this.createClickHandler_('fs'));
   this.fsButton = fsButton;
 
   // DEBUG!!!!!!!!!!!!!
-  Util.listenReflow(this.fsButton, function() { console.log('got a reflow');});
+  //Util.listenReflow(this.fsButton, function() { console.log('got a reflow');});
 
   // Make the VR button.
   var vrButton = this.createButton();
   vrButton.src = this.ICONS.cardboard;
+  vrButton.id = this.uid + this.buttonClasses.button + this.buttonClasses.vr;
   vrButton.title = 'Virtual reality mode';
   this.dom.appendChild(vrButton);
-  var s = vrButton.style;
+  s = vrButton.style;
   s.bottom = 0;
   s.right = '48px';
   vrButton.addEventListener('click', this.createClickHandler_('vr'));
@@ -100,9 +121,10 @@ function ButtonManager(uid) {
 
   // Make the back button.
   var backButton = this.createButton();
+  backButton.id = this.uid + this.buttonClasses.button + this.buttonClasses.back;
   backButton.title = 'Back to previous mode';
   this.dom.appendChild(backButton);
-  var s = backButton.style;
+  s = backButton.style;
   s.left = 0;
   s.top = 0;
   backButton.src = this.ICONS.back;
@@ -113,7 +135,7 @@ function ButtonManager(uid) {
   var settingsButton = this.createButton();
   settingsButton.title = 'Configure viewer';
   this.dom.appendChild(settingsButton);
-  var s = settingsButton.style;
+  s = settingsButton.style;
   s.left = '50%';
   s.marginLeft = '-24px';
   s.bottom = 0;
@@ -130,11 +152,11 @@ function ButtonManager(uid) {
 
 ButtonManager.prototype = new Emitter();
 
-ButtonManager.prototype.createButton = function() {
+ButtonManager.prototype.createButton = function(prefix) {
   var button = document.createElement('img');
-  button.className = 'webvr-button';
+  Util.addClass(button, this.prefix + this.buttonClasses.button);
   var s = button.style;
-  s.position = 'fixed';
+  //s.position = 'fixed';
   s.width = '24px'
   s.height = '24px';
   s.backgroundSize = 'cover';
@@ -147,6 +169,7 @@ ButtonManager.prototype.createButton = function() {
   s.padding = '12px';
   s.zIndex = 1;
   s.display = 'none';
+  s.float = 'right';
 
   // Prevent button from being selected and dragged.
   button.draggable = false;
@@ -796,15 +819,14 @@ var Util = require('./util.js');
 function PlayerManager(renderer, params) {
 
   this.playerClasses = {
-    prefix: 'webvr',
-    player: 'player',
-    canvas: 'canvas',
-    caption: 'caption',
-    controls: 'controls-',
-    back: 'button-back',
-    fullscreen: 'button-fullscreen',
-    vr: 'button-vr',
+    prefix: 'webvr',     //common prefix
+    player: '-player',   //player suffix
+    caption: '-caption', //<figcaption> suffix
+    canvas: '-canvas'    //canvas suffix
   };
+
+  this.fullWin = false;
+  this.aspect = 0;
 
   // Warning when HTML5 canvas not supported.
   this.canvasWarn = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
@@ -819,22 +841,22 @@ function PlayerManager(renderer, params) {
   this.params = params || {};
 
   // Assign IDs and classes to the Player elements.
-  this.uid = Util.getUniqueId(this.playerClasses.player);
-  console.log("PLAYER UID:" + this.uid);
+  this.uid =  Util.getUniqueId(this.playerClasses.prefix + this.playerClasses.player);
 
   // Initialize the Player container.
   this.initFigure(this.canvas);
-<<<<<<< HEAD
-=======
   this.initButtons();
+
   // Attach a Button panel to the Player, and save an object reference.
-  window.player = this;
->>>>>>> origin/master
+  //window.player = this;
 };
 
+// Set player to emit events.
 PlayerManager.prototype = new Emitter();
 
+// Use the <figure> element for semantic wrapping.
 PlayerManager.prototype.initFigure = function(canvas) {
+
   // If our canvas isn't wrapped in a Player <figure> container, add it.
   if(canvas.parentNode.tagName != 'FIGURE') {
     this.dom = document.createElement('figure');
@@ -845,22 +867,61 @@ PlayerManager.prototype.initFigure = function(canvas) {
     // Canvas should be inside a <figure> tag.
     this.dom = canvas.parentNode;
   }
+  // Set the Player id and standard class.
+  if(!this.dom.id) {
+      this.dom.id = this.uid;
+  }
+  Util.addClass(this.dom, this.playerClasses.prefix + this.playerClasses.player);
 
-  // Set default Player styles (all controls and captions overlay canvas).
-  this.dom.style.position = 'relative';
-  //this.dom.style.width = this.canvas.style.width;
-  //this.dom.style.height = this.canvas.style.height;
+  // Set the Player canvas id and standard class
+  if(!canvas.id) {
+    canvas.id = this.uid + this.playerClasses.canvas;
+  }
+  Util.addClass(canvas, this.playerClasses.prefix + this.playerClasses.player + this.playerClasses.canvas);
 
   // Set the ARIA attribute for figure caption.
-  this.dom.setAttribute('aria-describedby', this.uid + '-caption');
+  this.dom.setAttribute('aria-describedby', this.uid + this.playerClasses.caption);
 
+  // Set the Player default CSS styles.
+  var s = this.dom.style;
+
+  // If our parent is document.body, add styles causing the Player to fill the window.
+  if(this.isFullWin()) {
+    s.width = '100%';
+    s.height = '100%';
+  }
+
+  s.position = 'relative';
+  s.margin = '0px'; //applied to <figure> by some browsers
+  s.padding = '0px';
+
+  // Set canvas to always fill the Player (all controls and captions overlay canvas).
+  var c = this.canvas.style;
+  c.margin = '0px';
+  c.padding = '0px';
+  c.width = '100%';
+  c.height = '100%';
+
+  // Initialize internal Player elements.
   this.initButtons();
   this.initCaption();
 
+  /**
+   * Use the computed (not preset) size of the Player to set an aspect ratio.
+   * If the Player is is the DOM, we maintain this aspect ratio, and don't
+   * reculate it. If the Player is full window (its parent is document.body)
+   * we recalculate the aspect ratio via window.innerWidth and window.innerHeight
+   * each time Player.resize() is subsequently recalled.
+   */
+  this.getAspect();
+};
+
+PlayerManager.prototype.isFullWin = function() {
+  return(this.dom.parentNode == document.body);
 };
 
 PlayerManager.prototype.initButtons = function() {
-  this.buttons = new ButtonManager();
+  this.buttons = new ButtonManager(this.playerClasses.prefix, this.uid, this.params);
   this.dom.appendChild(this.buttons.dom);
 };
 
@@ -872,6 +933,10 @@ PlayerManager.prototype.initCaption = function() {
     figCaption = document.createElement('figcaption');
     this.dom.appendChild(figCaption);
   }
+
+  // Set the standard class.
+  Util.addClass(figCaption, this.playerClasses.prefix + this.playerClasses.player + this.playerClasses.caption);
+
   // Set the default styles.
   figCaption.style.position = 'absolute';
   figCaption.style.width = '100%';
@@ -891,49 +956,94 @@ PlayerManager.prototype.initCaption = function() {
   }
 };
 
-PlayerManager.prototype.onInit_ = function() {
-  console.log("Player:init event from manager");
-  // Check to see if there is layout. Otherwise, size canvas to size of window.
-  if(!Util.isThereALayout()) {
-    console.log('no layout');
-    this.canvas.style.width = '100%';
-    this.canvas.style.height = '100%';
+// Get the dynamically-computed aspect ratio of the Player based on CSS.
+PlayerManager.prototype.getAspect = function() {
+    this.aspect = parseFloat(getComputedStyle(this.dom).getPropertyValue('width')) / parseFloat(getComputedStyle(this.dom).getPropertyValue('height'));
+};
+
+/**
+ * Get dynamically computed size and aspect ratio of the Player (allows
+ * responsive CSS styling). If the Player is running standalone, it sizes
+ * via window.innerWidth and window.innerHeight. If it is part of a DOM, it
+ * sets width based on its CSS computed style, and sets height by using the
+ * ORIGINAL aspect ratio used when the player is initialized.
+ */
+PlayerManager.prototype.getSize = function() {
+  console.log('Player.getSize()');
+  if(this.isFullWin()) {
+    return {
+      aspect: this.getAspect(), // Dynamic, controlled by width and height
+      width: window.innerWidth,
+      height: window.innerHeight
+    };
   } else {
-    console.log('we have a layout');
+    var width = parseFloat(getComputedStyle(this.dom).getPropertyValue('width'));
+    return {
+      aspect: this.aspect, // Static, controlled by width
+      width: width,
+      height: width / this.aspect
+    };
   }
 };
 
+// Set the Player size.
+PlayerManager.prototype.setSize = function(width, height) {
+  // Canvas property.
+  this.canvas.width = width;
+  this.canvas.height = height;
+  //CSS styles (the most important).
+  this.dom.style.width = width + 'px';
+  this.dom.style.height = height + 'px';
+}
+
+// Initializaiton event received from WebVRManager.
+PlayerManager.prototype.onInit_ = function() {
+  console.log("Player:init event from manager");
+};
+
+// Mode change event received from WebVRManager.
 PlayerManager.prototype.onModeChange_ = function(oldMode, newMode) {
   console.log('Player:modechange from manager, old:' + oldMode + ' new:' + newMode);
 };
 
+// Resized event received from WebVRManager.
 PlayerManager.prototype.onResized_ = function(newCWidth, newCHeight) {
   console.log('resize event from manager, for Player, new canvas width:' + newCWidth + ' height:' + newCHeight);
 };
 
-// Run on entering fullscreen.
+// Callback for entering fullscreen.
 PlayerManager.prototype.enterFullscreen_ = function() {
   console.log('Player.enterFullscreen()');
+  // Temporarily override any CSS styles.
+  this.dom.style.width = '100%';
+  this.dom.style.height = '100%';
 };
 
+// Callback when fullscreen is actually reached.
 PlayerManager.prototype.reachFullscreen_ = function() {
-  console.log('Player.reachFullscreen()');
-}
 
-// Run on exiting fullscreen.
+};
+
+// Callback for exiting fullscreen.
 PlayerManager.prototype.exitFullscreen_ = function() {
   console.log('Player.exitFullscreen()');
+  this.dom.style.width = '';
+  this.dom.style.height = '';
+  //this.canvas.width = '';
+  //this.canvas.height = '';
 };
 
-PlayerManager.prototype.reachNormalscreen_ = function() {
-  console.log('Player.reachNormalscreen');
-}
+// Callback when normal screen is actually reached from fullscreen.
+PlayerManager.prototype.reachNormalScreen_ = function() {
 
+};
+
+// Viewer changed.
 PlayerManager.prototype.onViewerChanged_ = function() {
   console.log('Player.onViewerChanged');
 };
 
-  // Preload additional non-Button Player icons, as needed.
+// Preload additional non-Button Player icons, as needed.
 PlayerManager.prototype.loadIcons_ = function() {
   this.ICONS = {};
 };
@@ -1108,15 +1218,10 @@ Util.isIFrame = function() {
   }
 };
 
-// See if we're running with layout other than a WebVR Player.
-Util.hasLayout = function(canvas) {
-
-};
-
 // Get a unique, incrementing Id value for any object on the page.
 Util.getUniqueId = (function(prefix) {
   var i = Math.floor(Math.random() * 999) + 100;
-  var pfx = prefix;
+  var pfx = prefix || '';
   function inc(pfx) {
     if (!pfx) {
       pfx = '';
@@ -1183,26 +1288,8 @@ Util.getChildrenByTagName = function(elem, types) {
   return arr;
 };
 
-// Check to see if there is additional DOM layout, other than WebVR elements.
-Util.isThereALayout = function(classPrefix) {
-  var n = this.getDOMChildren('body > *'),
-      len = n.length;
-  for(var i = 0; i < len; i++) {
-    // Check if there are elements without a specific class prefix (e.g. 'webvr-') applied.
-    if(classPrefix && n.className.indexOf(classPrefix) < 0) {
-      return true;
-    }
-    // Look for tags not part of default WebVR Boilerplate.
-    var t = n[i].tagName;
-    if (t != 'CANVAS' && t != 'SCRIPT' && t != 'IMG', t != 'FIGURE') {
-      return true;
-    }
-  }
-  return false;
-};
-
 // Check if an element fills the screen.
-Util.isFullScreen = function() {
+Util.isFullScreen = function(elem) {
   if (document.fullscreen ||
     document.mozFullScreen ||
     document.webkitIsFullScreen ||
@@ -1226,7 +1313,7 @@ Util.listenReflow = function(target, callback) {
   var observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(mutation) {
       //console.log('mutation type:' + mutation.type + ' name:' + mutation.attributeName + ' target:' + mutation.target);
-      console.log('for tag:' + target.tagName + ' attribute ' + mutation.attributeName + ', oldvalue:' + mutation.oldValue + ' newValue:' + target.getAttribute(mutation.attributeName));
+      console.log('for tag:' + target.tagName + ' attribute ' + mutation.attributeName + ', oldvalue:' + mutation.oldValue + ', newValue:' + target.getAttribute(mutation.attributeName));
       callback();
     });
   });
@@ -1535,9 +1622,8 @@ module.exports = getWakeLock();
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ var PlayerManager = require('./player-manager.js');
 var ButtonManager = require('./button-manager.js');
-var PlayerManager = require('./player-manager.js');
 var CardboardDistorter = require('./cardboard-distorter.js');
 var DeviceInfo = require('./device-info.js');
 var Emitter = require('./emitter.js');
@@ -1573,6 +1659,7 @@ function WebVRManager(renderer, effect, params) {
 
   // Create a Player to wrap our rendered domElement in.
   this.player = new PlayerManager(renderer, params);
+  this.button = this.player.buttons;
 
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
@@ -1583,7 +1670,6 @@ function WebVRManager(renderer, effect, params) {
   this.renderer = renderer;
   this.effect = effect;
   this.distorter = new CardboardDistorter(renderer, this.deviceInfo);
-  this.button = new ButtonManager();
 
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
@@ -1650,9 +1736,7 @@ function WebVRManager(renderer, effect, params) {
     this.on('modechange', this.player.onModeChange_.bind(this.player));
     this.on('resized', this.player.onResized_.bind(this.player));
     this.on('enterfullscreen', this.player.enterFullscreen_.bind(this.player));
-    this.on('reachfullscreen', this.player.reachFullscreen_.bind(this.player));
     this.on('exitfullscreen', this.player.exitFullscreen_.bind(this.player));
-    this.on('reachnormalscreen', this.player.reachNormalscreen_.bind(this.player));
 
     // Emit initialization event.
     // Used by pages with layout DOM containing the Player.
@@ -1717,7 +1801,8 @@ WebVRManager.prototype.getViewer = function() {
 };
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
-  this.resizeIfNeeded_(camera);
+  this.camera = camera; // Could this change?
+  //this.resizeIfNeeded_(camera);
 
   if (this.isVRMode()) {
     this.distorter.preRender();
@@ -1876,45 +1961,32 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
   this.resize_();
 };
 
-// DEBUG: also test standard resize event.
-/*
-window.addEventListener('resize', function(e) {
-  var newCWidth = parseInt(getComputedStyle(manager.renderer.domElement).width);
-  var newCHeight = parseInt(getComputedStyle(manager.renderer.domElement).height);
-  console.log('standard window resize event, canvas width:' + newCWidth + ' window width:' + window.innerWidth + ' canvas height:' + newCHeight + ' window.innerHeight:' + window.innerHeight);
+// Listen for resize events independently of animate loop.
+// Note: needs to be started in initialization!
 
-});
-*/
+WebVRManager.prototype.listenResize = function() {
+  this.view = window;
+  this.view.addEventListener('resize', function(e) {
+    this.resizeIfNeeded_(this.camera);
+  }.bind(this), false);
+};
+
 
 // From the animate loop, check if the canvas needs to be resized.
 WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
-  // Only resize the canvas if it needs to be resized.
-  var size = this.renderer.getSize();
-
-  //TODO: default to window.innerWidth and .innerHeight if there is no default CSS.
-  //console.log('this.oldWidth:' + this.oldWidth + ' width:' + window.innerWidth + ' this.oldHeight:' + this.oldHeight + ' height:' + window.innerHeight);
-  //if(this.oldWWidth != window.innerWidth || this.oldWHeight != window.innerHeight) {
-  if((this.oldWidth - window.innerWidth) != 0 || (this.oldHeight - window.innerHeight) != 0) {
-    //check the canvas via getComputedStyle - this will handle canvas size changes in CSS
-    console.log('getting computed style...');
-    // Get the newly computed style
-    var newCWidth = parseInt(getComputedStyle(this.renderer.domElement).width);
-    var newCHeight = parseInt(getComputedStyle(this.renderer.domElement).height);
-    camera.aspect = newCWidth / newCHeight;
-    camera.updateProjectionMatrix();
-    this.renderer.setSize(newCWidth, newCHeight);
-    this.effect.setSize(newCWidth, newCHeight);
-
-    console.log('in css change, canvas width:' + newCWidth + ' window width:' + window.innerWidth + ' canvas height:' + newCHeight + ' window.innerHeight:' + window.innerHeight);
-    this.oldWidth = window.innerWidth;
-    this.oldHeight = window.innerHeight;
-    this.emit('resized', newCWidth, newCHeight);
-  }
+  var size = this.player.getSize();
+  camera.aspect = size.width / size.height;
+  camera.updateProjectionMatrix();
+  this.renderer.setSize(size.width, size.height);
+  this.effect.setSize(size.width, size.height);
+  this.emit('resized', size.width, size.height);
 };
 
 // Resize effect in cases where it needs independent resizing
 WebVRManager.prototype.resize_ = function() {
-  this.effect.setSize(this.renderer.domElement.width, this.renderer.domElement.height);
+  var size = this.player.getSize();
+  this.effect.setSize(size.width, size.height);
+  //this.effect.setSize(this.renderer.domElement.width, this.renderer.domElement.height);
 };
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {

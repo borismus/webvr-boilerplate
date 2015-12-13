@@ -41,15 +41,10 @@ Util.isIFrame = function() {
   }
 };
 
-// See if we're running with layout other than a WebVR Player.
-Util.hasLayout = function(canvas) {
-
-};
-
 // Get a unique, incrementing Id value for any object on the page.
 Util.getUniqueId = (function(prefix) {
   var i = Math.floor(Math.random() * 999) + 100;
-  var pfx = prefix;
+  var pfx = prefix || '';
   function inc(pfx) {
     if (!pfx) {
       pfx = '';
@@ -116,26 +111,8 @@ Util.getChildrenByTagName = function(elem, types) {
   return arr;
 };
 
-// Check to see if there is additional DOM layout, other than WebVR elements.
-Util.isThereALayout = function(classPrefix) {
-  var n = this.getDOMChildren('body > *'),
-      len = n.length;
-  for(var i = 0; i < len; i++) {
-    // Check if there are elements without a specific class prefix (e.g. 'webvr-') applied.
-    if(classPrefix && n.className.indexOf(classPrefix) < 0) {
-      return true;
-    }
-    // Look for tags not part of default WebVR Boilerplate.
-    var t = n[i].tagName;
-    if (t != 'CANVAS' && t != 'SCRIPT' && t != 'IMG', t != 'FIGURE') {
-      return true;
-    }
-  }
-  return false;
-};
-
 // Check if an element fills the screen.
-Util.isFullScreen = function() {
+Util.isFullScreen = function(elem) {
   if (document.fullscreen ||
     document.mozFullScreen ||
     document.webkitIsFullScreen ||
