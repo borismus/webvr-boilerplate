@@ -33,22 +33,29 @@ header, section, footer {
  * created by the Player. They can be changed
  * by including the following object in initialization of
  * the Player:
- * playerClasses = {
+ * Player.playerClasses = {
      prefix: 'xxx', //applied to all Player elements.
-     player: '-xxx', //only applied to Player <figure> element.
-     caption: '-xxx' //only applied to the <figcaption> element.
-     canvas: '-xxx',// only applied to PLayer <canvas> element.
+     player: 'xxx-yyy', //only applied to Player <figure> element.
+     caption: 'xxx-yyy' //only applied to the <figcaption> element.
+     canvas: 'xxx-yyy',// only applied to PLayer <canvas> element.
+     placeholder: 'xxx-yyy'
    };
  *
-/* webvr-boilerplate Player classes (created by Player) */
+/*
+ * webvr-boilerplate Player classes (created by Player)
+ * If the Player detects these selectors, it will use them instead
+ * of its default selector values in Player.playerClasses
+ */
 .webvr-player {
   border: 1px dotted red;
   width:80%;
   height:100%;
 }
 
+/* optional caption for scene in Player */
 .webvr-player-caption {}
 
+/* 3D drawing canvas within the Player */
 .webvr-player-canvas {
   /*border: 1px solid yellow;*/
   /*width:100%;*/
@@ -64,7 +71,12 @@ header, section, footer {
   border: 1px dotted orange;
 }
 
+/* Individual buttons in the control panel */
 .webvr-button {}
+
+/* Should always be invisible */
+.webvr-placeholder {}
+
 
 /* a generic class */
 .bordered {

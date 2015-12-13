@@ -32,7 +32,6 @@ function PlayerManager(renderer, params) {
     player: '-player',   //player suffix
     caption: '-caption', //<figcaption> suffix
     canvas: '-canvas',    //canvas suffix
-    placeholder: '-placeholder' //for DOM swaps
   };
 
   this.fullWin = false;
@@ -56,6 +55,17 @@ function PlayerManager(renderer, params) {
   // Initialize the Player container.
   this.initFigure(this.canvas);
   this.initButtons();
+
+  // Initialize internal Player elements.
+  this.initCaption();
+
+  /**
+   * Use the computed (not preset) size of the Player to set an aspect ratio.
+   * If the Player is in the DOM, we maintain this aspect ratio, and don't
+   * reculate it. If the Player fills the window (its parent is document.body)
+   * we recalculate the aspect ratio via window.innerWidth and window.innerHeight.
+   */
+  this.getAspect();
 
   // Attach a Button panel to the Player, and save an object reference.
   //window.player = this;
@@ -113,21 +123,9 @@ PlayerManager.prototype.initFigure = function(canvas) {
   c.padding = '0px';
   c.width = '100%';
   c.height = '100%';
-
-  // Initialize internal Player elements.
-  this.initButtons();
-  this.initCaption();
-
-  /**
-   * Use the computed (not preset) size of the Player to set an aspect ratio.
-   * If the Player is is the DOM, we maintain this aspect ratio, and don't
-   * reculate it. If the Player is full window (its parent is document.body)
-   * we recalculate the aspect ratio via window.innerWidth and window.innerHeight
-   * each time Player.resize() is subsequently recalled.
-   */
-  this.getAspect();
 };
 
+// Create buttons using the ButtonManager.
 PlayerManager.prototype.initButtons = function() {
   this.buttons = new ButtonManager(this.playerClasses.prefix, this.uid, this.params);
   this.dom.appendChild(this.buttons.dom);
@@ -240,6 +238,7 @@ PlayerManager.prototype.enterFullscreen_ = function() {
   // Temporarily override any stylesheet-based CSS styles. Needed for webkit.
   this.dom.style.width = '100%';
   this.dom.style.height = '100%';
+  //swap position of back button
 };
 
 // Callback for exiting fullscreen.

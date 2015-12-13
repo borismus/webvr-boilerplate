@@ -60,12 +60,20 @@ function ButtonManager(prefix, uid, params) {
   this.loadIcons_();
 
   this.buttonClasses = {
-    button: '-button',
-    panel: '-panel',
-    back: '-back',
-    fs: '-fullscreen',
-    vr: '-vr',
-    settings: '-settings'
+    button: '-button',      //prefix
+    panel: '-panel',        //panels with multiple buttons
+    back: '-back',          //back button
+    fs: '-fullscreen',      //fullscreen mode button
+    vr: '-vr',              //vr mode button
+    settings: '-settings'   //settings panel
+  };
+
+  // Constants for setting the corner of the button display.
+  this.buttonPositions = {
+    topLeft:0,
+    topRight:1,
+    bottomRight:2,
+    bottomLeft:3
   };
 
   // Default sizes.
@@ -73,7 +81,7 @@ function ButtonManager(prefix, uid, params) {
   this.buttonHeight = 24;
   this.buttonPadding = 12;
 
-  // Set a prefix
+  // Set a prefix.
   this.prefix = prefix;
 
   // Set a UID.
@@ -87,8 +95,9 @@ function ButtonManager(prefix, uid, params) {
   s.position = 'absolute';
   s.width = '150px';
   s.height = this.buttonHeight + this.buttonPadding + this.buttonPadding + 'px';
-  s.bottom = '0px';
-  s.right = '0px';
+  //s.bottom = '0px';
+  //s.right = '0px';
+  this.setPosition(this.buttonPositions.bottomRight);
 
   // Attach buttons to the wrapper, and store an object reference.
 
@@ -228,6 +237,36 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
   this.fsButton.style.display = 'inline-block';
   this.fsButton.offsetHeight;
   this.fsButton.style.display = oldValue;
+};
+
+// Move the control panel to one of the four corners.
+ButtonManager.prototype.setPosition = function(corner) {
+  // Assume position:absolute.
+  var p = this.buttonPositions;
+  switch(corner) {
+    case p.topLeft:
+      this.dom.style.top = '0px';
+      this.dom.style.left = '0px';
+      this.dom.style.bottom = this.dom.style.right = '';
+      break;
+    case p.topRight:
+      this.dom.style.top = '0px';
+      this.dom.style.right = '0px';
+      this.dom.style.left = this.dom.style.bottom = '';
+      break;
+    case p.bottomRight:
+      this.dom.style.bottom = '0px';
+      this.dom.style.right = '0px';
+      this.dom.style.top = this.dom.style.left = '';
+      break;
+    case p.bottomLeft:
+      this.dom.style.bottom = '0px';
+      this.dom.style.left = '0px';
+      this.dom.style.top = this.dom.style.right = '';
+      break;
+    default:
+      console.log('Unknown position for buttons:' + corner);
+  }
 };
 
 ButtonManager.prototype.setVisibility = function(isVisible) {
@@ -822,7 +861,6 @@ function PlayerManager(renderer, params) {
     player: '-player',   //player suffix
     caption: '-caption', //<figcaption> suffix
     canvas: '-canvas',    //canvas suffix
-    placeholder: '-placeholder' //for DOM swaps
   };
 
   this.fullWin = false;
@@ -846,6 +884,17 @@ function PlayerManager(renderer, params) {
   // Initialize the Player container.
   this.initFigure(this.canvas);
   this.initButtons();
+
+  // Initialize internal Player elements.
+  this.initCaption();
+
+  /**
+   * Use the computed (not preset) size of the Player to set an aspect ratio.
+   * If the Player is in the DOM, we maintain this aspect ratio, and don't
+   * reculate it. If the Player fills the window (its parent is document.body)
+   * we recalculate the aspect ratio via window.innerWidth and window.innerHeight.
+   */
+  this.getAspect();
 
   // Attach a Button panel to the Player, and save an object reference.
   //window.player = this;
@@ -903,22 +952,11 @@ PlayerManager.prototype.initFigure = function(canvas) {
   c.padding = '0px';
   c.width = '100%';
   c.height = '100%';
-
-  // Initialize internal Player elements.
-  this.initButtons();
-  this.initCaption();
-
-  /**
-   * Use the computed (not preset) size of the Player to set an aspect ratio.
-   * If the Player is is the DOM, we maintain this aspect ratio, and don't
-   * reculate it. If the Player is full window (its parent is document.body)
-   * we recalculate the aspect ratio via window.innerWidth and window.innerHeight
-   * each time Player.resize() is subsequently recalled.
-   */
-  this.getAspect();
 };
 
+// Create buttons using the ButtonManager.
 PlayerManager.prototype.initButtons = function() {
+  window.butt = ButtonManager;
   this.buttons = new ButtonManager(this.playerClasses.prefix, this.uid, this.params);
   this.dom.appendChild(this.buttons.dom);
 };
@@ -1030,6 +1068,7 @@ PlayerManager.prototype.enterFullscreen_ = function() {
   // Temporarily override any stylesheet-based CSS styles. Needed for webkit.
   this.dom.style.width = '100%';
   this.dom.style.height = '100%';
+  //swap position of back button
 };
 
 // Callback for exiting fullscreen.
@@ -1204,6 +1243,10 @@ Util.isMobile = function() {
   return check;
 };
 
+Util.isAndroid = function() {
+  return /Android/i.test(navigator.userAgent);
+};
+
 Util.isFirefox = function() {
   return /firefox/i.test(navigator.userAgent);
 };
@@ -1217,6 +1260,16 @@ Util.isIFrame = function() {
     return window.self !== window.top;
   } catch (e) {
     return true;
+  }
+};
+
+Util.setOverScroll = function(flag) {
+  if(flag) {
+    document.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    });
+  } else {
+
   }
 };
 
@@ -1318,6 +1371,7 @@ Util.isFullScreen = function(elem) {
     document.msFullscreenElement) {
     return true;
   }
+  // Hack for fullscreen element without fullscreen API.
   if (elem) {
     var width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
     var height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));

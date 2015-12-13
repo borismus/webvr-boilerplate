@@ -25,6 +25,10 @@ Util.isMobile = function() {
   return check;
 };
 
+Util.isAndroid = function() {
+  return /Android/i.test(navigator.userAgent);
+};
+
 Util.isFirefox = function() {
   return /firefox/i.test(navigator.userAgent);
 };
@@ -38,6 +42,16 @@ Util.isIFrame = function() {
     return window.self !== window.top;
   } catch (e) {
     return true;
+  }
+};
+
+Util.setOverScroll = function(flag) {
+  if(flag) {
+    document.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    });
+  } else {
+
   }
 };
 
@@ -139,6 +153,7 @@ Util.isFullScreen = function(elem) {
     document.msFullscreenElement) {
     return true;
   }
+  // Hack for fullscreen element without fullscreen API.
   if (elem) {
     var width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
     var height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));

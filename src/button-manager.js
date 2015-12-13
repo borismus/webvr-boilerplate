@@ -26,12 +26,20 @@ function ButtonManager(prefix, uid, params) {
   this.loadIcons_();
 
   this.buttonClasses = {
-    button: '-button',
-    panel: '-panel',
-    back: '-back',
-    fs: '-fullscreen',
-    vr: '-vr',
-    settings: '-settings'
+    button: '-button',      //prefix
+    panel: '-panel',        //panels with multiple buttons
+    back: '-back',          //back button
+    fs: '-fullscreen',      //fullscreen mode button
+    vr: '-vr',              //vr mode button
+    settings: '-settings'   //settings panel
+  };
+
+  // Constants for setting the corner of the button display.
+  this.buttonPositions = {
+    topLeft:0,
+    topRight:1,
+    bottomRight:2,
+    bottomLeft:3
   };
 
   // Default sizes.
@@ -39,7 +47,7 @@ function ButtonManager(prefix, uid, params) {
   this.buttonHeight = 24;
   this.buttonPadding = 12;
 
-  // Set a prefix
+  // Set a prefix.
   this.prefix = prefix;
 
   // Set a UID.
@@ -53,8 +61,9 @@ function ButtonManager(prefix, uid, params) {
   s.position = 'absolute';
   s.width = '150px';
   s.height = this.buttonHeight + this.buttonPadding + this.buttonPadding + 'px';
-  s.bottom = '0px';
-  s.right = '0px';
+  //s.bottom = '0px';
+  //s.right = '0px';
+  this.setPosition(this.buttonPositions.bottomRight);
 
   // Attach buttons to the wrapper, and store an object reference.
 
@@ -194,6 +203,36 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
   this.fsButton.style.display = 'inline-block';
   this.fsButton.offsetHeight;
   this.fsButton.style.display = oldValue;
+};
+
+// Move the control panel to one of the four corners.
+ButtonManager.prototype.setPosition = function(corner) {
+  // Assume position:absolute.
+  var p = this.buttonPositions;
+  switch(corner) {
+    case p.topLeft:
+      this.dom.style.top = '0px';
+      this.dom.style.left = '0px';
+      this.dom.style.bottom = this.dom.style.right = '';
+      break;
+    case p.topRight:
+      this.dom.style.top = '0px';
+      this.dom.style.right = '0px';
+      this.dom.style.left = this.dom.style.bottom = '';
+      break;
+    case p.bottomRight:
+      this.dom.style.bottom = '0px';
+      this.dom.style.right = '0px';
+      this.dom.style.top = this.dom.style.left = '';
+      break;
+    case p.bottomLeft:
+      this.dom.style.bottom = '0px';
+      this.dom.style.left = '0px';
+      this.dom.style.top = this.dom.style.right = '';
+      break;
+    default:
+      console.log('Unknown position for buttons:' + corner);
+  }
 };
 
 ButtonManager.prototype.setVisibility = function(isVisible) {
