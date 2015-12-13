@@ -191,9 +191,13 @@ WebVRManager.prototype.getViewer = function() {
 };
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
-  this.camera = camera; // Could this change?
-  //this.resizeIfNeeded_(camera);
-
+  this.camera = camera; // Could the supplied camera change?
+  /**
+   * Note: the Player will work if you check for resize here, but is faster
+   * using the browser window resize event. However, resize checks should
+   * be started after manager initialization (see index.html).
+   * this.resizeIfNeeded_(camera);
+  */
   if (this.isVRMode()) {
     this.distorter.preRender();
     this.effect.render(scene, camera);
@@ -351,9 +355,10 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
   this.resize_();
 };
 
-// Listen for resize events independently of animate loop.
-// Note: needs to be started in initialization!
-
+/**
+ * Listen for resize events independently of animate loop.
+ * Note: this function needs to be started in initialization!
+*/
 WebVRManager.prototype.listenResize = function() {
   this.view = window;
   this.view.addEventListener('resize', function(e) {
@@ -362,21 +367,25 @@ WebVRManager.prototype.listenResize = function() {
 };
 
 
-// From the animate loop, check if the canvas needs to be resized.
+/**
+ * From the animate loop, check if the canvas needs to be resized.
+ * The Player determines size and camera aspect, based on mode: magic window,
+ * fullscreen, or embedded within a DOM.
+ */
 WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   var size = this.player.getSize();
-  camera.aspect = size.width / size.height;
+  camera.aspect = size.aspect;
   camera.updateProjectionMatrix();
   this.renderer.setSize(size.width, size.height);
   this.effect.setSize(size.width, size.height);
   this.emit('resized', size.width, size.height);
 };
 
-// Resize effect in cases where it needs independent resizing
+// Resize effect in cases to handle Android bug.
 WebVRManager.prototype.resize_ = function() {
   var size = this.player.getSize();
   this.effect.setSize(size.width, size.height);
-  //below is wrong for FF
+  //below is wrong for FF desktop
   //this.effect.setSize(this.renderer.domElement.width, this.renderer.domElement.height);
 };
 
@@ -438,9 +447,10 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
   }
 };
 
+// Change from canvas to player
 WebVRManager.prototype.requestFullscreen_ = function() {
-  //var canvas = document.body;
-  var canvas = this.renderer.domElement;
+  // Resize the Player, not the canvas
+  canvas = this.player.dom;
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
@@ -449,10 +459,6 @@ WebVRManager.prototype.requestFullscreen_ = function() {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
   }
   this.emit('enterfullscreen');
-};
-
-WebVRManager.prototype.reachFullscreen_ = function() {
-
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {
@@ -465,10 +471,6 @@ WebVRManager.prototype.exitFullscreen_ = function() {
   }
   this.emit('exitfullscreen');
 };
-
-WebVRManager.prototype.returnNormalScreen_ = function() {
-
-}
 
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {
   this.deviceInfo.setViewer(viewer);

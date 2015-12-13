@@ -141,10 +141,6 @@ cube.position.z = -1;
 // Add cube mesh to your three.js scene
 scene.add(cube);
 
-manager.resizeIfNeeded_(camera);
-
-manager.listenResize();
-
 // Request animation frame loop function
 function animate(timestamp) {
   // Apply rotation to cube mesh
@@ -158,6 +154,12 @@ function animate(timestamp) {
 
   requestAnimationFrame(animate);
 }
+
+// Do ONE resize event to properly set up the scene, after manager is initialized.
+manager.resizeIfNeeded_(camera);
+
+// Begin listening for resize events (separate from animation loop).
+manager.listenResize();
 
 // Kick off animation loop
 animate();

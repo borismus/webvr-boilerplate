@@ -158,7 +158,6 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
   if (!this.isVisible) {
     return;
   }
-  console.log('coming into ButtonManager.setMode with mode:' + mode);
   switch (mode) {
     case Modes.NORMAL:
       this.fsButton.style.display = 'block';

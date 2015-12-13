@@ -75,7 +75,7 @@ Util.addClass = function(elem, selector) {
 
 // Get all current DOM children (not descendants) of document.body.
 Util.getDOMChildren = function(selector) {
-  if(document.querySelectorAll) {
+  if (document.querySelectorAll) {
       return document.querySelectorAll(selector);
   } else {
     var childNodes = element.childNodes,
@@ -111,6 +111,26 @@ Util.getChildrenByTagName = function(elem, types) {
   return arr;
 };
 
+// Swap two nodes in the DOM, preserving event handlers.
+// From: http://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript
+Util.swapNodes = function(elem1, elem2) {
+  if (elem1 && elem2) {
+    var p1 = elem1.parentNode;
+    var t1 = document.createElement('span');
+    p1.insertBefore(t1, elem1);
+
+    var p2 = elem2.parentNode;
+    var t2 = document.createElement('span');
+    p2.insertBefore(t2, elem2);
+
+    p1.insertBefore(elem2, t1);
+    p2.insertBefore(elem1, t2);
+
+    p1.removeChild(t1);
+    p2.removeChild(t2);
+  }
+};
+
 // Check if an element fills the screen.
 Util.isFullScreen = function(elem) {
   if (document.fullscreen ||
@@ -119,10 +139,10 @@ Util.isFullScreen = function(elem) {
     document.msFullscreenElement) {
     return true;
   }
-  if(elem) {
+  if (elem) {
     var width = parseFloat(getComputedStyle(elem).getPropertyValue('width'));
     var height = parseFloat(getComputedStyle(elem).getPropertyValue('height'));
-    if(width >= screen.availWidth && height >= screen.availHeight) {
+    if (width >= screen.width && height >= screen.height) {
       return true;
     }
   }
