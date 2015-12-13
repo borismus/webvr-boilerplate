@@ -923,6 +923,10 @@ PlayerManager.prototype.initButtons = function() {
   this.dom.appendChild(this.buttons.dom);
 };
 
+// TODO: pure 3.js HUD.
+// http://www.evermade.fi/pure-three-js-hud/
+// http://www.sitepoint.com/bringing-vr-to-web-google-cardboard-three-js/
+// https://stemkoski.github.io/Three.js/#text3D
 PlayerManager.prototype.initCaption = function() {
   var figCaption = Util.getChildrenByTagName(this.dom, 'figcaption');
   if (figCaption && figCaption[0]) {
@@ -1688,7 +1692,6 @@ function WebVRManager(renderer, effect, params) {
   this.renderer = renderer;
   this.effect = effect;
   this.distorter = new CardboardDistorter(renderer, this.deviceInfo);
-
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
