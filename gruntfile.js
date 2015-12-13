@@ -25,15 +25,18 @@ module.exports = function(grunt) {
 					username: 'plyojump@indiespace.com',
 					password: 'E^k$&bs=nU8O',
 					host: 'server57.web-hosting.com',
-					dest: '/projects/webvrboilerplate',
+					dest: '/projects/webvr-boilerplate',
 					port: 21
 				},
 				files: [
-					{
-						expand: true,
-						cwd: '.',
-						src: ['**', '!**/*.db']
-					}
+					{expand: true, cwd: 'asset_src', src:['*.*'], dest: './asset_src'},
+					{expand: true, cwd: 'bower_components', src:['**'], dest: './bower_components'},
+					{expand: true, cwd: 'build', src:['*.*'], dest: './build'},
+					{expand: true, cwd: 'content_images', src:['*.*'], dest: './content_images'},
+					{expand: true, cwd: 'img', src:['*.*'], dest: './img'},
+					{expand: true, cwd: 'src', src:['*.*'], dest: './src'},
+					{expand: true, cwd: 'test', src:['*.*'], dest: './test'},
+					{expand: true, cwd: '.', src:['*.html'], dest: '.'}
 				]
 			}
 		}
