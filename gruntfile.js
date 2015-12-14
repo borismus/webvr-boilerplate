@@ -30,7 +30,8 @@ module.exports = function(grunt) {
 				},
 				files: [
 					{expand: true, cwd: 'asset_src', src:['*.*'], dest: './asset_src'},
-					{expand: true, cwd: 'bower_components', src:['**'], dest: './bower_components'},
+					{expand: true, cwd: 'bower_components/threejs/build', src:['**'], dest: './bower_components'},
+					{expand: true, cwd: 'bower_components/threejs/examples/js/', src:['**'], dest: './bower_components'},
 					{expand: true, cwd: 'build', src:['*.*'], dest: './build'},
 					{expand: true, cwd: 'content_images', src:['*.*'], dest: './content_images'},
 					{expand: true, cwd: 'img', src:['*.*'], dest: './img'},

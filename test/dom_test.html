@@ -105,12 +105,20 @@ header, section, footer {
         <section id="content">
           <h2>Page Content Section</h2>
           <!--markup for webvr player-->
-          <figure class="bordered">
-            <canvas id="webvr-test-canvas">WebVR not Supported, upgrade browser!</canvas>
-          </figure>
-          <figure class="bordered">
-            <canvas id="webvr-text-canvas" height="200" width="400">WebVR not supported, upgrade!</canvas>
-          </figure>
+          <article>
+            <h3>First VR Example</h3>
+            <figure class="bordered">
+              <canvas id="webvr-test-canvas">HTML5 Canvas not Supported, upgrade browser!</canvas>
+            </figure>
+          </article>
+          <!--a second webvr player-->
+          <article>
+            <h3>Second VR Example</h3>
+            <figure class="bordered">
+              <canvas id="webvr-text-canvas">HTML5 Canvas not supported, upgrade!</canvas>
+              <figcaption>WebVR 3D Text</figcaption>
+            </figure>
+          </article>
       </section>
       <footer>
         <h2>Page Footer</h2>
@@ -150,77 +158,69 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   renderer.setPixelRatio(window.devicePixelRatio);
 
-  // TODO: we used .getComputedStyle here!
-
-    var newCWidth = getComputedStyle(renderer.domElement).width;
-    var newCHeight = getComputedStyle(renderer.domElement).height;
-    console.log('Initial canvas width from CSS:' + newCWidth + ' window width:' + window.innerWidth + ' height:' + newCHeight + ' window height:' + window.innerHeight);
-    console.log('Initial canvas width attribute:' + renderer.domElement.width)
+  // Use the CSS computed style for this <canvas>
   var canvasStyle = {
-    width:parseInt(newCWidth),
-    height:parseInt(newCHeight)
+    width:parseInt(getComputedStyle(renderer.domElement).width),
+    height:parseInt(getComputedStyle(renderer.domElement).height)
   };
 
-  // Append the canvas element created by the renderer to document body element.
-  if (renderer.domElement.id || renderer.domElement.className) {
-    //nothing
-    console.log('Using existing canvas.');
-  } else {
-    document.body.appendChild(renderer.domElement);
-  }
+  // Create a three.js scene.
+  var scene = new THREE.Scene();
 
-// Create a three.js scene.
-var scene = new THREE.Scene();
+  // Create a three.js camera.
+  var camera = new THREE.PerspectiveCamera(75, canvasStyle.width / canvasStyle.height, 0.1, 10000);
 
-// Create a three.js camera.
-var camera = new THREE.PerspectiveCamera(75, canvasStyle.width / canvasStyle.height, 0.1, 10000);
+  // Apply VR headset positional data to camera.
+  var controls = new THREE.VRControls(camera);
 
-// Apply VR headset positional data to camera.
-var controls = new THREE.VRControls(camera);
+  // Apply VR stereo rendering to renderer.
+  var effect = new THREE.VREffect(renderer);
+  effect.setSize(canvasStyle.width, canvasStyle.height);
 
-// Apply VR stereo rendering to renderer.
-var effect = new THREE.VREffect(renderer);
-effect.setSize(canvasStyle.width, canvasStyle.height);
-// Adjust our element
-renderer.setSize(canvasStyle.width, canvasStyle.height); //TODO: IS THIS NEEDED?
+  // Adjust our element
+  //renderer.setSize(canvasStyle.width, canvasStyle.height); //TODO: IS THIS NEEDED?
 
-// Add a repeating grid as a skybox.
-var boxWidth = 5;
-var texture = THREE.ImageUtils.loadTexture(
-  '../img/box.png'
-);
-texture.wrapS = THREE.RepeatWrapping;
-texture.wrapT = THREE.RepeatWrapping;
-texture.repeat.set(boxWidth, boxWidth);
+  // Add a repeating grid as a skybox.
+  var boxWidth = 5;
+  var texture = THREE.ImageUtils.loadTexture(
+    '../img/box.png'
+  );
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(boxWidth, boxWidth);
 
-var geometry = new THREE.BoxGeometry(boxWidth, boxWidth, boxWidth);
-var material = new THREE.MeshBasicMaterial({
-  map: texture,
-  color: 0x01BE00,
-  side: THREE.BackSide
-});
+  var geometry = new THREE.BoxGeometry(boxWidth, boxWidth, boxWidth);
+  var material = new THREE.MeshBasicMaterial({
+    map: texture,
+    color: 0x01BE00,
+    side: THREE.BackSide
+  });
 
-var skybox = new THREE.Mesh(geometry, material);
-scene.add(skybox);
+  var skybox = new THREE.Mesh(geometry, material);
+  scene.add(skybox);
 
-// Create a VR manager helper to enter and exit VR mode.
-// Attch to 'window' because we are in a DOMContentLoaded callback.
-window.manager = new WebVRManager(renderer, effect, {hideButton: false});
+  /**
+   * Create a VR manager helper to enter and exit VR mode.
+   * Attch to 'window' because we are in a DOMContentLoaded callback.
+   * Since we don't supply the setToCanvasSize in params, the Player
+   * will automatically re-scale to the computed CSS size.
+   */
+   window.manager = new WebVRManager(renderer, effect, {hideButton: false});
 
-// Create 3D objects.
-var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-var material = new THREE.MeshNormalMaterial();
-var cube = new THREE.Mesh(geometry, material);
+   // Create 3D objects.
+   var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+   var material = new THREE.MeshNormalMaterial();
+   var cube = new THREE.Mesh(geometry, material);
 
-// Position cube mesh
-cube.position.z = -1;
+   // Position cube mesh
+   cube.position.z = -1;
 
-// Add cube mesh to your three.js scene
-scene.add(cube);
+   // Add cube mesh to your three.js scene.
+  scene.add(cube);
 
-// Request animation frame loop function
-function animate(timestamp) {
-  // Apply rotation to cube mesh
+  // Request animation frame loop function.
+  function animate(timestamp) {
+  // Apply rotation to cube mesh.
   cube.rotation.y += 0.01;
 
   // Update VR headset position and apply to camera.
@@ -238,23 +238,16 @@ function onKey(event) {
     controls.resetSensor();
   }
 };
-
-//callbacks for manager functions
-manager.on('initialized', function() {
-  console.log('manager initialized event received by window (in dom_test.html())');
   window.addEventListener('keydown', onKey, true);
 
   // Do ONE resize event to properly set up the scene, after manager is initialized.
+  //TODO: this is fuzzy for some reason, unless we start with the resizeIfNeeded()
   manager.resizeIfNeeded_(camera);
-
   // Begin listening for resize events (separate from animation loop).
-  manager.listenResize();
+  manager.listenResize(camera);
 
   // Begin animating.
   animate();
-
-  }.bind(window)
-);
 
 /**
  * ===================================
@@ -263,81 +256,89 @@ manager.on('initialized', function() {
  * From: http://andrewray.me/threejs-examples/font-example/js/font-example.js
  * ===================================
  */
+
  var textscene = new THREE.Scene();
 
- // CAMERA
- var SCREEN_WIDTH = 800, SCREEN_HEIGHT = 300;
- var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
- textcamera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
- textscene.add(camera);
- textcamera.position.set(0,0,1000);
- textcamera.lookAt(textscene.position);
- textrenderer = new THREE.WebGLRenderer({antialias:true});
- textrenderer = new THREE.WebGLRenderer({
-   canvas:document.getElementById('webvr-text-canvas'),
-   antialias: true
- });
- renderer.setPixelRatio(window.devicePixelRatio);
- textrenderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+  // Set up the camera.
+  var SCREEN_WIDTH = 800, SCREEN_HEIGHT = 300;
+  var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
 
- // CONTROLS
- textcontrols = new THREE.OrbitControls(textcamera, textrenderer.domElement);
+  var textcamera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+  textscene.add(textcamera);
 
- // LIGHT
- var textlight = new THREE.PointLight(0xffffff);
- textlight.position.set(0,0,1000);
- textscene.add(textlight);
- var textmaterial = new THREE.MeshPhongMaterial({
-         color: 0xdddddd
-     });
-     var textGeom = new THREE.TextGeometry( 'WebVR Figure!', {
-         font: 'Optimer', weight: 'bold'// Must be lowercase!
-     });
-     var textMesh = new THREE.Mesh( textGeom, material );
-     // Do some optional calculations. This is only if you need to get the
-     // width of the generated text
-     textGeom.computeBoundingBox();
-     textGeom.textWidth = textGeom.boundingBox.max.x - textGeom.boundingBox.min.x;
-     textMesh.position.set( 0 * textGeom.textWidth, -100, 0);
-     textscene.add( textMesh );
+  textcamera.position.set(0,0,1000);
+  textcamera.lookAt(textscene.position);
 
+  var textrenderer = new THREE.WebGLRenderer({
+    canvas:document.getElementById('webvr-text-canvas'),
+    antialias: true
+  });
+  textrenderer.setPixelRatio(window.devicePixelRatio);
+  //////////textrenderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-     // add 3D text beveled and sized
-       var material2 = new THREE.MeshPhongMaterial({
-           color: 0x00ff00
-       });
-       var textGeom2 = new THREE.TextGeometry( 'WebVR Figure!', {
-           size: 60, height: 20, curveSegments: 3,
-           font: 'Optimer', weight: 'bold',
-           bevelThickness: 3, bevelSize: 3, bevelEnabled: true
-       });
-       var textMesh2 = new THREE.Mesh( textGeom2, material2 );
+// Set up the controls.
+  textcontrols = new THREE.OrbitControls(textcamera, textrenderer.domElement);
 
-       textGeom2.computeBoundingBox();
-       var textWidth2 = textGeom2.boundingBox.max.x - textGeom2.boundingBox.min.x;
+  // Set up the light.
+  var textlight = new THREE.PointLight(0xffffff);
+  textlight.position.set(0,0,1000);
+  textscene.add(textlight);
+  var textmaterial = new THREE.MeshPhongMaterial({
+      color: 0xdddddd
+  });
+  var textGeom = new THREE.TextGeometry('WebVR Figure!', {
+      font: 'Optimer', weight: 'bold'// Must be lowercase!
+  });
+  var textMesh = new THREE.Mesh(textGeom, material);
+  // Width of generated text (optional).
+  textGeom.computeBoundingBox();
+  textGeom.textWidth = textGeom.boundingBox.max.x - textGeom.boundingBox.min.x;
+  textMesh.position.set(0 * textGeom.textWidth, -100, 0);
 
-       textMesh2.position.set( -1.0 * textWidth2, -100, 0 );
-       textscene.add( textMesh2 );
+  // Add text to scene.
+  textscene.add(textMesh);
 
-       // Apply VR stereo rendering to renderer.
-       var texteffect = new THREE.VREffect(textrenderer);
-       texteffect.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+  // add 3D text beveled and sized.
+  var material2 = new THREE.MeshPhongMaterial({
+      color: 0x00ff00
+  });
+  var textGeom2 = new THREE.TextGeometry('WebVR Figure!', {
+      size: 60, height: 20, curveSegments: 3,
+      font: 'Optimer', weight: 'bold',
+      bevelThickness: 3, bevelSize: 3, bevelEnabled: true
+  });
+  var textMesh2 = new THREE.Mesh(textGeom2, material2);
 
-       // Create a VR manager helper to enter and exit VR mode.
-       // Attch to 'window' because we are in a DOMContentLoaded callback.
-       window.textmanager = new WebVRManager(textrenderer, texteffect, {hideButton: false});
+  textGeom2.computeBoundingBox();
+  var textWidth2 = textGeom2.boundingBox.max.x - textGeom2.boundingBox.min.x;
+  textMesh2.position.set(-1.0 * textWidth2, -100, 0);
+  textscene.add(textMesh2);
 
-       function textrender() {
-           textrenderer.render( textscene, textcamera );
-       }
+  // Apply VR stereo rendering to renderer.
+  var texteffect = new THREE.VREffect(textrenderer);
+  texteffect.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-       function textanimate() {
-           window.requestAnimationFrame( textanimate );
-           textrender();
-       }
+  // Create a VR manager helper to enter and exit VR mode.
+  // Attch to 'window' because we are in a DOMContentLoaded callback.
+  window.textmanager = new WebVRManager(textrenderer, texteffect, {hideButton: false});
 
-       textanimate();
+  // First default resize.
+  // Do ONE resize event to properly set up the scene, after manager is initialized.
+  //TODO: this is fuzzy for some reason, unless we start with the resizeIfNeeded()
+  textmanager.resizeIfNeeded_(textcamera);
+  // Begin listening for resize events (separate from animation loop).
+  textmanager.listenResize(textcamera);
 
+  function textrender() {
+    textrenderer.render(textscene, textcamera);
+  }
+
+  function textanimate() {
+    window.requestAnimationFrame(textanimate);
+    textrender();
+  }
+
+  textanimate();
 
 }); //end of DOMContentLoaded
 

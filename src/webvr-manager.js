@@ -47,7 +47,13 @@ function WebVRManager(renderer, effect, params) {
   // DEBUG: Listen for reflows
   //Util.listenReflow(renderer.domElement, function() { console.log('got a reflow');});
 
-  // Create a Player to wrap our rendered domElement in.
+  // Give a unique to each manager.
+  this.prefix = 'webvr';
+  this.uid = Util.getUniqueId(this.prefix);
+
+  // Create a Player to wrap our rendered domElement in.;
+  params.prefix = this.prefix;
+  params.uid = this.uid;
   this.player = new PlayerManager(renderer, params);
   this.button = this.player.buttons;
 
@@ -73,15 +79,12 @@ function WebVRManager(renderer, effect, params) {
     this.startMode = startModeParam;
   }
 
-  // Set the correct viewer profile, but only if this is Cardboard.
   if (Util.isMobile()) {
+    // Set the correct viewer profile, but only if this is Cardboard.
     this.onViewerChanged_(this.getViewer());
 
     //Prevent extra scrolling in iOS, Android.
     Util.setOverScroll();
-
-    // Add meta tag for Android, iOS.
-
   }
 
   // Listen for changes to the viewer.
@@ -121,22 +124,24 @@ function WebVRManager(renderer, effect, params) {
         this.setMode_(Modes.NORMAL);
     }
 
-    // Button events.
-    this.button.on('fs', this.onFSClick_.bind(this));
-    this.button.on('vr', this.onVRClick_.bind(this));
-    this.button.on('back', this.onBackClick_.bind(this));
-    this.button.on('settings', this.onSettingsClick_.bind(this));
+    // Page-wide events (received by all Players).
+    this.on('initialized', this.pageInit_.bind(this));
 
-    // Player events.
-    this.on('initialized', this.player.onInit_.bind(this.player));
-    this.on('modechange', this.player.onModeChange_.bind(this.player));
-    this.on('resized', this.player.onResized_.bind(this.player));
-    this.on('enterfullscreen', this.player.enterFullscreen_.bind(this.player));
-    this.on('exitfullscreen', this.player.exitFullscreen_.bind(this.player));
+    // Button events specific to this Manager (note UID added to event).
+    this.button.on('fs-' + this.uid, this.onFSClick_.bind(this));
+    this.button.on('vr-' + this.uid, this.onVRClick_.bind(this));
+    this.button.on('back-' + this.uid, this.onBackClick_.bind(this));
+    this.button.on('settings-' + this.uid, this.onSettingsClick_.bind(this));
 
-    // Emit initialization event.
-    // Used by pages with layout DOM containing the Player.
-    this.emit('initialized');
+    // Player events specific to this Manager (note UID added to event).
+    this.on('initialized-' + this.uid, this.player.onInit_.bind(this.player));
+    this.on('modechange-' + this.uid, this.player.onModeChange_.bind(this.player));
+    this.on('resized-' + this.uid, this.player.onResized_.bind(this.player));
+    this.on('enterfullscreen-' + this.uid, this.player.enterFullscreen_.bind(this.player));
+    this.on('exitfullscreen-' + this.uid, this.player.exitFullscreen_.bind(this.player));
+
+    // Transmit initialization of a Manager to all other Managers on the page.
+    this.emit('initialized', this.uid);
 
   }.bind(this));
 
@@ -165,7 +170,15 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
-WebVRManager.PlayerManager = PlayerManager;
+
+/**
+ * This callback is emitted to all Managers on the page. It lets the
+ * Manager know that there are other WebVRManager objects on the page, and
+ * take steps to avoid collisions (e.g. with key events).
+ */
+WebVRManager.prototype.pageInit_ = function(uid) {
+  console.log('pageInit_ in Manager:' + this.uid);
+};
 
 /**
  * Promise returns true if there is at least one HMD device available.
@@ -365,13 +378,12 @@ WebVRManager.prototype.anyModeToNormal_ = function() {
  * Listen for resize events independently of animate loop.
  * Note: this function needs to be started in initialization!
 */
-WebVRManager.prototype.listenResize = function() {
+WebVRManager.prototype.listenResize = function(camera) {
   this.view = window;
   this.view.addEventListener('resize', function(e) {
-    this.resizeIfNeeded_(this.camera);
+    this.resizeIfNeeded_(camera);
   }.bind(this), false);
 };
-
 
 /**
  * From the animate loop, check if the canvas needs to be resized.
@@ -384,7 +396,7 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   camera.updateProjectionMatrix();
   this.renderer.setSize(size.width, size.height);
   this.effect.setSize(size.width, size.height);
-  this.emit('resized', size.width, size.height);
+  //this.emit('resized', size.width, size.height); // All managers would get this!
 };
 
 // Resize effect in cases to handle Android bug.
@@ -396,6 +408,7 @@ WebVRManager.prototype.resize_ = function() {
 };
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {
+  //TODO: if there is a DOM, hide it on landscape (similar to iOS 8).
   this.updateRotateInstructions_();
   // Also hide the viewer selector.
   this.viewerSelector.hide();
@@ -421,7 +434,8 @@ WebVRManager.prototype.onFullscreenChange_ = function(e) {
 };
 
 WebVRManager.prototype.requestPointerLock_ = function() {
-  var canvas = this.renderer.domElement;
+  //var canvas = this.renderer.domElement;
+  var canvas = this.player.canvas;
   canvas.requestPointerLock = canvas.requestPointerLock ||
       canvas.mozRequestPointerLock ||
       canvas.webkitRequestPointerLock;
@@ -456,7 +470,8 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 // Change from canvas to player
 WebVRManager.prototype.requestFullscreen_ = function() {
   // Resize the Player, not the canvas
-  canvas = this.player.dom;
+  this.player.enterFullscreen_();
+  var canvas = this.player.dom;
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
@@ -464,10 +479,11 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
   }
-  this.emit('enterfullscreen');
+  //this.emit('enterfullscreen'); // This goes to ALL Managers on the page.
 };
 
 WebVRManager.prototype.exitFullscreen_ = function() {
+  this.player.exitFullscreen_();
   if (document.exitFullscreen) {
     document.exitFullscreen();
   } else if (document.mozCancelFullScreen) {
@@ -475,7 +491,7 @@ WebVRManager.prototype.exitFullscreen_ = function() {
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
   }
-  this.emit('exitfullscreen');
+  //this.emit('exitfullscreen'); // This goes to ALL Managers on the page.
 };
 
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {

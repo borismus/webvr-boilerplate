@@ -159,7 +159,7 @@ function animate(timestamp) {
 manager.resizeIfNeeded_(camera);
 
 // Begin listening for resize events (separate from animation loop).
-manager.listenResize();
+manager.listenResize(camera);
 
 // Kick off animation loop
 animate();

@@ -22,7 +22,7 @@ var Util = require('./util.js');
  * Everything having to do with the WebVR button.
  * Emits a 'click' event when it's clicked.
  */
-function ButtonManager(prefix, uid, params) {
+function ButtonManager(params) {
   this.loadIcons_();
 
   this.buttonClasses = {
@@ -47,16 +47,16 @@ function ButtonManager(prefix, uid, params) {
   this.buttonHeight = 24;
   this.buttonPadding = 12;
 
-  // Set a prefix.
-  this.prefix = prefix;
+  // Save a local reference to params
+  this.params = params;
 
   // Set a UID.
-  this.uid = uid;
+  this.uid = this.params.uid + this.buttonClasses.panel;
 
   // Create a wrapper element for the Buttons.
   this.dom = document.createElement('nav');
-  this.dom.id = this.uid + this.buttonClasses.button + this.buttonClasses.panel;
-  Util.addClass(this.dom, prefix + this.buttonClasses.button + this.buttonClasses.panel);
+  this.dom.id = this.uid;
+  Util.addClass(this.dom, this.params.prefix + this.buttonClasses.panel);
   var s = this.dom.style;
   s.position = 'absolute';
   s.width = '150px';
@@ -127,9 +127,9 @@ function ButtonManager(prefix, uid, params) {
 
 ButtonManager.prototype = new Emitter();
 
-ButtonManager.prototype.createButton = function(prefix) {
+ButtonManager.prototype.createButton = function() {
   var button = document.createElement('img');
-  Util.addClass(button, this.prefix + this.buttonClasses.button);
+  Util.addClass(button, this.params.prefix + this.buttonClasses.button);
   var s = button.style;
   //s.position = 'fixed';
   s.width = '24px'
@@ -253,7 +253,8 @@ ButtonManager.prototype.createClickHandler_ = function(eventName) {
   return function(e) {
     e.stopPropagation();
     e.preventDefault();
-    this.emit(eventName);
+    console.log("*****************ABOUT TO EMIT:" + eventName + '-' + this.params.uid)
+    this.emit(eventName + '-' + this.params.uid);
   }.bind(this);
 };
 

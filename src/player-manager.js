@@ -30,14 +30,29 @@ var Util = require('./util.js');
 function PlayerManager(renderer, params) {
 
   this.playerClasses = {
-    prefix: 'webvr',     //common prefix
     player: '-player',   //player suffix
     caption: '-caption', //<figcaption> suffix
-    canvas: '-canvas',    //canvas suffix
+    canvas: '-canvas',   //canvas suffix
   };
 
-  this.fullWin = false;
+  /*
+   * Used if the Player canvas has a fixed ratio of width and height.
+   * 1. <canvas width="100" height="100">
+   * 2. <style>
+   *    .vr-container {
+   *      position: relative; padding-bottom: 56.25%;
+   *      padding-top: 30px;height: 0;overflow: hidden;
+   *      }
+   *    .vr-container iframe {
+   *      position: absolute; top: 0; left: 0;
+   *      width: 100%; height: 100%;
+   *      }
+   *    </style>
+   */
   this.aspect = 0;
+
+  // Flag for Player running alone in a browser window.
+  this.fullWin = false;
 
   // Warning when HTML5 canvas not supported.
   this.canvasWarn = 'Your browser does not support HTML5 Canvas. You need to upgrade to view this content.';
@@ -45,29 +60,31 @@ function PlayerManager(renderer, params) {
 
   this.loadIcons_();
 
-  // Save a local reference to the canvas (note: ThreeJS can also render to SVG)
+  // Get a local reference to the <canvas>.
   this.canvas = renderer.domElement;
 
-  // Save a local reference to params
-  this.params = params || {};
+  // Save a local reference to params.
+  this.params = params;
 
   // Assign IDs and classes to the Player elements.
-  this.uid =  Util.getUniqueId(this.playerClasses.prefix + this.playerClasses.player);
+  this.uid = params.uid + this.playerClasses.player;
 
   // Initialize the Player container.
-  this.initFigure(this.canvas);
-  this.initButtons();
+  this.initFigure();
 
   // Initialize internal Player elements.
   this.initCaption();
 
+  // Initialize the Buttons and their container.
+  this.initButtons();
+
   /**
    * Use the computed (not preset) size of the Player to set an aspect ratio.
-   * If the Player is in the DOM, we maintain this aspect ratio, and don't
-   * reculate it. If the Player fills the window (its parent is document.body)
+   * If the Player is in the DOM, we maintain this aspect ratio statically, and don't
+   * recalculate it. Otherwise, if the Player fills the window (its parent is document.body)
    * we recalculate the aspect ratio via window.innerWidth and window.innerHeight.
    */
-  this.getAspect();
+  this.getCurrentAspect();
 
   // Attach a Button panel to the Player, and save an object reference.
   //window.player = this;
@@ -77,63 +94,74 @@ function PlayerManager(renderer, params) {
 PlayerManager.prototype = new Emitter();
 
 // Use the <figure> element for semantic wrapping.
-PlayerManager.prototype.initFigure = function(canvas) {
+PlayerManager.prototype.initFigure = function() {
+  var c = this.canvas;
 
   // If our canvas isn't wrapped in a Player <figure> container, add it.
-  if (canvas.parentNode.tagName != 'FIGURE') {
+  if (c.parentNode.tagName != 'FIGURE') {
     this.dom = document.createElement('figure');
-    canvas.parentNode.appendChild(this.dom);
-    this.dom.appendChild(canvas);
+    c.parentNode.appendChild(this.dom);
+    this.dom.appendChild(c);
   }
   else {
-    // Canvas should be inside a <figure> tag.
-    this.dom = canvas.parentNode;
+    // Supplied <canvas> is already inside a <figure> tag.
+    this.dom = c.parentNode;
   }
+
+  var d = this.dom;
+
   // Set the Player id and standard class.
-  if (!this.dom.id) {
-      this.dom.id = this.uid;
+  if (!d.id) {
+      d.id = this.uid;
   }
-  Util.addClass(this.dom, this.playerClasses.prefix + this.playerClasses.player);
+  Util.addClass(d, this.params.prefix + this.playerClasses.player);
 
   // Set the Player canvas id and standard class
-  if (!canvas.id) {
-    canvas.id = this.uid + this.playerClasses.canvas;
+  if (!c.id) {
+    c.id = this.uid + this.playerClasses.canvas;
   }
-  Util.addClass(canvas, this.playerClasses.prefix + this.playerClasses.player + this.playerClasses.canvas);
+  Util.addClass(c, this.params.prefix + this.playerClasses.player + this.playerClasses.canvas);
 
   // Set the ARIA attribute for figure caption.
-  this.dom.setAttribute('aria-describedby', this.uid + this.playerClasses.caption);
+  d.setAttribute('aria-describedby', this.uid + this.playerClasses.caption);
 
   // Set the Player default CSS styles. By default, its width and height are
   // controlled by CSS stylesheets.
-  var s = this.dom.style;
+  var ds = d.style;
+  var cs = c.style;
 
   // If our parent is document.body, add styles causing the Player to fill the window.
   if (this.isFullWin()) {
-    s.width = '100%';
-    s.height = '100%';
+    ds.width = '100%';
+    ds.height = '100%';
   }
 
-  // Positioning of buttons.
-  s.position = 'relative';
-  s.margin = '0px';
-  s.padding = '0px';
+  /**
+   * If there are no CSS styles applied to the Player, use the <canvas> width and height.
+   * This will default to 300 x 150 on all browsers if the width and height aren't
+   * explcitly set in markup.
+   *
+   * The <canvas> size will initially be set up when we set up the THREE renderer, which
+   * will override the width and height attributes in the canvas.
+   */
+  if(!this.getCurrentWidth() || !this.getCurrentHeight()) {
+    ds.width = c.width + 'px';
+    ds.height = c.height + 'px';
+  }
+
+  // Positioning of Buttons.
+  ds.position = 'relative';
+  ds.margin = '0px';
+  ds.padding = '0px';
 
   // Set canvas to always fill the Player (all controls and captions overlay canvas).
-  var c = this.canvas.style;
-  c.margin = '0px';
-  c.padding = '0px';
-  c.width = '100%';
-  c.height = '100%';
+  cs.width = '100%';
+  cs.height = '100%';
+  cs.margin = '0px';
+  cs.padding = '0px';
 };
 
-// Create buttons using the ButtonManager.
-PlayerManager.prototype.initButtons = function() {
-  this.buttons = new ButtonManager(this.playerClasses.prefix, this.uid, this.params);
-  this.dom.appendChild(this.buttons.dom);
-};
-
-// TODO: pure 3.js HUD.
+// TODO: pure THREE.js HUD.
 // http://www.evermade.fi/pure-three-js-hud/
 // http://www.sitepoint.com/bringing-vr-to-web-google-cardboard-three-js/
 // https://stemkoski.github.io/Three.js/#text3D
@@ -146,8 +174,11 @@ PlayerManager.prototype.initCaption = function() {
     this.dom.appendChild(figCaption);
   }
 
+  // Link caption to its parent figure (required by ARIA).
+  figCaption.id = this.dom.getAttribute('aria-describedby');
+
   // Set the standard class.
-  Util.addClass(figCaption, this.playerClasses.prefix + this.playerClasses.player + this.playerClasses.caption);
+  Util.addClass(figCaption, this.params.prefix + this.playerClasses.player + this.playerClasses.caption);
 
   // Set the default styles.
   figCaption.style.position = 'absolute';
@@ -155,10 +186,7 @@ PlayerManager.prototype.initCaption = function() {
   figCaption.style.bottom = '48px';
   figCaption.style.textAlign = 'center';
 
-  // Link caption to its parent figure (required by ARIA).
-  figCaption.id = this.dom.getAttribute('aria-describedby');
-
-  // Add a caption, if supplied, otherwise default.
+  // Add caption text, if supplied, otherwise default.
   if (this.params.caption) {
     figCaption.textContent = this.params.caption;
   } else {
@@ -168,13 +196,36 @@ PlayerManager.prototype.initCaption = function() {
   }
 };
 
+// Create buttons using the ButtonManager.
+PlayerManager.prototype.initButtons = function() {
+  this.buttons = new ButtonManager(this.params);
+  this.dom.appendChild(this.buttons.dom);
+};
+
+// Test if Player is alone, or embedded in layout DOM.
 PlayerManager.prototype.isFullWin = function() {
   return(this.dom.parentNode == document.body);
 };
 
+// Get the computed width of the Player.
+PlayerManager.prototype.getCurrentWidth = function() {
+  return parseFloat(getComputedStyle(this.dom).getPropertyValue('width'));
+};
+
+// Get the computed height of the Player.
+PlayerManager.prototype.getCurrentHeight = function() {
+  return parseFloat(getComputedStyle(this.dom).getPropertyValue('height'));
+}
+
 // Get the dynamically-computed aspect ratio of the Player based on CSS.
-PlayerManager.prototype.getAspect = function() {
-    this.aspect = parseFloat(getComputedStyle(this.dom).getPropertyValue('width')) / parseFloat(getComputedStyle(this.dom).getPropertyValue('height'));
+PlayerManager.prototype.getCurrentAspect = function() {
+  var w = this.getCurrentWidth();
+  var h = this.getCurrentHeight();
+  if(w && h) {
+    this.aspect = parseFloat(w / h); // Save it.
+  } else {
+    console.log('Warning: player does not have computed width and/or height yet.');
+  }
 };
 
 /**
@@ -185,75 +236,77 @@ PlayerManager.prototype.getAspect = function() {
  * ORIGINAL aspect ratio used when the player is initialized.
  */
 PlayerManager.prototype.getSize = function() {
-  //console.log('Player.getSize()');
+  //TODO: might need to check for fixed-width canvas
   if (this.isFullWin()) {
+    console.log("full window")
     return {
-      aspect: window.innerWidth / window.innerHeight,
+      aspect: window.innerWidth / window.innerHeight, //dynamic aspect inf full window.
       width: window.innerWidth,
       height: window.innerHeight
     };
   } else if (Util.isFullScreen()) {
+    console.log("full screen")
     return {
-      aspect: window.innerWidth / window.innerHeight,
+      aspect: window.innerWidth / window.innerHeight, //dynamic aspect in fullscreen.
       width: window.innerWidth,
       height: window.innerHeight
     };
   } else {
-    var width = parseFloat(getComputedStyle(this.dom).getPropertyValue('width'));
+    console.log("partial screen")
+    var width = this.getCurrentWidth();
     return {
-      aspect: this.aspect, // Static, controlled by width
+      aspect: this.aspect, // Static, controlled by width.
       width: width,
-      height: width / this.aspect
+      height: width / this.aspect // Static, controlled by width.
     };
   }
 };
 
-// Set the Player size.
+// Set the Player size to fixed proportions.
 PlayerManager.prototype.setSize = function(width, height) {
   // Canvas property.
-  this.canvas.width = width;
-  this.canvas.height = height;
-  //CSS styles (the most important).
+  //this.canvas.width = width;
+  //this.canvas.height = height;
+  // CSS styles (the most important).
   this.dom.style.width = width + 'px';
   this.dom.style.height = height + 'px';
 }
 
-// Initializaiton event received from WebVRManager.
+// Initialization event received from WebVRManager.
 PlayerManager.prototype.onInit_ = function() {
-  console.log("Player:init event received from manager");
+  console.log('Player' + this.uid + ':init event received from manager');
 };
 
 // Mode change event received from WebVRManager.
 PlayerManager.prototype.onModeChange_ = function(oldMode, newMode) {
-  console.log('Player:modechange from manager, old:' + oldMode + ' new:' + newMode);
+  //console.log('Player' + this.uid + ':modechange from manager, old:' + oldMode + ' new:' + newMode);
 };
 
 // Resized event received from WebVRManager.
-PlayerManager.prototype.onResized_ = function(newCWidth, newCHeight) {
-  //console.log('resize event from manager, for Player, new canvas width:' + newCWidth + ' height:' + newCHeight);
-  //console.log('current domElement width:' + this.canvas.style.width + ' height:' + this.canvas.style.height);
+PlayerManager.prototype.onResized_ = function(width, height) {
+  //console.log('Player' + this.uid + ':resize event from manager');
 };
 
 // Callback for entering fullscreen.
 PlayerManager.prototype.enterFullscreen_ = function() {
-  //console.log('Player.enterFullscreen()');
   // Temporarily override any stylesheet-based CSS styles. Needed for webkit.
   this.dom.style.width = '100%';
   this.dom.style.height = '100%';
-  //swap position of back button
+  //TODO: swap position of back button
+  //console.log('Player' + this.uid + ':enter fullscreen from manager');
 };
 
 // Callback for exiting fullscreen.
 PlayerManager.prototype.exitFullscreen_ = function() {
-  //console.log('Player.exitFullscreen()');
   // Restore CSS styles (remove overriding local styles).
   this.dom.style.width = '';
   this.dom.style.height = '';
+  //console.log('Player' + this.uid + ':exit fullscreen from manager');
 };
 
 // Viewer changed.
 PlayerManager.prototype.onViewerChanged_ = function() {
-  console.log('Player.onViewerChanged');
+  //console.log('Player' + this.uid + '.onViewerChanged');
 };
 
 // Preload additional non-Button Player icons, as needed.
