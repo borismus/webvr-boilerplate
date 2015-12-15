@@ -41,6 +41,21 @@ Util.isIFrame = function() {
   }
 };
 
+// Get a unique, incrementing Id value for any object on the page.
+Util.getUniqueId = (function(prefix) {
+  var i = Math.floor(Math.random() * 999) + 100;
+  var pfx = prefix || '';
+  function inc(pfx) {
+    if (!pfx) {
+      pfx = '';
+    } else {
+      pfx += '-';
+    }
+    return pfx + i++;
+  }
+  return inc;
+})();
+
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
   var delimiter = (url.indexOf('?') < 0 ? '?' : '&');
