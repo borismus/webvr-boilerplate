@@ -106,6 +106,7 @@ var controls = new THREE.VRControls(camera);
 var effect = new THREE.VREffect(renderer);
 effect.setSize(window.innerWidth, window.innerHeight);
 
+
 // Add a repeating grid as a skybox.
 var boxWidth = 5;
 var texture = THREE.ImageUtils.loadTexture(
@@ -140,7 +141,6 @@ cube.position.z = -1;
 
 // Add cube mesh to your three.js scene
 scene.add(cube);
-
 // Request animation frame loop function
 function animate(timestamp) {
   // Apply rotation to cube mesh
@@ -155,12 +155,6 @@ function animate(timestamp) {
   requestAnimationFrame(animate);
 }
 
-// Do ONE resize event to properly set up the scene, after manager is initialized.
-manager.resizeIfNeeded_(camera);
-
-// Begin listening for resize events (separate from animation loop).
-manager.listenResize(camera);
-
 // Kick off animation loop
 animate();
 
@@ -170,6 +164,7 @@ function onKey(event) {
     controls.resetSensor();
   }
 }
+
 window.addEventListener('keydown', onKey, true);
 
 </script>

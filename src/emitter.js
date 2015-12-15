@@ -15,23 +15,20 @@
 
 function Emitter() {
   this.callbacks = {};
-};
+}
 
 Emitter.prototype.emit = function(eventName) {
-  //console.log('emitting:' + eventName);
   var callbacks = this.callbacks[eventName];
   if (!callbacks) {
-    console.log('No valid callback specified for manager:' + this.uid + ' event:' + eventName + '.');
-    return false;
+    //console.log('No valid callback specified.');
+    return;
   }
-  var args = [].slice.call(arguments);
-
+  var args = [].slice.call(arguments)
   // Eliminate the first param (the callback).
   args.shift();
   for (var i = 0; i < callbacks.length; i++) {
     callbacks[i].apply(this, args);
   }
-  return true;
 };
 
 Emitter.prototype.on = function(eventName, callback) {
@@ -40,16 +37,6 @@ Emitter.prototype.on = function(eventName, callback) {
   } else {
     this.callbacks[eventName] = [callback];
   }
-};
-
-Emitter.prototype.remove = function (eventName, callback) {
-  if (eventName in this.callbacks) {
-      var index = indexOf(this.callbacks[eventName], callback);
-      if(index >= 0) {
-        this.callbacks[eventName].splice(index, 1);
-      }
-  }
-
 };
 
 module.exports = Emitter;
