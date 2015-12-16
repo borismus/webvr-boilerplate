@@ -232,9 +232,6 @@ module.exports = ButtonManager;
  */
 
 var BarrelDistortion = _dereq_('./distortion/barrel-distortion-fragment.js');
-var DeviceInfo = _dereq_('./device-info.js');
-
-var deviceInfo = new DeviceInfo();
 
 
 function ShaderPass(shader) {
@@ -272,7 +269,7 @@ function createRenderTarget(renderer) {
   return new THREE.WebGLRenderTarget(width, height, parameters);
 }
 
-function CardboardDistorter(renderer) {
+function CardboardDistorter(renderer, deviceInfo) {
   var left = deviceInfo.getLeftEyeCenter();
   var right = deviceInfo.getRightEyeCenter();
 
@@ -358,7 +355,7 @@ CardboardDistorter.prototype.setDistortionCoefficients = function(coefficients) 
 
 module.exports = CardboardDistorter;
 
-},{"./device-info.js":4,"./distortion/barrel-distortion-fragment.js":5}],4:[function(_dereq_,module,exports){
+},{"./distortion/barrel-distortion-fragment.js":5}],4:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -402,6 +399,7 @@ var iOSDevices = {
   })
 };
 
+// TODO: Add Nexus 5X, Nexus 6P, Nexus 6.
 var AndroidDevices = {
   Nexus5: new Device({
     userAgentRegExp: /Nexus 5/,
@@ -440,17 +438,23 @@ var Viewers = {
     id: 'CardboardV1',
     label: 'Cardboard I/O 2014',
     fov: 40,
-    ipdMm: 60,
+    ipd: 0.060,
     baselineLensCenterMm: 37.26,
-    distortionCoefficients: [0.441, 0.156]
+    distortionCoefficients: [0.441, 0.156],
+    inverseCoefficients: [-0.4410035, 0.42756155, -0.4804439, 0.5460139,
+      -0.58821183, 0.5733938, -0.48303202, 0.33299083, -0.17573841,
+      0.0651772, -0.01488963, 0.001559834]
   }),
   CardboardV2: new CardboardViewer({
     id: 'CardboardV2',
     label: 'Cardboard I/O 2015',
     fov: 60,
-    ipdMm: 64,
+    ipd: 0.064,
     baselineLensCenterMm: 37.26,
-    distortionCoefficients: [0.34, 0.55]
+    distortionCoefficients: [0.34, 0.55],
+    inverseCoefficients: [-0.33836704, -0.18162185, 0.862655, -1.2462051,
+      1.0560602, -0.58208317, 0.21609078, -0.05444823, 0.009177956,
+      -9.904169E-4, 6.183535E-5, -1.6981803E-6]
   })
 };
 
@@ -464,11 +468,15 @@ var DEFAULT_RIGHT_CENTER = {x: 0.5, y: 0.5};
  */
 function DeviceInfo() {
   this.device = this.determineDevice_();
-  this.enclosure = Viewers.CardboardV1;
+  this.viewer = Viewers.CardboardV1;
 }
 
 DeviceInfo.prototype.getDevice = function() {
   return this.device;
+};
+
+DeviceInfo.prototype.setViewer = function(viewer) {
+  this.viewer = viewer;
 };
 
 /**
@@ -478,9 +486,10 @@ DeviceInfo.prototype.getLeftEyeCenter = function() {
   if (!this.device) {
     return DEFAULT_LEFT_CENTER;
   }
-  // Get parameters from the enclosure.
-  var eyeToMid = this.enclosure.ipdMm / 2;
-  var eyeToBase = this.enclosure.baselineLensCenterMm;
+  // Get parameters from the viewer.
+  var ipdMm = this.viewer.ipd * 1000;
+  var eyeToMid = ipdMm / 2;
+  var eyeToBase = this.viewer.baselineLensCenterMm;
 
   // Get parameters from the phone.
   var halfWidthMm = this.device.heightMm / 2;
@@ -571,13 +580,16 @@ function CardboardViewer(params) {
   this.fov = params.fov;
   // Distortion coefficients.
   this.distortionCoefficients = params.distortionCoefficients;
-  // IPD in millimeters.
-  this.ipdMm = params.ipdMm;
+  // Inverse distortion coefficients.
+  // TODO: Calculate these from distortionCoefficients in the future.
+  this.inverseCoefficients = params.inverseCoefficients;
+  // Interpupillary distance in meters.
+  this.ipd = params.ipd;
   // Distance between baseline and lens center.
   this.baselineLensCenterMm = params.baselineLensCenterMm;
 }
 
-// Export enclosure information.
+// Export viewer information.
 DeviceInfo.Viewers = Viewers;
 module.exports = DeviceInfo;
 
@@ -953,7 +965,7 @@ var VIEWER_KEY = 'WEBVR_CARDBOARD_VIEWER';
 function ViewerSelector(options) {
   // Try to load the selected key from local storage. If none exists, use the
   // default key.
-  this.selectedKey = localStorage[VIEWER_KEY] || DEFAULT_VIEWER;
+  this.selectedKey = localStorage.getItem(VIEWER_KEY) || DEFAULT_VIEWER;
   this.dialog = this.createDialog_(options);
   this.options = options;
   document.body.appendChild(this.dialog);
@@ -995,7 +1007,7 @@ ViewerSelector.prototype.onSave_ = function() {
 
   // Attempt to save the viewer profile, but fails in private mode.
   try {
-    localStorage[VIEWER_KEY] = this.selectedKey;
+    localStorage.setItem(VIEWER_KEY, this.selectedKey);
   } catch(error) {
     console.error('Failed to save viewer profile: %s', error);
   }
@@ -1234,10 +1246,12 @@ function WebVRManager(renderer, effect, params) {
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
 
+  this.deviceInfo = new DeviceInfo();
+
   // Save the THREE.js renderer and effect for later.
   this.renderer = renderer;
   this.effect = effect;
-  this.distorter = new CardboardDistorter(renderer);
+  this.distorter = new CardboardDistorter(renderer, this.deviceInfo);
   this.button = new ButtonManager();
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
@@ -1252,15 +1266,16 @@ function WebVRManager(renderer, effect, params) {
     this.startMode = startModeParam;
   }
 
-  // Set the correct viewer and listen for changes.
-  this.onViewerChanged_(this.getViewer());
+  // Set the correct viewer profile, but only if this is Cardboard.
+  if (Util.isMobile()) {
+    this.onViewerChanged_(this.getViewer());
+  }
+  // Listen for changes to the viewer.
   this.viewerSelector.on('change', this.onViewerChanged_.bind(this));
 
   if (hideButton) {
     this.button.setVisibility(false);
   }
-
-  var deviceInfo = new DeviceInfo();
 
   // Check if the browser is compatible with WebVR.
   this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
@@ -1272,7 +1287,7 @@ function WebVRManager(renderer, effect, params) {
       this.isVRCompatible = true;
       // Only enable distortion if we are dealing using the polyfill, we have a
       // perfect device match, and it's not prevented via configuration.
-      if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && deviceInfo.getDevice() &&
+      if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && this.deviceInfo.getDevice() &&
           !WebVRConfig.PREVENT_DISTORTION) {
         this.distorter.setActive(true);
       }
@@ -1609,26 +1624,31 @@ WebVRManager.prototype.exitFullscreen_ = function() {
 };
 
 WebVRManager.prototype.onViewerChanged_ = function(viewer) {
-  this.emit('viewerchange', viewer);
+  this.deviceInfo.setViewer(viewer);
 
   // Set the proper coefficients.
   this.distorter.setDistortionCoefficients(viewer.distortionCoefficients);
 
   // And update the camera FOV.
-  this.setCardboardFov_(viewer.fov);
+  this.setHMDVRDeviceParams_(viewer);
+
+  // Notify anyone interested in this event.
+  this.emit('viewerchange', viewer);
 };
 
 /**
- * Sets the FOV of the CardboardHMDVRDevice. These changes are ultimately
- * handled by VREffect.
+ * Sets parameters on CardboardHMDVRDevice. These changes are ultimately handled
+ * by VREffect.
  */
-WebVRManager.prototype.setCardboardFov_ = function(fov) {
+WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
   this.getDeviceByType_(HMDVRDevice).then(function(hmd) {
-    if (hmd) {
-      hmd.fov.upDegrees = fov;
-      hmd.fov.downDegrees = fov;
-      hmd.fov.leftDegrees = fov;
-      hmd.fov.rightDegrees = fov;
+    // Set these properties if this HMDVRDevice supports them.
+    if (hmd && hmd.setFieldOfView) {
+      hmd.setFieldOfView(viewer.fov);
+    }
+    // Note: setInterpupillaryDistance is not part of the WebVR standard.
+    if (hmd && hmd.setInterpupillaryDistance) {
+      hmd.setInterpupillaryDistance(viewer.ipd);
     }
   });
 };

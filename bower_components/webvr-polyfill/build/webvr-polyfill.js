@@ -59,33 +59,17 @@ module.exports.PositionSensorVRDevice = PositionSensorVRDevice;
 var HMDVRDevice = _dereq_('./base.js').HMDVRDevice;
 
 // Constants from vrtoolkit: https://github.com/googlesamples/cardboard-java.
-var INTERPUPILLARY_DISTANCE = 0.06;
-var DEFAULT_MAX_FOV_LEFT_RIGHT = 40;
-var DEFAULT_MAX_FOV_BOTTOM = 40;
-var DEFAULT_MAX_FOV_TOP = 40;
+var DEFAULT_INTERPUPILLARY_DISTANCE = 0.06;
+var DEFAULT_FIELD_OF_VIEW = 40;
 
 /**
  * The HMD itself, providing rendering parameters.
  */
 function CardboardHMDVRDevice() {
   // From com/google/vrtoolkit/cardboard/FieldOfView.java.
-  this.fov = {
-    upDegrees: DEFAULT_MAX_FOV_TOP,
-    downDegrees: DEFAULT_MAX_FOV_BOTTOM,
-    leftDegrees: DEFAULT_MAX_FOV_LEFT_RIGHT,
-    rightDegrees: DEFAULT_MAX_FOV_LEFT_RIGHT
-  };
+  this.setFieldOfView(DEFAULT_FIELD_OF_VIEW);
   // Set display constants.
-  this.eyeTranslationLeft = {
-    x: INTERPUPILLARY_DISTANCE * -0.5,
-    y: 0,
-    z: 0
-  };
-  this.eyeTranslationRight = {
-    x: INTERPUPILLARY_DISTANCE * 0.5,
-    y: 0,
-    z: 0
-  };
+  this.setInterpupillaryDistance(DEFAULT_INTERPUPILLARY_DISTANCE);
 }
 CardboardHMDVRDevice.prototype = new HMDVRDevice();
 
@@ -102,6 +86,36 @@ CardboardHMDVRDevice.prototype.getEyeParameters = function(whichEye) {
   return {
     recommendedFieldOfView: this.fov,
     eyeTranslation: eyeTranslation
+  };
+};
+
+/**
+ * Sets the IPD (in m) of this device. Useful for initialization and for
+ * changing viewer parameters dynamically.
+ */
+CardboardHMDVRDevice.prototype.setInterpupillaryDistance = function(ipd) {
+  this.eyeTranslationLeft = {
+    x: ipd * -0.5,
+    y: 0,
+    z: 0
+  };
+  this.eyeTranslationRight = {
+    x: ipd * 0.5,
+    y: 0,
+    z: 0
+  };
+};
+
+/**
+ * Sets the FOV (in degrees) of this viewer. Useful for initialization and
+ * changing viewer parameters dynamically.
+ */
+CardboardHMDVRDevice.prototype.setFieldOfView = function(angle) {
+  this.fov = {
+    upDegrees: angle,
+    downDegrees: angle,
+    leftDegrees: angle,
+    rightDegrees: angle
   };
 };
 
