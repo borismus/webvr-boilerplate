@@ -62,12 +62,17 @@ var HMDVRDevice = _dereq_('./base.js').HMDVRDevice;
 var DEFAULT_INTERPUPILLARY_DISTANCE = 0.06;
 var DEFAULT_FIELD_OF_VIEW = 40;
 
+var Eye = {
+  LEFT: 'left',
+  RIGHT: 'right'
+};
+
 /**
  * The HMD itself, providing rendering parameters.
  */
 function CardboardHMDVRDevice() {
   // From com/google/vrtoolkit/cardboard/FieldOfView.java.
-  this.setFieldOfView(DEFAULT_FIELD_OF_VIEW);
+  this.setMonocularFieldOfView_(DEFAULT_FIELD_OF_VIEW);
   // Set display constants.
   this.setInterpupillaryDistance(DEFAULT_INTERPUPILLARY_DISTANCE);
 }
@@ -75,23 +80,62 @@ CardboardHMDVRDevice.prototype = new HMDVRDevice();
 
 CardboardHMDVRDevice.prototype.getEyeParameters = function(whichEye) {
   var eyeTranslation;
-  if (whichEye == 'left') {
+  var fieldOfView;
+  var renderRect;
+
+  if (whichEye == Eye.LEFT) {
     eyeTranslation = this.eyeTranslationLeft;
-  } else if (whichEye == 'right') {
+    fieldOfView = this.fieldOfViewLeft;
+    renderRect = this.renderRectLeft;
+  } else if (whichEye == Eye.RIGHT) {
     eyeTranslation = this.eyeTranslationRight;
+    fieldOfView = this.fieldOfViewRight;
+    renderRect = this.renderRectRight;
   } else {
     console.error('Invalid eye provided: %s', whichEye);
     return null;
   }
   return {
-    recommendedFieldOfView: this.fov,
-    eyeTranslation: eyeTranslation
+    recommendedFieldOfView: fieldOfView,
+    eyeTranslation: eyeTranslation,
+    renderRect: renderRect
   };
 };
 
 /**
- * Sets the IPD (in m) of this device. Useful for initialization and for
- * changing viewer parameters dynamically.
+ * Sets the field of view for both eyes. This is according to WebVR spec:
+ *
+ * @param {FieldOfView} opt_fovLeft Field of view of the left eye.
+ * @param {FieldOfView} opt_fovRight Field of view of the right eye.
+ * @param {Number} opt_zNear The near plane.
+ * @param {Number} opt_zFar The far plane.
+ *
+ * http://mozvr.github.io/webvr-spec/webvr.html#dom-hmdvrdevice-setfieldofviewleftfov-rightfov-znear-zfar
+ */
+CardboardHMDVRDevice.prototype.setFieldOfView =
+    function(opt_fovLeft, opt_fovRight, opt_zNear, opt_zFar) {
+  if (opt_fovLeft) {
+    this.fieldOfViewLeft = opt_fovLeft;
+  }
+  if (opt_fovRight) {
+    this.fieldOfViewRight = opt_fovRight;
+  }
+  if (opt_zNear) {
+    this.zNear = opt_zNear;
+  }
+  if (opt_zFar) {
+    this.zFar = opt_zFar;
+  }
+};
+
+
+/**
+ * Changes the interpupillary distance of the rendered scene. This is useful for
+ * changing Cardboard viewers.
+ *
+ * Possibly a useful addition to the WebVR spec?
+ *
+ * @param {Number} ipd Distance between eyes.
  */
 CardboardHMDVRDevice.prototype.setInterpupillaryDistance = function(ipd) {
   this.eyeTranslationLeft = {
@@ -106,12 +150,36 @@ CardboardHMDVRDevice.prototype.setInterpupillaryDistance = function(ipd) {
   };
 };
 
+
 /**
- * Sets the FOV (in degrees) of this viewer. Useful for initialization and
- * changing viewer parameters dynamically.
+ * Changes the render rect (ie. viewport) where each eye is rendered. Again,
+ * useful for changing Cardboard viewers.
+ *
+ * @param {Rect} opt_rectLeft Viewport for left eye.
+ * @param {Rect} opt_rectRight Viewport for right eye.
  */
-CardboardHMDVRDevice.prototype.setFieldOfView = function(angle) {
-  this.fov = {
+CardboardHMDVRDevice.prototype.setRenderRect = function(opt_rectLeft, opt_rectRight) {
+  if (opt_rectLeft) {
+    this.renderRectLeft = opt_rectLeft;
+  }
+  if (opt_rectRight) {
+    this.renderRectRight = opt_rectRight;
+  }
+};
+
+/**
+ * Sets a symmetrical field of view for both eyes, with just one angle.
+ *
+ * @param {Number} angle Angle in degrees of left, right, top and bottom for
+ * both eyes.
+ */
+CardboardHMDVRDevice.prototype.setMonocularFieldOfView_ = function(angle) {
+  this.setFieldOfView(this.createSymmetricalFieldOfView_(angle),
+                      this.createSymmetricalFieldOfView_(angle));
+};
+
+CardboardHMDVRDevice.prototype.createSymmetricalFieldOfView_ = function(angle) {
+  return {
     upDegrees: angle,
     downDegrees: angle,
     leftDegrees: angle,
