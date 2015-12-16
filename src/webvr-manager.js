@@ -47,6 +47,10 @@ function WebVRManager(renderer, effect, params) {
   // Set option to hide the button.
   var hideButton = this.params.hideButton || false;
 
+  // Give a unique to ID to each manager.
+  this.prefix = 'webvr';
+  this.uid = Util.getUniqueId(this.prefix);
+
   this.deviceInfo = new DeviceInfo();
 
   // Save the THREE.js renderer and effect for later.
