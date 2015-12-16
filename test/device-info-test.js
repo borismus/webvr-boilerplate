@@ -1,7 +1,7 @@
 var DeviceInfo = require('../src/device-info.js');
 
 var di = new DeviceInfo();
-var centroid = di.getLeftCentroid();
+var centroid = di.getLeftEyeCenter();
 
 // Size the canvas. Render the centroid.
 var canvas = document.querySelector('canvas');
