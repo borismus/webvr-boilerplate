@@ -29,7 +29,11 @@ var VIEWER_KEY = 'WEBVR_CARDBOARD_VIEWER';
 function ViewerSelector(options) {
   // Try to load the selected key from local storage. If none exists, use the
   // default key.
-  this.selectedKey = localStorage.getItem(VIEWER_KEY) || DEFAULT_VIEWER;
+  try {
+    this.selectedKey = localStorage.getItem(VIEWER_KEY) || DEFAULT_VIEWER;
+  } catch(error) {
+    console.error('Failed to load viewer profile: %s', error);
+  }
   this.dialog = this.createDialog_(options);
   this.options = options;
   document.body.appendChild(this.dialog);
