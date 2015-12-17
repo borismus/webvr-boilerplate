@@ -92,6 +92,8 @@ Here is an example of WebVRConfig usage:
       //PREVENT_DISTORTION: true, // Default: false.
       // Override the cardboard distortion background color.
       //DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
+      // Show eye centers (for debugging).
+      //SHOW_EYE_CENTERS: true, // Default: false.
     };
 
 In addition to `render()`, WebVRManager provides a sparse API surface:
@@ -108,7 +110,7 @@ As well as emitting the following events:
 
 ## Thanks
 
-- [Dmitry Kovalev][dk] for implementing [lens distortion correction][distortion].
+- [Dmitry Kovalev][dk] for help with [lens distortion correction][distortion].
 - [Brandon Jones][bj] and [Vladimir Vukicevic][vv] for their work on the [WebVR
   spec][spec]
 - [Diego Marcos][dm] for VREffect and VRControls.

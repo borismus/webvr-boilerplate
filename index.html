@@ -35,7 +35,7 @@ WebVRConfig = {
    */
 
   // Forces availability of VR mode.
-  //FORCE_ENABLE_VR: true, // Default: false.
+  FORCE_ENABLE_VR: true, // Default: false.
   // Complementary filter coefficient. 0 for accelerometer, 1 for gyro.
   //K_FILTER: 0.98, // Default: 0.98.
   // How far into the future to predict during fast motion.
@@ -52,9 +52,11 @@ WebVRConfig = {
   // Forces distortion in VR mode.
   //FORCE_DISTORTION: true, // Default: false.
   // Override the distortion background color.
-  //DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
+  DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
   // Prevent distortion from happening.
   //PREVENT_DISTORTION: true, // Default: false.
+  // Show eye centers for debugging.
+  //SHOW_EYE_CENTERS: true, // Default: false.
 };
 </script>
 
@@ -109,26 +111,32 @@ effect.setSize(window.innerWidth, window.innerHeight);
 
 // Add a repeating grid as a skybox.
 var boxWidth = 5;
-var texture = THREE.ImageUtils.loadTexture(
-  'img/box.png'
-);
-texture.wrapS = THREE.RepeatWrapping;
-texture.wrapT = THREE.RepeatWrapping;
-texture.repeat.set(boxWidth, boxWidth);
+var loader = new THREE.TextureLoader();
+loader.load('img/box.png', onTextureLoaded);
 
-var geometry = new THREE.BoxGeometry(boxWidth, boxWidth, boxWidth);
-var material = new THREE.MeshBasicMaterial({
-  map: texture,
-  color: 0x01BE00,
-  side: THREE.BackSide
-});
+function onTextureLoaded(texture) {
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(boxWidth, boxWidth);
 
-var skybox = new THREE.Mesh(geometry, material);
-scene.add(skybox);
+  var geometry = new THREE.BoxGeometry(boxWidth, boxWidth, boxWidth);
+  var material = new THREE.MeshBasicMaterial({
+    map: texture,
+    color: 0x01BE00,
+    side: THREE.BackSide
+  });
+
+  var skybox = new THREE.Mesh(geometry, material);
+  scene.add(skybox);
+}
 
 
 // Create a VR manager helper to enter and exit VR mode.
-var manager = new WebVRManager(renderer, effect, {hideButton: false});
+var params = {
+  hideButton: false, // Default: false.
+  isUndistorted: false // Default: false.
+};
+var manager = new WebVRManager(renderer, effect, params);
 
 // Create 3D objects.
 var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
