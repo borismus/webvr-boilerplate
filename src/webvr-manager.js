@@ -42,6 +42,10 @@ var Wakelock = require('./wakelock.js');
 function WebVRManager(renderer, effect, params) {
   this.params = params || {};
 
+  // Give a unique to ID to each manager.
+  this.prefix = 'webvr';
+  this.uid = Util.getUniqueId(this.prefix);
+
   this.mode = Modes.UNKNOWN;
 
   // Set option to hide the button.
