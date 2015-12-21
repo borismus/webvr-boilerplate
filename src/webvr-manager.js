@@ -338,17 +338,16 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
      height = elem.offsetHeight;
   
   // Only resize the canvas if it needs to be resized.
-  var size = this.renderer.getSize();
   if (size.width != width || size.height != height) {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.aspect = width / height;
     camera.updateProjectionMatrix();
     this.resize_();
   }
 };
 
 WebVRManager.prototype.resize_ = function() {
- var elem = this.getParentElem_();
- 
+  var elem = this.parentEl;
+
   this.effect.setSize(elem.offsetWidth, elem.offsetHeight);
 };
 
