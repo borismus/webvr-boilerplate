@@ -23,6 +23,8 @@
   ],
   "dependencies": {
     "threejs": "*",
-    "webvr-polyfill": "*"
+    "webvr-polyfill": "*",
+    "bower": "*",
+    "promise-polyfill": "~2.1.0"
   }
 }
