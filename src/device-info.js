@@ -81,8 +81,8 @@ var AndroidDevices = {
   }),
   Nexus6: new Device({
     userAgentRegExp: /Nexus 6 /, // Trailing space to disambiguate from 6P.
-    widthMeters: 0.1593,
-    heightMeters: 0.083,
+    widthMeters: 0.1320,
+    heightMeters: 0.074,
     bevelMeters: 0.004
   }),
   Nexus5X: new Device({
