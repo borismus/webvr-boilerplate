@@ -33,12 +33,6 @@ var BarrelDistortionFragment = {
     'uniform int showCenter;',
     'uniform vec4 dividerColor;',
 
-    // right projections are shifted and vertically mirrored relative to left
-    'vec4 projectionRight = ',
-    '(projectionLeft + vec4(0.0, 0.0, 1.0, 0.0)) * vec4(1.0, 1.0, -1.0, 1.0);',
-    'vec4 unprojectionRight = ',
-    '(unprojectionLeft + vec4(0.0, 0.0, 1.0, 0.0)) * vec4(1.0, 1.0, -1.0, 1.0);',
-
     'varying vec2 vUV;',
 
     'float poly(float val) {',
@@ -52,6 +46,12 @@ var BarrelDistortionFragment = {
     '}',
 
     'void main() {',
+      // right projections are shifted and vertically mirrored relative to left
+      'vec4 projectionRight = ',
+      '(projectionLeft + vec4(0.0, 0.0, 1.0, 0.0)) * vec4(1.0, 1.0, -1.0, 1.0);',
+      'vec4 unprojectionRight = ',
+      '(unprojectionLeft + vec4(0.0, 0.0, 1.0, 0.0)) * vec4(1.0, 1.0, -1.0, 1.0);',
+
       'vec2 a = (vUV.x < 0.5) ? ',
       'barrel(vec2(vUV.x / 0.5, vUV.y), projectionLeft, unprojectionLeft) : ',
       'barrel(vec2((vUV.x - 0.5) / 0.5, vUV.y), projectionRight, unprojectionRight);',
