@@ -42,6 +42,10 @@ var Wakelock = require('./wakelock.js');
 function WebVRManager(renderer, effect, params) {
   this.params = params || {};
 
+  // Give a unique to ID to each manager.
+  this.prefix = 'webvr';
+  this.uid = Util.getUniqueId(this.prefix);
+
   this.mode = Modes.UNKNOWN;
 
   // Set option to hide the button.
@@ -145,6 +149,8 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
+WebVRManager.Util = Util;
+console.log("BOB")
 
 /**
  * Promise returns true if there is at least one HMD device available.

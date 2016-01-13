@@ -41,6 +41,49 @@ Util.isIFrame = function() {
   }
 };
 
+// https://jsfiddle.net/xg7tek9j/7/
+Util.uuid = function(){
+    var d = new Date().getTime();
+    if(window.performance && typeof window.performance.now === "function"){
+        d += performance.now();; //use high-precision timer if available
+    }
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (d + Math.random()*16)%16 | 0;
+        d = Math.floor(d/16);
+        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+    });
+    return uuid;
+};
+
+// Get a unique, incrementing Id value for any object on the page.
+Util.getUniqueId = (function(prefix) {
+  //var i = Math.floor(Math.random() * 999) + 100;
+
+  var randomNumber = Math.floor(Math.random()*1000000)
+
+  if (!Date.now) {
+      Date.now = function() { return new Date().getTime(); }
+  }
+
+  function newStamp() {
+    var d = Date.now();
+    var r = (d + Math.random()*16)%16 | 0;
+    var i = Math.floor(d/16) << randomNumber;
+    return i;
+  };
+
+  var pfx = prefix || '';
+  function inc(pfx) {
+    if (!pfx) {
+      pfx = '';
+    } else {
+      pfx += '-';
+    }
+    return pfx + newStamp();
+  }
+  return inc;
+})();
+
 Util.appendQueryParameter = function(url, key, value) {
   // Determine delimiter based on if the URL already GET parameters in it.
   var delimiter = (url.indexOf('?') < 0 ? '?' : '&');
