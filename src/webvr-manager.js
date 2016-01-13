@@ -149,6 +149,8 @@ WebVRManager.prototype = new Emitter();
 
 // Expose these values externally.
 WebVRManager.Modes = Modes;
+WebVRManager.Util = Util;
+console.log("BOB")
 
 /**
  * Promise returns true if there is at least one HMD device available.
