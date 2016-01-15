@@ -42,7 +42,7 @@ var BarrelDistortionFragment = {
     'varying vec2 vUV;',
 
     'float poly(float val) {',
-      'return (showCenter == 1 && val < 0.00005) ? ',
+      'return (showCenter == 1 && val < 0.00010) ? ',
       '10000.0 : 1.0 + (distortion.x + distortion.y * val) * val;',
     '}',
 
