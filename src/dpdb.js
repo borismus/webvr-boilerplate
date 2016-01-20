@@ -18,8 +18,8 @@
 var DPDB_CACHE = require('./dpdb-cache.js');
 var Util = require('./util.js');
 
-// TODO(btco): replace this with the actual DPDB URL.
-var ONLINE_DPDB_URL = "/dpdb.txt";
+// Online DPDB URL.
+var ONLINE_DPDB_URL = 'https://storage.googleapis.com/cardboard-dpdb/dpdb.json';
 
 /**
  * Calculates device parameters based on the DPDB (Device Parameter Database).
@@ -42,24 +42,22 @@ function Dpdb(fetchOnline, onDeviceParamsUpdated) {
     // Set the callback.
     this.onDeviceParamsUpdated = onDeviceParamsUpdated;
 
-    console.log("Fetching DPDB...");
+    console.log("Fetching DPDB...');
     var xhr = new XMLHttpRequest();
     var obj = this;
-    xhr.open("GET", ONLINE_DPDB_URL, true);
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState != 4) return;
-
+    xhr.open('GET', ONLINE_DPDB_URL, true);
+    xhr.addEventListener('load', function() {
       obj.loading = false;
       if (xhr.status >= 200 && xhr.status <= 299) {
         // Success.
-        console.log("Successfully loaded online DPDB.");
+        console.log('Successfully loaded online DPDB.');
         obj.dpdb = JSON.parse(xhr.response);
         obj.recalculateDeviceParams_();
       } else {
         // Error loading the DPDB.
-        console.error("Error loading online DPDB!");
+        console.error('Error loading online DPDB!');
       }
-    };
+    });
     xhr.send();
   }
 }
@@ -71,9 +69,9 @@ Dpdb.prototype.getDeviceParams = function() {
 
 // Recalculates this device's parameters based on the DPDB.
 Dpdb.prototype.recalculateDeviceParams_ = function() {
-  console.log("Recalculating device params.");
+  console.log('Recalculating device params.');
   var newDeviceParams = this.calcDeviceParams_();
-  console.log("New device parameters:");
+  console.log('New device parameters:');
   console.log(newDeviceParams);
   if (newDeviceParams) {
     this.deviceParams = newDeviceParams;
@@ -82,7 +80,7 @@ Dpdb.prototype.recalculateDeviceParams_ = function() {
       this.onDeviceParamsUpdated(this.deviceParams);
     }
   } else {
-    console.error("Failed to recalculate device parameters.");
+    console.error('Failed to recalculate device parameters.');
   }
 };
 
@@ -92,15 +90,15 @@ Dpdb.prototype.recalculateDeviceParams_ = function() {
 Dpdb.prototype.calcDeviceParams_ = function() {
   var db = this.dpdb; // shorthand
   if (!db) {
-    console.error("DPDB not available.");
+    console.error('DPDB not available.');
     return null;
   }
-  if (db.format != "1") {
-    console.error("DPDB has unexpected format version.");
+  if (db.format != 1) {
+    console.error('DPDB has unexpected format version.');
     return null;
   }
   if (!db.devices || !db.devices.length) {
-    console.error("DPDB does not have a devices section.");
+    console.error('DPDB does not have a devices section.');
     return null;
   }
 
@@ -108,31 +106,36 @@ Dpdb.prototype.calcDeviceParams_ = function() {
   var userAgent = navigator.userAgent || navigator.vendor || window.opera;
   var width = Util.getScreenWidth();
   var height = Util.getScreenHeight();
-  console.log("User agent: " + userAgent);
-  console.log("Pixel width: " + width);
-  console.log("Pixel height: " + height);
+  console.log('User agent: ' + userAgent);
+  console.log('Pixel width: ' + width);
+  console.log('Pixel height: ' + height);
+
+  if (!db.devices) {
+    console.error('DPDB has no devices section.');
+    return null;
+  }
 
   for (var i = 0; i < db.devices.length; i++) {
     var device = db.devices[i];
-    if (!device.ru) {
-      console.warn("Device[" + i + "] has no rules section.");
+    if (!device.rules) {
+      console.warn('Device[' + i + '] has no rules section.');
       continue;
     }
 
-    if (device.type != "ios" && device.type != "android") {
-      console.warn("Device[" + i + "] has invalid type.");
+    if (device.type != 'ios' && device.type != 'android') {
+      console.warn('Device[' + i + '] has invalid type.');
       continue;
     }
 
     // See if this device is of the appropriate type.
-    if (Util.isIOS() != (device.type == "ios")) continue;
+    if (Util.isIOS() != (device.type == 'ios')) continue;
 
     // See if this device matches any of the rules:
     var matched = false;
-    for (var j = 0; j < device.ru.length; j++) {
-      var rule = device.ru[j];
+    for (var j = 0; j < device.rules.length; j++) {
+      var rule = device.rules[j];
       if (this.matchRule_(rule, userAgent, width, height)) {
-        console.log("Rule matched:");
+        console.log('Rule matched:');
         console.log(rule);
         matched = true;
         break;
@@ -140,35 +143,30 @@ Dpdb.prototype.calcDeviceParams_ = function() {
     }
     if (!matched) continue;
 
-    console.log("Device matched, #" + i + ", id " + device.id);
+    // device.dpi might be an array of [ xdpi, ydpi] or just a scalar.
+    var xdpi = device.dpi[0] || device.dpi;
+    var ydpi = device.dpi[1] || device.dpi;
 
-    var dpiPair = device.dpi.indexOf('x') > 0 ? this.parseRes_(device.dpi) :
-        { x: device.dpi, y: device.dpi };
-
-    return new DeviceParams({
-      xdpi: dpiPair.x,
-      ydpi: dpiPair.y,
-      bevelMm: device.bw
-    });
+    return new DeviceParams({ xdpi: xdpi, ydpi: ydpi, bevelMm: device.bw });
   }
 
-  console.warn("No DPDB device match.");
+  console.warn('No DPDB device match.');
   return null;
 };
 
 Dpdb.prototype.matchRule_ = function(rule, ua, screenWidth, screenHeight) {
-  // If the rule doesn't have a user agent, we can't match it (it is meant
-  // for other platforms).
-  if (!rule.ua) return false;
+  // We can only match 'ua' and 'res' rules, not other types like 'mdmh'
+  // (which are meant for native platforms).
+  if (!rule.ua && !rule.res) return false;
 
   // If our user agent string doesn't contain the indicated user agent string,
   // the match fails.
-  if (ua.indexOf(rule.ua) < 0) return false;
+  if (rule.ua && ua.indexOf(rule.ua) < 0) return false;
 
   // If the rule specifies screen dimensions that don't correspond to ours,
   // the match fails.
   if (rule.res) {
-    var reqRes = this.parseRes_(rule.res);
+    if (!rule.res[0] || !rule.res[1]) return false;
     if (!reqRes) return false;
     // Compare min and max so as to make the order not matter, i.e., it should
     // be true that 640x480 == 480x640.
@@ -179,16 +177,6 @@ Dpdb.prototype.matchRule_ = function(rule, ua, screenWidth, screenHeight) {
   }
 
   return true;
-}
-
-// Parses a resolution string like "1280x760" into {x: 1280, y: 760}
-Dpdb.prototype.parseRes_ = function(res) {
-  var p = res.split(/x/);
-  if (p.length != 2) {
-    console.error("Invalid resolution string: " + res);
-    return null;
-  }
-  return { "x": p[0], "y": p[1] };
 }
 
 function DeviceParams(params) {

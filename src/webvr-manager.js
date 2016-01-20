@@ -493,7 +493,7 @@ WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
 };
 
 WebVRManager.prototype.onDeviceParamsUpdated_ = function(newParams) {
-  console.log("DPDB reported that device params were updated.");
+  console.log('DPDB reported that device params were updated.');
   this.deviceInfo.updateDeviceParams(newParams);
   this.distorter.recalculateUniforms();
 }
