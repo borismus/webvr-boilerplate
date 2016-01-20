@@ -33,6 +33,14 @@ var DEFAULT_ANDROID = new Device({
   bevelMeters: 0.004
 });
 
+// Fallback iOS device (based on iPhone6) for use when
+// we can't recognize an Android device.
+var DEFAULT_IOS = new Device({
+  widthMeters: 0.1038,
+  heightMeters: 0.0584,
+  bevelMeters: 0.004
+});
+
 
 var Viewers = {
   CardboardV1: new CardboardViewer({
@@ -78,7 +86,7 @@ function DeviceInfo(deviceParams) {
 }
 
 DeviceInfo.prototype.updateDeviceParams = function(deviceParams) {
-  this.device = this.determineDevice_(deviceParams);
+  this.device = this.determineDevice_(deviceParams) || this.device;
 };
 
 DeviceInfo.prototype.getDevice = function() {
@@ -93,10 +101,10 @@ DeviceInfo.prototype.determineDevice_ = function(deviceParams) {
   if (!deviceParams) {
     // No parameters, so use a default.
     if (Util.isIOS()) {
-      // On iOS, there is no default device, so don't use one.
-      return null;
+      console.warn("Using fallback Android device measurements.");
+      return DEFAULT_IOS;
     } else {
-      // On Android, use the default Android device.
+      console.warn("Using fallback iOS device measurements.");
       return DEFAULT_ANDROID;
     }
   }

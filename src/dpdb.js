@@ -167,11 +167,12 @@ Dpdb.prototype.matchRule_ = function(rule, ua, screenWidth, screenHeight) {
   // the match fails.
   if (rule.res) {
     if (!rule.res[0] || !rule.res[1]) return false;
-    if (!reqRes) return false;
+    var resX = rule.res[0];
+    var resY = rule.res[1];
     // Compare min and max so as to make the order not matter, i.e., it should
     // be true that 640x480 == 480x640.
-    if (Math.min(screenWidth, screenHeight) != Math.min(reqRes.x, reqRes.y) ||
-        (Math.max(screenWidth, screenHeight) != Math.max(reqRes.x, reqRes.y))) {
+    if (Math.min(screenWidth, screenHeight) != Math.min(resX, resY) ||
+        (Math.max(screenWidth, screenHeight) != Math.max(resX, resY))) {
       return false;
     }
   }
