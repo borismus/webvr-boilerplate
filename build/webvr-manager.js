@@ -215,7 +215,7 @@ ButtonManager.prototype.loadIcons_ = function() {
 
 module.exports = ButtonManager;
 
-},{"./aligner.js":1,"./emitter.js":7,"./modes.js":9,"./util.js":11}],3:[function(_dereq_,module,exports){
+},{"./aligner.js":1,"./emitter.js":9,"./modes.js":11,"./util.js":13}],3:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -425,118 +425,28 @@ var Distortion = _dereq_('./distortion/distortion.js');
 var Util = _dereq_('./util.js');
 
 function Device(params) {
-  this.label = params.label;
-  this.userAgentRegExp = params.userAgentRegExp;
-
-  this.width = params.width || this.calcWidth_();
-  this.height = params.height || this.calcHeight_();
+  this.width = params.width || Util.getScreenWidth();
+  this.height = params.height || Util.getScreenHeight();
   this.widthMeters = params.widthMeters;
   this.heightMeters = params.heightMeters;
   this.bevelMeters = params.bevelMeters;
 }
 
-Device.prototype.calcWidth_ = function() {
-  return Math.max(window.screen.width, window.screen.height) *
-      window.devicePixelRatio;
-};
 
-Device.prototype.calcHeight_ = function() {
-  return Math.min(window.screen.width, window.screen.height) *
-      window.devicePixelRatio;
-};
+// Fallback Android device (based on Nexus 5 measurements) for use when
+// we can't recognize an Android device.
+var DEFAULT_ANDROID = new Device({
+  widthMeters: 0.110,
+  heightMeters: 0.062,
+  bevelMeters: 0.004
+});
 
-
-// Display width, display height and bevel measurements done on real phones.
-// Resolutions from http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions
-var iOSDevices = {
-  iPhone4: new Device({
-    width: 640,
-    height: 960,
-    widthMeters: 0.075,
-    heightMeters: 0.0495,
-    bevelMeters: 0.004
-  }),
-  iPhone5: new Device({
-    width: 640,
-    height: 1136,
-    widthMeters: 0.09011,
-    heightMeters: 0.05127,
-    bevelMeters: 0.00343
-  }),
-  iPhone6: new Device({
-    width: 750,
-    height: 1334,
-    widthMeters: 0.1038,
-    heightMeters: 0.0584,
-    bevelMeters: 0.004
-  }),
-  iPhone6Plus: new Device({
-    width: 1242,
-    height: 2208,
-    widthMeters: 0.12235,
-    heightMeters: 0.06954,
-    bevelMeters: 0.00471
-  })
-};
-
-
-var AndroidDevices = {
-  Nexus5: new Device({
-    userAgentRegExp: /Nexus 5 /, // Trailing space to disambiguate from 5X.
-    widthMeters: 0.110,
-    heightMeters: 0.062,
-    bevelMeters: 0.004
-  }),
-  Nexus6: new Device({
-    userAgentRegExp: /Nexus 6 /, // Trailing space to disambiguate from 6P.
-    widthMeters: 0.1593,
-    heightMeters: 0.083,
-    bevelMeters: 0.004
-  }),
-  Nexus5X: new Device({
-    userAgentRegExp: /Nexus 5X/,
-    widthMeters: 0.1155,
-    heightMeters: 0.065,
-    bevelMeters: 0.004
-  }),
-  Nexus6P: new Device({
-    userAgentRegExp: /Nexus 6P/,
-    widthMeters: 0.126,
-    heightMeters: 0.0705,
-    bevelMeters: 0.004
-  }),
-  GalaxyS3: new Device({
-    userAgentRegExp: /GT-I9300/,
-    widthMeters: 0.106,
-    heightMeters: 0.060,
-    bevelMeters: 0.005
-  }),
-  GalaxyS4: new Device({
-    userAgentRegExp: /GT-I9505/,
-    widthMeters: 0.111,
-    heightMeters: 0.0625,
-    bevelMeters: 0.004
-  }),
-  GalaxyS5: new Device({
-    userAgentRegExp: /SM-G900F/,
-    widthMeters: 0.113,
-    heightMeters: 0.066,
-    bevelMeters: 0.005
-  }),
-  GalaxyS6: new Device({
-    userAgentRegExp: /SM-G920/,
-    widthMeters: 0.114,
-    heightMeters: 0.0635,
-    bevelMeters: 0.0035
-  }),
-};
-
-
-var AVERAGE_ANDROID = new Device({
-  label: 'Average android (ie. no specific device detected)',
-  widthMeters: AndroidDevices.Nexus5.widthMeters,
-  heightMeters: AndroidDevices.Nexus5.heightMeters,
-  bevelMeters: AndroidDevices.Nexus5.bevelMeters
+// Fallback iOS device (based on iPhone6) for use when
+// we can't recognize an Android device.
+var DEFAULT_IOS = new Device({
+  widthMeters: 0.1038,
+  heightMeters: 0.0584,
+  bevelMeters: 0.004
 });
 
 
@@ -572,13 +482,20 @@ var DEFAULT_LEFT_CENTER = {x: 0.5, y: 0.5};
 var DEFAULT_RIGHT_CENTER = {x: 0.5, y: 0.5};
 
 /**
- * Gives the correct device DPI based on screen dimensions and user agent.
- * For now, only iOS is supported.
+ * Manages information about the device and the viewer.
+ *
+ * deviceParams indicates the parameters of the device to use (generally
+ * obtained from dpdb.getDeviceParams()). Can be null to mean no device
+ * params were found.
  */
-function DeviceInfo() {
-  this.device = this.determineDevice_();
+function DeviceInfo(deviceParams) {
   this.viewer = Viewers.CardboardV1;
+  this.updateDeviceParams(deviceParams);
 }
+
+DeviceInfo.prototype.updateDeviceParams = function(deviceParams) {
+  this.device = this.determineDevice_(deviceParams) || this.device;
+};
 
 DeviceInfo.prototype.getDevice = function() {
   return this.device;
@@ -588,54 +505,29 @@ DeviceInfo.prototype.setViewer = function(viewer) {
   this.viewer = viewer;
 };
 
-DeviceInfo.prototype.determineDevice_ = function() {
-  // Only support iPhones.
-  if (Util.isIOS()) {
-    return this.determineIPhone_();
-  } else {
-    return this.determineAndroid_();
-  }
-};
-
-DeviceInfo.prototype.determineIPhone_ = function() {
-  // On iOS, use screen dimensions to determine iPhone/iPad model.
-  var userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-  // Check both width and height since the phone may be in landscape.
-  var width = screen.availWidth;
-  var height = screen.availHeight;
-  var pixelWidth = width * window.devicePixelRatio;
-  var pixelHeight = height * window.devicePixelRatio;
-
-  // Match the screen dimension to the correct device.
-  for (var id in iOSDevices) {
-    var device = iOSDevices[id];
-    // Expect an exact match on width.
-    if (device.width == pixelWidth || device.width == pixelHeight) {
-      console.log('Detected iPhone: %s', id);
-      // This is the right device.
-      return device;
+DeviceInfo.prototype.determineDevice_ = function(deviceParams) {
+  if (!deviceParams) {
+    // No parameters, so use a default.
+    if (Util.isIOS()) {
+      console.warn("Using fallback Android device measurements.");
+      return DEFAULT_IOS;
+    } else {
+      console.warn("Using fallback iOS device measurements.");
+      return DEFAULT_ANDROID;
     }
   }
-  // This should never happen.
-  console.error('Unable to detect iPhone type.');
-  return null;
-};
 
-DeviceInfo.prototype.determineAndroid_ = function() {
-  // Do a userAgent match against all of the known Android devices.
-  for (var id in AndroidDevices) {
-    var device = AndroidDevices[id];
-    // Does it match?
-    if (navigator.userAgent.match(device.userAgentRegExp)) {
-      console.log('Detected Android: %s', id);
-      return device;
-    }
-  }
-  // No device matched, so return a default (average) smartphone.
-  console.warn('No specific Android device detected. Using a generic size, ' +
-               'which may lead to VR rendering issues.');
-  return AVERAGE_ANDROID;
+  // Compute device screen dimensions based on deviceParams.
+  var METERS_PER_INCH = 0.0254;
+  var metersPerPixelX = METERS_PER_INCH / deviceParams.xdpi;
+  var metersPerPixelY = METERS_PER_INCH / deviceParams.ydpi;
+  var width = Util.getScreenWidth();
+  var height = Util.getScreenHeight();
+  return new Device({
+    widthMeters: metersPerPixelX * width,
+    heightMeters: metersPerPixelY * height,
+    bevelMeters: deviceParams.bevelMm * 0.001,
+  });
 };
 
 /**
@@ -802,7 +694,7 @@ function CardboardViewer(params) {
 DeviceInfo.Viewers = Viewers;
 module.exports = DeviceInfo;
 
-},{"./distortion/distortion.js":6,"./util.js":11}],5:[function(_dereq_,module,exports){
+},{"./distortion/distortion.js":6,"./util.js":13}],5:[function(_dereq_,module,exports){
 var BarrelDistortionFragment = {
   type: 'fragment_v2',
 
@@ -838,16 +730,10 @@ var BarrelDistortionFragment = {
     'uniform int showCenter;',
     'uniform vec4 dividerColor;',
 
-    // right projections are shifted and vertically mirrored relative to left
-    'vec4 projectionRight = ',
-    '(projectionLeft + vec4(0.0, 0.0, 1.0, 0.0)) * vec4(1.0, 1.0, -1.0, 1.0);',
-    'vec4 unprojectionRight = ',
-    '(unprojectionLeft + vec4(0.0, 0.0, 1.0, 0.0)) * vec4(1.0, 1.0, -1.0, 1.0);',
-
     'varying vec2 vUV;',
 
     'float poly(float val) {',
-      'return (showCenter == 1 && val < 0.00005) ? ',
+      'return (showCenter == 1 && val < 0.00010) ? ',
       '10000.0 : 1.0 + (distortion.x + distortion.y * val) * val;',
     '}',
 
@@ -857,6 +743,12 @@ var BarrelDistortionFragment = {
     '}',
 
     'void main() {',
+      // right projections are shifted and vertically mirrored relative to left
+      'vec4 projectionRight = ',
+      '(projectionLeft + vec4(0.0, 0.0, 1.0, 0.0)) * vec4(1.0, 1.0, -1.0, 1.0);',
+      'vec4 unprojectionRight = ',
+      '(unprojectionLeft + vec4(0.0, 0.0, 1.0, 0.0)) * vec4(1.0, 1.0, -1.0, 1.0);',
+
       'vec2 a = (vUV.x < 0.5) ? ',
       'barrel(vec2(vUV.x / 0.5, vUV.y), projectionLeft, unprojectionLeft) : ',
       'barrel(vec2((vUV.x - 0.5) / 0.5, vUV.y), projectionRight, unprojectionRight);',
@@ -958,6 +850,1169 @@ module.exports = Distortion;
  * limitations under the License.
  */
 
+/**
+ * DPDB cache.
+ */
+var DPDB_CACHE = {
+  "format": 1,
+  "last_updated": "2016-01-20T00:18:35Z",
+  "devices": [
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "asus/*/Nexus 7/*" },
+      { "ua": "Nexus 7" }
+    ],
+    "dpi": [ 320.8, 323.0 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "asus/*/ASUS_Z00AD/*" },
+      { "ua": "ASUS_Z00AD" }
+    ],
+    "dpi": [ 403.0, 404.6 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "HTC/*/HTC6435LVW/*" },
+      { "ua": "HTC6435LVW" }
+    ],
+    "dpi": [ 449.7, 443.3 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "HTC/*/HTC One XL/*" },
+      { "ua": "HTC One XL" }
+    ],
+    "dpi": [ 315.3, 314.6 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "htc/*/Nexus 9/*" },
+      { "ua": "Nexus 9" }
+    ],
+    "dpi": 289.0,
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "HTC/*/HTC One M9/*" },
+      { "ua": "HTC One M9" }
+    ],
+    "dpi": [ 442.5, 443.3 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "HTC/*/HTC One_M8/*" },
+      { "ua": "HTC One_M8" }
+    ],
+    "dpi": [ 449.7, 447.4 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "HTC/*/HTC One/*" },
+      { "ua": "HTC One" }
+    ],
+    "dpi": 472.8,
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "Huawei/*/Nexus 6P/*" },
+      { "ua": "Nexus 6P" }
+    ],
+    "dpi": [ 515.1, 518.0 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "LGE/*/Nexus 5X/*" },
+      { "ua": "Nexus 5X" }
+    ],
+    "dpi": [ 422.0, 419.9 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "LGE/*/LGMS345/*" },
+      { "ua": "LGMS345" }
+    ],
+    "dpi": [ 221.7, 219.1 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "LGE/*/LG-D800/*" },
+      { "ua": "LG-D800" }
+    ],
+    "dpi": [ 422.0, 424.1 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "LGE/*/LG-D850/*" },
+      { "ua": "LG-D850" }
+    ],
+    "dpi": [ 537.9, 541.9 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "LGE/*/VS985 4G/*" },
+      { "ua": "VS985 4G" }
+    ],
+    "dpi": [ 537.9, 535.6 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "LGE/*/Nexus 5/*" },
+      { "ua": "Nexus 5 " }
+    ],
+    "dpi": [ 442.4, 444.8 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "LGE/*/Nexus 4/*" },
+      { "ua": "Nexus 4" }
+    ],
+    "dpi": [ 319.8, 318.4 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "LGE/*/LG-P769/*" },
+      { "ua": "LG-P769" }
+    ],
+    "dpi": [ 240.6, 247.5 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "LGE/*/LGMS323/*" },
+      { "ua": "LGMS323" }
+    ],
+    "dpi": [ 206.6, 204.6 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "LGE/*/LGLS996/*" },
+      { "ua": "LGLS996" }
+    ],
+    "dpi": [ 403.4, 401.5 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "Micromax/*/4560MMX/*" },
+      { "ua": "4560MMX" }
+    ],
+    "dpi": [ 240.0, 219.4 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "Micromax/*/A250/*" },
+      { "ua": "Micromax A250" }
+    ],
+    "dpi": [ 480.0, 446.4 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "Micromax/*/Micromax AQ4501/*" },
+      { "ua": "Micromax AQ4501" }
+    ],
+    "dpi": 240.0,
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/DROID RAZR/*" },
+      { "ua": "DROID RAZR" }
+    ],
+    "dpi": [ 368.1, 256.7 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/XT830C/*" },
+      { "ua": "XT830C" }
+    ],
+    "dpi": [ 254.0, 255.9 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/XT1021/*" },
+      { "ua": "XT1021" }
+    ],
+    "dpi": [ 254.0, 256.7 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/XT1023/*" },
+      { "ua": "XT1023" }
+    ],
+    "dpi": [ 254.0, 256.7 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/XT1028/*" },
+      { "ua": "XT1028" }
+    ],
+    "dpi": [ 326.6, 327.6 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/XT1034/*" },
+      { "ua": "XT1034" }
+    ],
+    "dpi": [ 326.6, 328.4 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/XT1053/*" },
+      { "ua": "XT1053" }
+    ],
+    "dpi": [ 315.3, 316.1 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/XT1562/*" },
+      { "ua": "XT1562" }
+    ],
+    "dpi": [ 403.4, 402.7 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/Nexus 6/*" },
+      { "ua": "Nexus 6 " }
+    ],
+    "dpi": [ 494.3, 489.7 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/XT1063/*" },
+      { "ua": "XT1063" }
+    ],
+    "dpi": [ 295.0, 296.6 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/XT1064/*" },
+      { "ua": "XT1064" }
+    ],
+    "dpi": [ 295.0, 295.6 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/XT1092/*" },
+      { "ua": "XT1092" }
+    ],
+    "dpi": [ 422.0, 424.1 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "motorola/*/XT1095/*" },
+      { "ua": "XT1095" }
+    ],
+    "dpi": [ 422.0, 423.4 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "OnePlus/*/A0001/*" },
+      { "ua": "A0001" }
+    ],
+    "dpi": [ 403.4, 401.0 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "OnePlus/*/ONE E1005/*" },
+      { "ua": "ONE E1005" }
+    ],
+    "dpi": [ 442.4, 441.4 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "OnePlus/*/ONE A2005/*" },
+      { "ua": "ONE A2005" }
+    ],
+    "dpi": [ 391.9, 405.4 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "OPPO/*/X909/*" },
+      { "ua": "X909" }
+    ],
+    "dpi": [ 442.4, 444.1 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/GT-I9082/*" },
+      { "ua": "GT-I9082" }
+    ],
+    "dpi": [ 184.7, 185.4 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-G360P/*" },
+      { "ua": "SM-G360P" }
+    ],
+    "dpi": [ 196.7, 205.4 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/Nexus S/*" },
+      { "ua": "Nexus S" }
+    ],
+    "dpi": [ 234.5, 229.8 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/GT-I9300/*" },
+      { "ua": "GT-I9300" }
+    ],
+    "dpi": [ 304.8, 303.9 ],
+    "bw": 5,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-T230NU/*" },
+      { "ua": "SM-T230NU" }
+    ],
+    "dpi": 216.0,
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SGH-T399/*" },
+      { "ua": "SGH-T399" }
+    ],
+    "dpi": [ 217.7, 231.4 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-N9005/*" },
+      { "ua": "SM-N9005" }
+    ],
+    "dpi": [ 386.4, 387.0 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SAMSUNG-SM-N900A/*" },
+      { "ua": "SAMSUNG-SM-N900A" }
+    ],
+    "dpi": [ 386.4, 387.7 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/GT-I9500/*" },
+      { "ua": "GT-I9500" }
+    ],
+    "dpi": [ 442.5, 443.3 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/GT-I9505/*" },
+      { "ua": "GT-I9505" }
+    ],
+    "dpi": 439.4,
+    "bw": 4,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-G900F/*" },
+      { "ua": "SM-G900F" }
+    ],
+    "dpi": [ 415.6, 431.6 ],
+    "bw": 5,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-G900M/*" },
+      { "ua": "SM-G900M" }
+    ],
+    "dpi": [ 415.6, 431.6 ],
+    "bw": 5,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-G800F/*" },
+      { "ua": "SM-G800F" }
+    ],
+    "dpi": 326.8,
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-G906S/*" },
+      { "ua": "SM-G906S" }
+    ],
+    "dpi": [ 562.7, 572.4 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/GT-I9300/*" },
+      { "ua": "GT-I9300" }
+    ],
+    "dpi": [ 306.7, 304.8 ],
+    "bw": 5,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-T535/*" },
+      { "ua": "SM-T535" }
+    ],
+    "dpi": [ 142.6, 136.4 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-N920C/*" },
+      { "ua": "SM-N920C" }
+    ],
+    "dpi": [ 515.1, 518.4 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/GT-I9300I/*" },
+      { "ua": "GT-I9300I" }
+    ],
+    "dpi": [ 304.8, 305.8 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/GT-I9195/*" },
+      { "ua": "GT-I9195" }
+    ],
+    "dpi": [ 249.4, 256.7 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SPH-L520/*" },
+      { "ua": "SPH-L520" }
+    ],
+    "dpi": [ 249.4, 255.9 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SAMSUNG-SGH-I717/*" },
+      { "ua": "SAMSUNG-SGH-I717" }
+    ],
+    "dpi": 285.8,
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SPH-D710/*" },
+      { "ua": "SPH-D710" }
+    ],
+    "dpi": [ 217.7, 204.2 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/GT-N7100/*" },
+      { "ua": "GT-N7100" }
+    ],
+    "dpi": 265.1,
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SCH-I605/*" },
+      { "ua": "SCH-I605" }
+    ],
+    "dpi": 265.1,
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/Galaxy Nexus/*" },
+      { "ua": "Galaxy Nexus" }
+    ],
+    "dpi": [ 315.3, 314.2 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-N910H/*" },
+      { "ua": "SM-N910H" }
+    ],
+    "dpi": [ 515.1, 518.0 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-N910C/*" },
+      { "ua": "SM-N910C" }
+    ],
+    "dpi": [ 515.2, 520.2 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-G130M/*" },
+      { "ua": "SM-G130M" }
+    ],
+    "dpi": [ 165.9, 164.8 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-G928I/*" },
+      { "ua": "SM-G928I" }
+    ],
+    "dpi": [ 515.1, 518.4 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-G920F/*" },
+      { "ua": "SM-G920F" }
+    ],
+    "dpi": 580.6,
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-G920P/*" },
+      { "ua": "SM-G920P" }
+    ],
+    "dpi": [ 522.5, 577.0 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-G925F/*" },
+      { "ua": "SM-G925F" }
+    ],
+    "dpi": 580.6,
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "samsung/*/SM-G925V/*" },
+      { "ua": "SM-G925V" }
+    ],
+    "dpi": [ 522.5, 576.6 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "Sony/*/C6903/*" },
+      { "ua": "C6903" }
+    ],
+    "dpi": [ 442.5, 443.3 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "Sony/*/D6653/*" },
+      { "ua": "D6653" }
+    ],
+    "dpi": [ 428.6, 427.6 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "Sony/*/E6653/*" },
+      { "ua": "E6653" }
+    ],
+    "dpi": [ 428.6, 425.7 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "Sony/*/E6853/*" },
+      { "ua": "E6853" }
+    ],
+    "dpi": [ 403.4, 401.9 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "Sony/*/SGP321/*" },
+      { "ua": "SGP321" }
+    ],
+    "dpi": [ 224.7, 224.1 ],
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "TCT/*/ALCATEL ONE TOUCH Fierce/*" },
+      { "ua": "ALCATEL ONE TOUCH Fierce" }
+    ],
+    "dpi": [ 240.0, 247.5 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "THL/*/thl 5000/*" },
+      { "ua": "thl 5000" }
+    ],
+    "dpi": [ 480.0, 443.3 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "android",
+    "rules": [
+      { "mdmh": "ZTE/*/ZTE Blade L2/*" },
+      { "ua": "ZTE Blade L2" }
+    ],
+    "dpi": 240.0,
+    "bw": 3,
+    "ac": 500
+  },
+
+  {
+    "type": "ios",
+    "rules": [ { "res": [ 640, 960 ] } ],
+    "dpi": [ 325.1, 328.4 ],
+    "bw": 4,
+    "ac": 1000
+  },
+
+  {
+    "type": "ios",
+    "rules": [ { "res": [ 640, 960 ] } ],
+    "dpi": [ 325.1, 328.4 ],
+    "bw": 4,
+    "ac": 1000
+  },
+
+  {
+    "type": "ios",
+    "rules": [ { "res": [ 640, 1136 ] } ],
+    "dpi": [ 317.1, 320.2 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "ios",
+    "rules": [ { "res": [ 640, 1136 ] } ],
+    "dpi": [ 317.1, 320.2 ],
+    "bw": 3,
+    "ac": 1000
+  },
+
+  {
+    "type": "ios",
+    "rules": [ { "res": [ 750, 1334 ] } ],
+    "dpi": 326.4,
+    "bw": 4,
+    "ac": 1000
+  },
+
+  {
+    "type": "ios",
+    "rules": [ { "res": [ 750, 1334 ] } ],
+    "dpi": 326.4,
+    "bw": 4,
+    "ac": 1000
+  },
+
+  {
+    "type": "ios",
+    "rules": [ { "res": [ 1242, 2208 ] } ],
+    "dpi": [ 453.6, 458.4 ],
+    "bw": 4,
+    "ac": 1000
+  },
+
+  {
+    "type": "ios",
+    "rules": [ { "res": [ 1242, 2208 ] } ],
+    "dpi": [ 453.6, 458.4 ],
+    "bw": 4,
+    "ac": 1000
+  }
+]};
+
+module.exports = DPDB_CACHE;
+
+
+},{}],8:[function(_dereq_,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Offline cache of the DPDB, to be used until we load the online one (and
+// as a fallback in case we can't load the online one).
+var DPDB_CACHE = _dereq_('./dpdb-cache.js');
+var Util = _dereq_('./util.js');
+
+// Online DPDB URL.
+var ONLINE_DPDB_URL = 'https://storage.googleapis.com/cardboard-dpdb/dpdb.json';
+
+/**
+ * Calculates device parameters based on the DPDB (Device Parameter Database).
+ * Initially, uses the cached DPDB values.
+ *
+ * If fetchOnline == true, then this object tries to fetch the online version
+ * of the DPDB and updates the device info if a better match is found.
+ * Calls the onDeviceParamsUpdated callback when there is an update to the
+ * device information.
+ */
+function Dpdb(fetchOnline, onDeviceParamsUpdated) {
+  // Start with the offline DPDB cache while we are loading the real one.
+  this.dpdb = DPDB_CACHE;
+
+  // Calculate device params based on the offline version of the DPDB.
+  this.recalculateDeviceParams_();
+
+  // XHR to fetch online DPDB file, if requested.
+  if (fetchOnline) {
+    // Set the callback.
+    this.onDeviceParamsUpdated = onDeviceParamsUpdated;
+
+    console.log('Fetching DPDB...');
+    var xhr = new XMLHttpRequest();
+    var obj = this;
+    xhr.open('GET', ONLINE_DPDB_URL, true);
+    xhr.addEventListener('load', function() {
+      obj.loading = false;
+      if (xhr.status >= 200 && xhr.status <= 299) {
+        // Success.
+        console.log('Successfully loaded online DPDB.');
+        obj.dpdb = JSON.parse(xhr.response);
+        obj.recalculateDeviceParams_();
+      } else {
+        // Error loading the DPDB.
+        console.error('Error loading online DPDB!');
+      }
+    });
+    xhr.send();
+  }
+}
+
+// Returns the current device parameters.
+Dpdb.prototype.getDeviceParams = function() {
+  return this.deviceParams;
+};
+
+// Recalculates this device's parameters based on the DPDB.
+Dpdb.prototype.recalculateDeviceParams_ = function() {
+  console.log('Recalculating device params.');
+  var newDeviceParams = this.calcDeviceParams_();
+  console.log('New device parameters:');
+  console.log(newDeviceParams);
+  if (newDeviceParams) {
+    this.deviceParams = newDeviceParams;
+    // Invoke callback, if it is set.
+    if (this.onDeviceParamsUpdated) {
+      this.onDeviceParamsUpdated(this.deviceParams);
+    }
+  } else {
+    console.error('Failed to recalculate device parameters.');
+  }
+};
+
+// Returns a DeviceParams object that represents the best guess as to this
+// device's parameters. Can return null if the device does not match any
+// known devices.
+Dpdb.prototype.calcDeviceParams_ = function() {
+  var db = this.dpdb; // shorthand
+  if (!db) {
+    console.error('DPDB not available.');
+    return null;
+  }
+  if (db.format != 1) {
+    console.error('DPDB has unexpected format version.');
+    return null;
+  }
+  if (!db.devices || !db.devices.length) {
+    console.error('DPDB does not have a devices section.');
+    return null;
+  }
+
+  // Get the actual user agent and screen dimensions in pixels.
+  var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  var width = Util.getScreenWidth();
+  var height = Util.getScreenHeight();
+  console.log('User agent: ' + userAgent);
+  console.log('Pixel width: ' + width);
+  console.log('Pixel height: ' + height);
+
+  if (!db.devices) {
+    console.error('DPDB has no devices section.');
+    return null;
+  }
+
+  for (var i = 0; i < db.devices.length; i++) {
+    var device = db.devices[i];
+    if (!device.rules) {
+      console.warn('Device[' + i + '] has no rules section.');
+      continue;
+    }
+
+    if (device.type != 'ios' && device.type != 'android') {
+      console.warn('Device[' + i + '] has invalid type.');
+      continue;
+    }
+
+    // See if this device is of the appropriate type.
+    if (Util.isIOS() != (device.type == 'ios')) continue;
+
+    // See if this device matches any of the rules:
+    var matched = false;
+    for (var j = 0; j < device.rules.length; j++) {
+      var rule = device.rules[j];
+      if (this.matchRule_(rule, userAgent, width, height)) {
+        console.log('Rule matched:');
+        console.log(rule);
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) continue;
+
+    // device.dpi might be an array of [ xdpi, ydpi] or just a scalar.
+    var xdpi = device.dpi[0] || device.dpi;
+    var ydpi = device.dpi[1] || device.dpi;
+
+    return new DeviceParams({ xdpi: xdpi, ydpi: ydpi, bevelMm: device.bw });
+  }
+
+  console.warn('No DPDB device match.');
+  return null;
+};
+
+Dpdb.prototype.matchRule_ = function(rule, ua, screenWidth, screenHeight) {
+  // We can only match 'ua' and 'res' rules, not other types like 'mdmh'
+  // (which are meant for native platforms).
+  if (!rule.ua && !rule.res) return false;
+
+  // If our user agent string doesn't contain the indicated user agent string,
+  // the match fails.
+  if (rule.ua && ua.indexOf(rule.ua) < 0) return false;
+
+  // If the rule specifies screen dimensions that don't correspond to ours,
+  // the match fails.
+  if (rule.res) {
+    if (!rule.res[0] || !rule.res[1]) return false;
+    var resX = rule.res[0];
+    var resY = rule.res[1];
+    // Compare min and max so as to make the order not matter, i.e., it should
+    // be true that 640x480 == 480x640.
+    if (Math.min(screenWidth, screenHeight) != Math.min(resX, resY) ||
+        (Math.max(screenWidth, screenHeight) != Math.max(resX, resY))) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function DeviceParams(params) {
+  this.xdpi = params.xdpi;
+  this.ydpi = params.ydpi;
+  this.bevelMm = params.bevelMm;
+}
+
+module.exports = Dpdb;
+
+},{"./dpdb-cache.js":7,"./util.js":13}],9:[function(_dereq_,module,exports){
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 function Emitter() {
   this.callbacks = {};
 }
@@ -986,7 +2041,7 @@ Emitter.prototype.on = function(eventName, callback) {
 
 module.exports = Emitter;
 
-},{}],8:[function(_dereq_,module,exports){
+},{}],10:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1007,7 +2062,7 @@ var WebVRManager = _dereq_('./webvr-manager.js');
 window.WebVRConfig = window.WebVRConfig || {};
 window.WebVRManager = WebVRManager;
 
-},{"./webvr-manager.js":14}],9:[function(_dereq_,module,exports){
+},{"./webvr-manager.js":16}],11:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1035,7 +2090,7 @@ var Modes = {
 
 module.exports = Modes;
 
-},{}],10:[function(_dereq_,module,exports){
+},{}],12:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1159,7 +2214,7 @@ RotateInstructions.prototype.loadIcon_ = function() {
 
 module.exports = RotateInstructions;
 
-},{"./util.js":11}],11:[function(_dereq_,module,exports){
+},{"./util.js":13}],13:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1222,10 +2277,19 @@ Util.isLandscapeMode = function() {
   return (window.orientation == 90 || window.orientation == -90);
 };
 
+Util.getScreenWidth = function() {
+  return Math.max(window.screen.width, window.screen.height) *
+      window.devicePixelRatio;
+};
+
+Util.getScreenHeight = function() {
+  return Math.min(window.screen.width, window.screen.height) *
+      window.devicePixelRatio;
+};
 
 module.exports = Util;
 
-},{}],12:[function(_dereq_,module,exports){
+},{}],14:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1416,7 +2480,7 @@ ViewerSelector.prototype.createButton_ = function(label, onclick) {
 
 module.exports = ViewerSelector;
 
-},{"./emitter.js":7,"./util.js":11}],13:[function(_dereq_,module,exports){
+},{"./emitter.js":9,"./util.js":13}],15:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1492,7 +2556,7 @@ function getWakeLock() {
 
 module.exports = getWakeLock();
 
-},{"./util.js":11}],14:[function(_dereq_,module,exports){
+},{"./util.js":13}],16:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1511,6 +2575,7 @@ module.exports = getWakeLock();
 var ButtonManager = _dereq_('./button-manager.js');
 var CardboardDistorter = _dereq_('./cardboard-distorter.js');
 var DeviceInfo = _dereq_('./device-info.js');
+var Dpdb = _dereq_('./dpdb.js');
 var Emitter = _dereq_('./emitter.js');
 var Modes = _dereq_('./modes.js');
 var RotateInstructions = _dereq_('./rotate-instructions.js');
@@ -1553,8 +2618,12 @@ function WebVRManager(renderer, effect, params) {
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
+  // Load the DPDB.
+  var shouldFetch = !WebVRConfig.NO_DPDB_FETCH;
+  this.dpdb = new Dpdb(shouldFetch, this.onDeviceParamsUpdated_.bind(this));
+
   // Create device info and set the correct default viewer.
-  this.deviceInfo = new DeviceInfo();
+  this.deviceInfo = new DeviceInfo(this.dpdb.getDeviceParams());
   this.deviceInfo.viewer = DeviceInfo.Viewers[this.viewerSelector.selectedKey];
   console.log('Using the %s viewer.', this.getViewer().label);
 
@@ -1634,6 +2703,7 @@ function WebVRManager(renderer, effect, params) {
   // Save whether or not we want the touch panner to be enabled or disabled by
   // default.
   this.isTouchPannerEnabled = !WebVRConfig.TOUCH_PANNER_DISABLED;
+
 }
 
 WebVRManager.prototype = new Emitter();
@@ -1850,7 +2920,7 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   if (size.width != window.innerWidth || size.height != window.innerHeight) {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    this.resize_()
+    this.resize_();
   }
 };
 
@@ -1981,6 +3051,12 @@ WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
   }.bind(this));
 };
 
+WebVRManager.prototype.onDeviceParamsUpdated_ = function(newParams) {
+  console.log('DPDB reported that device params were updated.');
+  this.deviceInfo.updateDeviceParams(newParams);
+  this.distorter.recalculateUniforms();
+}
+
 module.exports = WebVRManager;
 
-},{"./button-manager.js":2,"./cardboard-distorter.js":3,"./device-info.js":4,"./emitter.js":7,"./modes.js":9,"./rotate-instructions.js":10,"./util.js":11,"./viewer-selector.js":12,"./wakelock.js":13}]},{},[8]);
+},{"./button-manager.js":2,"./cardboard-distorter.js":3,"./device-info.js":4,"./dpdb.js":8,"./emitter.js":9,"./modes.js":11,"./rotate-instructions.js":12,"./util.js":13,"./viewer-selector.js":14,"./wakelock.js":15}]},{},[10]);
