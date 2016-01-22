@@ -157,10 +157,15 @@ cube.position.z = -1;
 
 // Add cube mesh to your three.js scene
 scene.add(cube);
+
 // Request animation frame loop function
+var lastRender = 0;
 function animate(timestamp) {
+  var delta = Math.min(timestamp - lastRender, 500);
+  lastRender = timestamp;
+
   // Apply rotation to cube mesh
-  cube.rotation.y += 0.01;
+  cube.rotation.y += delta * 0.0006;
 
   // Update VR headset position and apply to camera.
   controls.update();
@@ -172,7 +177,7 @@ function animate(timestamp) {
 }
 
 // Kick off animation loop
-animate();
+animate(performance ? performance.now() : Date.now());
 
 // Reset the position sensor when 'z' pressed.
 function onKey(event) {
