@@ -16,6 +16,7 @@
 var ButtonManager = require('./button-manager.js');
 var CardboardDistorter = require('./cardboard-distorter.js');
 var DeviceInfo = require('./device-info.js');
+var Dpdb = require('./dpdb.js');
 var Emitter = require('./emitter.js');
 var Modes = require('./modes.js');
 var RotateInstructions = require('./rotate-instructions.js');
@@ -58,8 +59,12 @@ function WebVRManager(renderer, effect, params) {
   this.rotateInstructions = new RotateInstructions();
   this.viewerSelector = new ViewerSelector(DeviceInfo.Viewers);
 
+  // Load the DPDB.
+  var shouldFetch = !WebVRConfig.NO_DPDB_FETCH;
+  this.dpdb = new Dpdb(shouldFetch, this.onDeviceParamsUpdated_.bind(this));
+
   // Create device info and set the correct default viewer.
-  this.deviceInfo = new DeviceInfo();
+  this.deviceInfo = new DeviceInfo(this.dpdb.getDeviceParams());
   this.deviceInfo.viewer = DeviceInfo.Viewers[this.viewerSelector.selectedKey];
   console.log('Using the %s viewer.', this.getViewer().label);
 
@@ -139,6 +144,7 @@ function WebVRManager(renderer, effect, params) {
   // Save whether or not we want the touch panner to be enabled or disabled by
   // default.
   this.isTouchPannerEnabled = !WebVRConfig.TOUCH_PANNER_DISABLED;
+
 }
 
 WebVRManager.prototype = new Emitter();
@@ -485,5 +491,11 @@ WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
     }
   }.bind(this));
 };
+
+WebVRManager.prototype.onDeviceParamsUpdated_ = function(newParams) {
+  console.log('DPDB reported that device params were updated.');
+  this.deviceInfo.updateDeviceParams(newParams);
+  this.distorter.recalculateUniforms();
+}
 
 module.exports = WebVRManager;

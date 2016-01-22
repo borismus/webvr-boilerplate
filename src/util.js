@@ -60,5 +60,14 @@ Util.isLandscapeMode = function() {
   return (window.orientation == 90 || window.orientation == -90);
 };
 
+Util.getScreenWidth = function() {
+  return Math.max(window.screen.width, window.screen.height) *
+      window.devicePixelRatio;
+};
+
+Util.getScreenHeight = function() {
+  return Math.min(window.screen.width, window.screen.height) *
+      window.devicePixelRatio;
+};
 
 module.exports = Util;
