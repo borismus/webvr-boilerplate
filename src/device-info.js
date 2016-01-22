@@ -17,118 +17,28 @@ var Distortion = require('./distortion/distortion.js');
 var Util = require('./util.js');
 
 function Device(params) {
-  this.label = params.label;
-  this.userAgentRegExp = params.userAgentRegExp;
-
-  this.width = params.width || this.calcWidth_();
-  this.height = params.height || this.calcHeight_();
+  this.width = params.width || Util.getScreenWidth();
+  this.height = params.height || Util.getScreenHeight();
   this.widthMeters = params.widthMeters;
   this.heightMeters = params.heightMeters;
   this.bevelMeters = params.bevelMeters;
 }
 
-Device.prototype.calcWidth_ = function() {
-  return Math.max(window.screen.width, window.screen.height) *
-      window.devicePixelRatio;
-};
 
-Device.prototype.calcHeight_ = function() {
-  return Math.min(window.screen.width, window.screen.height) *
-      window.devicePixelRatio;
-};
+// Fallback Android device (based on Nexus 5 measurements) for use when
+// we can't recognize an Android device.
+var DEFAULT_ANDROID = new Device({
+  widthMeters: 0.110,
+  heightMeters: 0.062,
+  bevelMeters: 0.004
+});
 
-
-// Display width, display height and bevel measurements done on real phones.
-// Resolutions from http://www.paintcodeapp.com/news/ultimate-guide-to-iphone-resolutions
-var iOSDevices = {
-  iPhone4: new Device({
-    width: 640,
-    height: 960,
-    widthMeters: 0.075,
-    heightMeters: 0.0495,
-    bevelMeters: 0.004
-  }),
-  iPhone5: new Device({
-    width: 640,
-    height: 1136,
-    widthMeters: 0.09011,
-    heightMeters: 0.05127,
-    bevelMeters: 0.00343
-  }),
-  iPhone6: new Device({
-    width: 750,
-    height: 1334,
-    widthMeters: 0.1038,
-    heightMeters: 0.0584,
-    bevelMeters: 0.004
-  }),
-  iPhone6Plus: new Device({
-    width: 1242,
-    height: 2208,
-    widthMeters: 0.12235,
-    heightMeters: 0.06954,
-    bevelMeters: 0.00471
-  })
-};
-
-
-var AndroidDevices = {
-  Nexus5: new Device({
-    userAgentRegExp: /Nexus 5 /, // Trailing space to disambiguate from 5X.
-    widthMeters: 0.110,
-    heightMeters: 0.062,
-    bevelMeters: 0.004
-  }),
-  Nexus6: new Device({
-    userAgentRegExp: /Nexus 6 /, // Trailing space to disambiguate from 6P.
-    widthMeters: 0.1320,
-    heightMeters: 0.074,
-    bevelMeters: 0.004
-  }),
-  Nexus5X: new Device({
-    userAgentRegExp: /Nexus 5X/,
-    widthMeters: 0.1155,
-    heightMeters: 0.065,
-    bevelMeters: 0.004
-  }),
-  Nexus6P: new Device({
-    userAgentRegExp: /Nexus 6P/,
-    widthMeters: 0.126,
-    heightMeters: 0.0705,
-    bevelMeters: 0.004
-  }),
-  GalaxyS3: new Device({
-    userAgentRegExp: /GT-I9300/,
-    widthMeters: 0.106,
-    heightMeters: 0.060,
-    bevelMeters: 0.005
-  }),
-  GalaxyS4: new Device({
-    userAgentRegExp: /GT-I9505/,
-    widthMeters: 0.111,
-    heightMeters: 0.0625,
-    bevelMeters: 0.004
-  }),
-  GalaxyS5: new Device({
-    userAgentRegExp: /SM-G900F/,
-    widthMeters: 0.113,
-    heightMeters: 0.066,
-    bevelMeters: 0.005
-  }),
-  GalaxyS6: new Device({
-    userAgentRegExp: /SM-G920/,
-    widthMeters: 0.114,
-    heightMeters: 0.0635,
-    bevelMeters: 0.0035
-  }),
-};
-
-
-var AVERAGE_ANDROID = new Device({
-  label: 'Average android (ie. no specific device detected)',
-  widthMeters: AndroidDevices.Nexus5.widthMeters,
-  heightMeters: AndroidDevices.Nexus5.heightMeters,
-  bevelMeters: AndroidDevices.Nexus5.bevelMeters
+// Fallback iOS device (based on iPhone6) for use when
+// we can't recognize an Android device.
+var DEFAULT_IOS = new Device({
+  widthMeters: 0.1038,
+  heightMeters: 0.0584,
+  bevelMeters: 0.004
 });
 
 
@@ -164,13 +74,20 @@ var DEFAULT_LEFT_CENTER = {x: 0.5, y: 0.5};
 var DEFAULT_RIGHT_CENTER = {x: 0.5, y: 0.5};
 
 /**
- * Gives the correct device DPI based on screen dimensions and user agent.
- * For now, only iOS is supported.
+ * Manages information about the device and the viewer.
+ *
+ * deviceParams indicates the parameters of the device to use (generally
+ * obtained from dpdb.getDeviceParams()). Can be null to mean no device
+ * params were found.
  */
-function DeviceInfo() {
-  this.device = this.determineDevice_();
+function DeviceInfo(deviceParams) {
   this.viewer = Viewers.CardboardV1;
+  this.updateDeviceParams(deviceParams);
 }
+
+DeviceInfo.prototype.updateDeviceParams = function(deviceParams) {
+  this.device = this.determineDevice_(deviceParams) || this.device;
+};
 
 DeviceInfo.prototype.getDevice = function() {
   return this.device;
@@ -180,54 +97,29 @@ DeviceInfo.prototype.setViewer = function(viewer) {
   this.viewer = viewer;
 };
 
-DeviceInfo.prototype.determineDevice_ = function() {
-  // Only support iPhones.
-  if (Util.isIOS()) {
-    return this.determineIPhone_();
-  } else {
-    return this.determineAndroid_();
-  }
-};
-
-DeviceInfo.prototype.determineIPhone_ = function() {
-  // On iOS, use screen dimensions to determine iPhone/iPad model.
-  var userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-  // Check both width and height since the phone may be in landscape.
-  var width = screen.availWidth;
-  var height = screen.availHeight;
-  var pixelWidth = width * window.devicePixelRatio;
-  var pixelHeight = height * window.devicePixelRatio;
-
-  // Match the screen dimension to the correct device.
-  for (var id in iOSDevices) {
-    var device = iOSDevices[id];
-    // Expect an exact match on width.
-    if (device.width == pixelWidth || device.width == pixelHeight) {
-      console.log('Detected iPhone: %s', id);
-      // This is the right device.
-      return device;
+DeviceInfo.prototype.determineDevice_ = function(deviceParams) {
+  if (!deviceParams) {
+    // No parameters, so use a default.
+    if (Util.isIOS()) {
+      console.warn("Using fallback Android device measurements.");
+      return DEFAULT_IOS;
+    } else {
+      console.warn("Using fallback iOS device measurements.");
+      return DEFAULT_ANDROID;
     }
   }
-  // This should never happen.
-  console.error('Unable to detect iPhone type.');
-  return null;
-};
 
-DeviceInfo.prototype.determineAndroid_ = function() {
-  // Do a userAgent match against all of the known Android devices.
-  for (var id in AndroidDevices) {
-    var device = AndroidDevices[id];
-    // Does it match?
-    if (navigator.userAgent.match(device.userAgentRegExp)) {
-      console.log('Detected Android: %s', id);
-      return device;
-    }
-  }
-  // No device matched, so return a default (average) smartphone.
-  console.warn('No specific Android device detected. Using a generic size, ' +
-               'which may lead to VR rendering issues.');
-  return AVERAGE_ANDROID;
+  // Compute device screen dimensions based on deviceParams.
+  var METERS_PER_INCH = 0.0254;
+  var metersPerPixelX = METERS_PER_INCH / deviceParams.xdpi;
+  var metersPerPixelY = METERS_PER_INCH / deviceParams.ydpi;
+  var width = Util.getScreenWidth();
+  var height = Util.getScreenHeight();
+  return new Device({
+    widthMeters: metersPerPixelX * width,
+    heightMeters: metersPerPixelY * height,
+    bevelMeters: deviceParams.bevelMm * 0.001,
+  });
 };
 
 /**
