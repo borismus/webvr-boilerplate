@@ -169,7 +169,7 @@ function animate(timestamp) {
 }
 
 // Kick off animation loop
-animate(performance.now());
+animate(performance ? performance.now() : Date.now());
 
 // Reset the position sensor when 'z' pressed.
 function onKey(event) {
