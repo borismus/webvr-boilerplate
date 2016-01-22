@@ -355,7 +355,7 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   if (size.width != window.innerWidth || size.height != window.innerHeight) {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    this.resize_()
+    this.resize_();
   }
 };
 
