@@ -471,7 +471,10 @@ WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
     if (!hmd) {
       return;
     }
-
+    if (hmd.deviceName.indexOf('webvr-polyfill') === -1) {
+      // webvr-polyfill not in use, assume params are provided by browser/WebVR API
+      return;
+    }
     // If we can set fields of view, do that now.
     if (hmd.setFieldOfView) {
       // Calculate the optimal field of view for each eye.
