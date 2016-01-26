@@ -232,6 +232,7 @@ module.exports = ButtonManager;
  */
 
 var BarrelDistortion = _dereq_('./distortion/barrel-distortion-fragment-v2.js');
+var Util = _dereq_('./util.js');
 
 
 function ShaderPass(shader) {
@@ -269,7 +270,7 @@ function createRenderTarget(renderer) {
   return new THREE.WebGLRenderTarget(width, height, parameters);
 }
 
-function CardboardDistorter(renderer, deviceInfo) {
+function CardboardDistorter(renderer) {
   this.shaderPass = new ShaderPass(BarrelDistortion);
   this.renderer = renderer;
 
@@ -277,9 +278,6 @@ function CardboardDistorter(renderer, deviceInfo) {
   this.genuineRender = renderer.render;
   this.genuineSetSize = renderer.setSize;
   this.isActive = false;
-
-  this.deviceInfo = deviceInfo;
-  //this.recalculateUniforms();
 }
 
 CardboardDistorter.prototype.patch = function() {
@@ -333,14 +331,14 @@ CardboardDistorter.prototype.setActive = function(state) {
 /**
  * Updates uniforms.
  */
-CardboardDistorter.prototype.recalculateUniforms = function() {
+CardboardDistorter.prototype.updateDeviceInfo = function(deviceInfo) {
   var uniforms = this.shaderPass.material.uniforms;
 
-  var distortedProj = this.deviceInfo.getProjectionMatrixLeftEye();
-  var undistortedProj = this.deviceInfo.getProjectionMatrixLeftEye(true);
-  var viewport = this.deviceInfo.getUndistortedViewportLeftEye();
+  var distortedProj = deviceInfo.getProjectionMatrixLeftEye();
+  var undistortedProj = deviceInfo.getProjectionMatrixLeftEye(true);
+  var viewport = deviceInfo.getUndistortedViewportLeftEye();
 
-  var device = this.deviceInfo.device;
+  var device = deviceInfo.device;
   var params = {
     xScale: viewport.width / (device.width / 2),
     yScale: viewport.height / device.height,
@@ -349,12 +347,12 @@ CardboardDistorter.prototype.recalculateUniforms = function() {
   }
 
   uniforms.projectionLeft.value.copy(
-      this.projectionMatrixToVector_(distortedProj));
+      Util.projectionMatrixToVector_(distortedProj));
   uniforms.unprojectionLeft.value.copy(
-      this.projectionMatrixToVector_(undistortedProj, params));
+      Util.projectionMatrixToVector_(undistortedProj, params));
 
   // Set distortion coefficients.
-  var coefficients = this.deviceInfo.viewer.distortionCoefficients;
+  var coefficients = deviceInfo.viewer.distortionCoefficients;
   uniforms.distortion.value.set(coefficients[0], coefficients[1]);
       
 
@@ -382,30 +380,9 @@ CardboardDistorter.prototype.setDistortionCoefficients = function(coefficients) 
   this.shaderPass.material.needsUpdate = true;
 };
 
-/**
- * Utility to convert the projection matrix to a vector accepted by the shader.
- *
- * @param {Object} opt_params A rectangle to scale this vector by.
- */
-CardboardDistorter.prototype.projectionMatrixToVector_ = function(matrix, opt_params) {
-  var params = opt_params || {};
-  var xScale = params.xScale || 1;
-  var yScale = params.yScale || 1;
-  var xTrans = params.xTrans || 0;
-  var yTrans = params.yTrans || 0;
-
-  var elements = matrix.elements;
-  var vec = new THREE.Vector4();
-  vec.set(elements[4*0 + 0] * xScale,
-          elements[4*1 + 1] * yScale,
-          elements[4*2 + 0] - 1 - xTrans,
-          elements[4*2 + 1] - 1 - yTrans).divideScalar(2);
-  return vec;
-};
-
 module.exports = CardboardDistorter;
 
-},{"./distortion/barrel-distortion-fragment-v2.js":5}],4:[function(_dereq_,module,exports){
+},{"./distortion/barrel-distortion-fragment-v2.js":5,"./util.js":13}],4:[function(_dereq_,module,exports){
 /*
  * Copyright 2015 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -700,13 +677,13 @@ var BarrelDistortionFragment = {
 
   
   uniforms: {
-    'texture':   { type: 't', value: null },
-    'distortion': { type: 'v2', value: new THREE.Vector2(0.441, 0.156) },
-    'projectionLeft':    { type: 'v4', value: new THREE.Vector4(1.0, 1.0, -0.5, -0.5) },
-    'unprojectionLeft':  { type: 'v4', value: new THREE.Vector4(1.0, 1.0, -0.5, -0.5) },
-    'backgroundColor': { type: 'v4', value: new THREE.Vector4(0.0, 0.0, 0.0, 1.0) },
-    'showCenter': { type: 'i', value: 0},
-    'dividerColor': { type: 'v4', value: new THREE.Vector4(0.5, 0.5, 0.5, 1.0) },
+    texture:   { type: 't', value: null },
+    distortion: { type: 'v2', value: new THREE.Vector2(0.441, 0.156) },
+    projectionLeft:    { type: 'v4', value: new THREE.Vector4(1.0, 1.0, -0.5, -0.5) },
+    unprojectionLeft:  { type: 'v4', value: new THREE.Vector4(1.0, 1.0, -0.5, -0.5) },
+    backgroundColor: { type: 'v4', value: new THREE.Vector4(0.0, 0.0, 0.0, 1.0) },
+    showCenter: { type: 'i', value: 0},
+    dividerColor: { type: 'v4', value: new THREE.Vector4(0.5, 0.5, 0.5, 1.0) },
   },
 
   vertexShader: [
@@ -2287,6 +2264,37 @@ Util.getScreenHeight = function() {
       window.devicePixelRatio;
 };
 
+/**
+ * Utility to convert the projection matrix to a vector accepted by the shader.
+ *
+ * @param {Object} opt_params A rectangle to scale this vector by.
+ */
+Util.projectionMatrixToVector_ = function(matrix, opt_params) {
+  var params = opt_params || {};
+  var xScale = params.xScale || 1;
+  var yScale = params.yScale || 1;
+  var xTrans = params.xTrans || 0;
+  var yTrans = params.yTrans || 0;
+
+  var elements = matrix.elements;
+  var vec = new THREE.Vector4();
+  vec.set(elements[4*0 + 0] * xScale,
+          elements[4*1 + 1] * yScale,
+          elements[4*2 + 0] - 1 - xTrans,
+          elements[4*2 + 1] - 1 - yTrans).divideScalar(2);
+  return vec;
+};
+
+Util.leftProjectionVectorToRight_ = function(left) {
+  //projectionLeft + vec4(0.0, 0.0, 1.0, 0.0)) * vec4(1.0, 1.0, -1.0, 1.0);
+  var out = new THREE.Vector4(0, 0, 1, 0);
+  out.add(left); // out = left + (0, 0, 1, 0).
+  out.z *= -1; // Flip z.
+
+  return out;
+};
+
+
 module.exports = Util;
 
 },{}],14:[function(_dereq_,module,exports){
@@ -2627,7 +2635,8 @@ function WebVRManager(renderer, effect, params) {
   this.deviceInfo.viewer = DeviceInfo.Viewers[this.viewerSelector.selectedKey];
   console.log('Using the %s viewer.', this.getViewer().label);
 
-  this.distorter = new CardboardDistorter(renderer, this.deviceInfo);
+  this.distorter = new CardboardDistorter(renderer);
+  this.distorter.updateDeviceInfo(this.deviceInfo);
 
   this.isVRCompatible = false;
   this.isFullscreenDisabled = !!Util.getQueryParameter('no_fullscreen');
@@ -3012,7 +3021,7 @@ WebVRManager.prototype.onViewerChanged_ = function(viewer) {
   this.deviceInfo.setViewer(viewer);
 
   // Update the distortion appropriately.
-  this.distorter.recalculateUniforms();
+  this.distorter.updateDeviceInfo(this.deviceInfo);
 
   // And update the HMDVRDevice parameters.
   this.setHMDVRDeviceParams_(viewer);
@@ -3054,7 +3063,7 @@ WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
 WebVRManager.prototype.onDeviceParamsUpdated_ = function(newParams) {
   console.log('DPDB reported that device params were updated.');
   this.deviceInfo.updateDeviceParams(newParams);
-  this.distorter.recalculateUniforms();
+  this.distorter.updateDeviceInfo(this.deviceInfo);
 }
 
 module.exports = WebVRManager;
