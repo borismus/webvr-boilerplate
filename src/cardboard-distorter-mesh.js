@@ -24,8 +24,9 @@ function CardboardDistorter(renderer) {
   };
   this.renderTarget = new THREE.WebGLRenderTarget(512, 512, params);
 
-	this.material = new THREE.MeshBasicMaterial({wireframe: true});
-	//this.material = new THREE.MeshBasicMaterial({map: this.renderTarget});
+	//this.material = new THREE.MeshBasicMaterial({wireframe: true});
+	this.material = new THREE.MeshBasicMaterial({map: this.renderTarget});
+  //this.material = new THREE.MeshBasicMaterial({map: THREE.ImageUtils.loadTexture('img/UV_Grid_Sm.jpg')});
   this.scene = new THREE.Scene();
 
   var geometry = this.createWarpMeshGeometry_();
@@ -96,9 +97,9 @@ CardboardDistorter.prototype.updateDeviceInfo = function(deviceInfo) {
 CardboardDistorter.prototype.createWarpMeshGeometry_ = function() {
 	var distortion = new THREE.Vector2( 0.441, 0.156 );
 
-	var geometry = new THREE.PlaneBufferGeometry( 1, 1, 10, 20 );
+	//var geometry = new THREE.PlaneBufferGeometry( 1, 1, 10, 20 );
 	// Original line, but it doesn't work:
-  // var geometry = new THREE.PlaneBufferGeometry( 1, 1, 10, 20 ).removeAttribute( 'normal' ).toNonIndexed();
+  var geometry = new THREE.PlaneBufferGeometry( 1, 1, 20, 40 ).removeAttribute( 'normal' ).toNonIndexed();
   
 
 	var positions = geometry.attributes.position.array;
@@ -167,43 +168,50 @@ CardboardDistorter.prototype.createWarpMeshGeometry2_ = function(deviceInfo) {
   this.distortion.fromArray(deviceInfo.viewer.distortionCoefficients);
 
   // Calculate the distortion mesh (this is a port of https://goo.gl/LgpmzU).
-  var geometry = new THREE.PlaneBufferGeometry(1, 1, 40, 40);
-  var indices = geometry.index.array;
-  var positions = geometry.attributes.position.array;
-  var uvs = geometry.attributes.uv.array;
+  //var geometry = new THREE.PlaneBufferGeometry(1, 2, 10, 20);
+  var geometry = new THREE.PlaneBufferGeometry(1, 2, 10, 20).removeAttribute('normal').toNonIndexed();
+  var eyePositions = geometry.attributes.position.array;
+  var eyeUvs = geometry.attributes.uv.array;
+
+  // Distortion mesh consists of two eye meshes, each one independent of the
+  // other. So we take the original (half) geometry created above, duplicate it
+  // and translate it.
+	var positions = new Float32Array(eyePositions.length * 2);
+	positions.set(eyePositions);
+	positions.set(eyePositions, eyePositions.length);
+
+	uvs = new Float32Array(eyeUvs.length * 2);
+	uvs.set(eyeUvs);
+	uvs.set(eyeUvs, eyeUvs.length);
 
   // Go through the triangle strip and distort each vertex.
   var vector = new THREE.Vector2();
-  var length = Math.round(indices.length / 3) + 1;
+  var length = uvs.length/2;
   for (var i = 0; i < length; i++) {
-    vector.x = positions[i * 3 + 0];
-    vector.y = positions[i * 3 + 1];
-
-    // Vectors should be in [0, 1]^2.
-    vector.x += 0.5;
-    vector.y += 0.5;
+    vector.x = uvs[i * 2 + 0];
+    vector.y = uvs[i * 2 + 1];
 
     // Now we split screen coordinates into left and right eye coordinates, each
     // into [0, 1]^2.
-    var isLeft = (vector.x < 0.5)
-    var offset = (isLeft ? 0 : 0.5);
-    vector.x = (vector.x - offset) * 2;
+    var isLeft = i < length/2;
+    var uvOffset = (isLeft ? 0 : 0.5);
 
     // Next, apply barrel distortion.
     vector = this.distort_(vector, isLeft);
 
     // Convert from eye into screen coordinates.
-    vector.x = vector.x / 2 + offset;
+    vector.x = vector.x / 2 + uvOffset;
 
-    // We are in [0, 1], but need to ultimately convert to [-1, 1] to cover the
-    // whole orthographic camera frustum.
-    vector.x = (vector.x - 0.5) * 2;
-    vector.y = (vector.y - 0.5) * 2;
+    uvs[i * 2 + 0] = vector.x;
+    uvs[i * 2 + 1] = vector.y;
 
-    positions[i * 3 + 0] = vector.x;
-    positions[i * 3 + 1] = vector.y;
+    var positionOffset = (isLeft ? -0.5 : 0.5);
+    positions[i * 3] = positions[i * 3] + positionOffset;
   }
 
+  // Use both eyes in the final geometry.
+	geometry.attributes.position.array = positions;
+	geometry.attributes.uv.array = uvs;
   return geometry;
 };
 
