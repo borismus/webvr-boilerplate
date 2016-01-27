@@ -68,7 +68,8 @@ function WebVRManager(renderer, effect, params) {
   this.deviceInfo.viewer = DeviceInfo.Viewers[this.viewerSelector.selectedKey];
   console.log('Using the %s viewer.', this.getViewer().label);
 
-  this.distorter = new CardboardDistorter(renderer, this.deviceInfo);
+  this.distorter = new CardboardDistorter(renderer);
+  this.distorter.updateDeviceInfo(this.deviceInfo);
 
   this.isVRCompatible = false;
   this.isFullscreenDisabled = !!Util.getQueryParameter('no_fullscreen');
@@ -453,7 +454,7 @@ WebVRManager.prototype.onViewerChanged_ = function(viewer) {
   this.deviceInfo.setViewer(viewer);
 
   // Update the distortion appropriately.
-  this.distorter.recalculateUniforms();
+  this.distorter.updateDeviceInfo(this.deviceInfo);
 
   // And update the HMDVRDevice parameters.
   this.setHMDVRDeviceParams_(viewer);
@@ -498,7 +499,7 @@ WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
 WebVRManager.prototype.onDeviceParamsUpdated_ = function(newParams) {
   console.log('DPDB reported that device params were updated.');
   this.deviceInfo.updateDeviceParams(newParams);
-  this.distorter.recalculateUniforms();
+  this.distorter.updateDeviceInfo(this.deviceInfo);
 }
 
 module.exports = WebVRManager;

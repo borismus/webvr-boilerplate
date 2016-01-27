@@ -14,6 +14,7 @@
  */
 
 var BarrelDistortion = require('./distortion/barrel-distortion-fragment-v2.js');
+var Util = require('./util.js');
 
 
 function ShaderPass(shader) {
@@ -51,7 +52,7 @@ function createRenderTarget(renderer) {
   return new THREE.WebGLRenderTarget(width, height, parameters);
 }
 
-function CardboardDistorter(renderer, deviceInfo) {
+function CardboardDistorter(renderer) {
   this.shaderPass = new ShaderPass(BarrelDistortion);
   this.renderer = renderer;
 
@@ -59,9 +60,6 @@ function CardboardDistorter(renderer, deviceInfo) {
   this.genuineRender = renderer.render;
   this.genuineSetSize = renderer.setSize;
   this.isActive = false;
-
-  this.deviceInfo = deviceInfo;
-  //this.recalculateUniforms();
 }
 
 CardboardDistorter.prototype.patch = function() {
@@ -115,14 +113,14 @@ CardboardDistorter.prototype.setActive = function(state) {
 /**
  * Updates uniforms.
  */
-CardboardDistorter.prototype.recalculateUniforms = function() {
+CardboardDistorter.prototype.updateDeviceInfo = function(deviceInfo) {
   var uniforms = this.shaderPass.material.uniforms;
 
-  var distortedProj = this.deviceInfo.getProjectionMatrixLeftEye();
-  var undistortedProj = this.deviceInfo.getProjectionMatrixLeftEye(true);
-  var viewport = this.deviceInfo.getUndistortedViewportLeftEye();
+  var distortedProj = deviceInfo.getProjectionMatrixLeftEye();
+  var undistortedProj = deviceInfo.getProjectionMatrixLeftEye(true);
+  var viewport = deviceInfo.getUndistortedViewportLeftEye();
 
-  var device = this.deviceInfo.device;
+  var device = deviceInfo.device;
   var params = {
     xScale: viewport.width / (device.width / 2),
     yScale: viewport.height / device.height,
@@ -131,12 +129,12 @@ CardboardDistorter.prototype.recalculateUniforms = function() {
   }
 
   uniforms.projectionLeft.value.copy(
-      this.projectionMatrixToVector_(distortedProj));
+      Util.projectionMatrixToVector_(distortedProj));
   uniforms.unprojectionLeft.value.copy(
-      this.projectionMatrixToVector_(undistortedProj, params));
+      Util.projectionMatrixToVector_(undistortedProj, params));
 
   // Set distortion coefficients.
-  var coefficients = this.deviceInfo.viewer.distortionCoefficients;
+  var coefficients = deviceInfo.viewer.distortionCoefficients;
   uniforms.distortion.value.set(coefficients[0], coefficients[1]);
       
 
@@ -162,27 +160,6 @@ CardboardDistorter.prototype.setDistortionCoefficients = function(coefficients) 
   var value = new THREE.Vector2(coefficients[0], coefficients[1]);
   this.shaderPass.material.uniforms.distortion.value = value;
   this.shaderPass.material.needsUpdate = true;
-};
-
-/**
- * Utility to convert the projection matrix to a vector accepted by the shader.
- *
- * @param {Object} opt_params A rectangle to scale this vector by.
- */
-CardboardDistorter.prototype.projectionMatrixToVector_ = function(matrix, opt_params) {
-  var params = opt_params || {};
-  var xScale = params.xScale || 1;
-  var yScale = params.yScale || 1;
-  var xTrans = params.xTrans || 0;
-  var yTrans = params.yTrans || 0;
-
-  var elements = matrix.elements;
-  var vec = new THREE.Vector4();
-  vec.set(elements[4*0 + 0] * xScale,
-          elements[4*1 + 1] * yScale,
-          elements[4*2 + 0] - 1 - xTrans,
-          elements[4*2 + 1] - 1 - yTrans).divideScalar(2);
-  return vec;
 };
 
 module.exports = CardboardDistorter;

@@ -3,13 +3,13 @@ var BarrelDistortionFragment = {
 
   
   uniforms: {
-    'texture':   { type: 't', value: null },
-    'distortion': { type: 'v2', value: new THREE.Vector2(0.441, 0.156) },
-    'projectionLeft':    { type: 'v4', value: new THREE.Vector4(1.0, 1.0, -0.5, -0.5) },
-    'unprojectionLeft':  { type: 'v4', value: new THREE.Vector4(1.0, 1.0, -0.5, -0.5) },
-    'backgroundColor': { type: 'v4', value: new THREE.Vector4(0.0, 0.0, 0.0, 1.0) },
-    'showCenter': { type: 'i', value: 0},
-    'dividerColor': { type: 'v4', value: new THREE.Vector4(0.5, 0.5, 0.5, 1.0) },
+    texture:   { type: 't', value: null },
+    distortion: { type: 'v2', value: new THREE.Vector2(0.441, 0.156) },
+    projectionLeft:    { type: 'v4', value: new THREE.Vector4(1.0, 1.0, -0.5, -0.5) },
+    unprojectionLeft:  { type: 'v4', value: new THREE.Vector4(1.0, 1.0, -0.5, -0.5) },
+    backgroundColor: { type: 'v4', value: new THREE.Vector4(0.0, 0.0, 0.0, 1.0) },
+    showCenter: { type: 'i', value: 0},
+    dividerColor: { type: 'v4', value: new THREE.Vector4(0.5, 0.5, 0.5, 1.0) },
   },
 
   vertexShader: [

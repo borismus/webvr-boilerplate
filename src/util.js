@@ -70,4 +70,35 @@ Util.getScreenHeight = function() {
       window.devicePixelRatio;
 };
 
+/**
+ * Utility to convert the projection matrix to a vector accepted by the shader.
+ *
+ * @param {Object} opt_params A rectangle to scale this vector by.
+ */
+Util.projectionMatrixToVector_ = function(matrix, opt_params) {
+  var params = opt_params || {};
+  var xScale = params.xScale || 1;
+  var yScale = params.yScale || 1;
+  var xTrans = params.xTrans || 0;
+  var yTrans = params.yTrans || 0;
+
+  var elements = matrix.elements;
+  var vec = new THREE.Vector4();
+  vec.set(elements[4*0 + 0] * xScale,
+          elements[4*1 + 1] * yScale,
+          elements[4*2 + 0] - 1 - xTrans,
+          elements[4*2 + 1] - 1 - yTrans).divideScalar(2);
+  return vec;
+};
+
+Util.leftProjectionVectorToRight_ = function(left) {
+  //projectionLeft + vec4(0.0, 0.0, 1.0, 0.0)) * vec4(1.0, 1.0, -1.0, 1.0);
+  var out = new THREE.Vector4(0, 0, 1, 0);
+  out.add(left); // out = left + (0, 0, 1, 0).
+  out.z *= -1; // Flip z.
+
+  return out;
+};
+
+
 module.exports = Util;

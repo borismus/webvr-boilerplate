@@ -18,9 +18,8 @@
  */
 var DPDB_CACHE = {
   "format": 1,
-  "last_updated": "2016-01-20T00:18:35Z",
+  "last_updated": "2016-01-26T23:11:18Z",
   "devices": [
-
   {
     "type": "android",
     "rules": [
@@ -31,7 +30,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -42,7 +40,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -53,7 +50,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -64,7 +60,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -75,7 +70,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -86,7 +80,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -97,7 +90,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -108,7 +100,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -119,7 +110,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -130,7 +120,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -141,7 +130,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -152,7 +140,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -163,7 +150,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -174,18 +160,16 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
       { "mdmh": "LGE/*/Nexus 5/*" },
-      { "ua": "Nexus 5 " }
+      { "ua": "Nexus 5 B" }
     ],
     "dpi": [ 442.4, 444.8 ],
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -196,7 +180,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -207,7 +190,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -218,7 +200,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -229,7 +210,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -240,7 +220,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -251,7 +230,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -262,7 +240,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -273,7 +250,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -284,7 +260,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -295,7 +270,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -306,7 +280,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -317,7 +290,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -328,7 +300,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -339,7 +310,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -350,18 +320,16 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
       { "mdmh": "motorola/*/Nexus 6/*" },
-      { "ua": "Nexus 6 " }
+      { "ua": "Nexus 6 B" }
     ],
     "dpi": [ 494.3, 489.7 ],
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -372,7 +340,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -383,7 +350,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -394,7 +360,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -405,7 +370,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -416,7 +380,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -427,7 +390,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -438,7 +400,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -449,7 +410,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -460,7 +420,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -471,7 +430,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -482,7 +440,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -493,7 +450,6 @@ var DPDB_CACHE = {
     "bw": 5,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -504,7 +460,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -515,7 +470,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -526,7 +480,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -537,7 +490,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -548,7 +500,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -559,7 +510,6 @@ var DPDB_CACHE = {
     "bw": 4,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -570,7 +520,6 @@ var DPDB_CACHE = {
     "bw": 5,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -581,7 +530,6 @@ var DPDB_CACHE = {
     "bw": 5,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -592,7 +540,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -603,7 +550,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -614,7 +560,6 @@ var DPDB_CACHE = {
     "bw": 5,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -625,7 +570,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -636,7 +580,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -647,7 +590,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -658,7 +600,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -669,7 +610,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -680,7 +620,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -691,7 +630,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -702,7 +640,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -713,7 +650,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -724,7 +660,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -735,7 +670,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -746,7 +680,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -757,7 +690,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -768,7 +700,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -779,7 +710,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -790,7 +720,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -801,7 +730,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -812,7 +740,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -823,7 +750,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -834,7 +760,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -845,7 +770,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -856,7 +780,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -867,7 +790,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "android",
     "rules": [
@@ -878,7 +800,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -889,7 +810,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
   {
     "type": "android",
     "rules": [
@@ -900,7 +820,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 500
   },
-
   {
     "type": "ios",
     "rules": [ { "res": [ 640, 960 ] } ],
@@ -908,15 +827,6 @@ var DPDB_CACHE = {
     "bw": 4,
     "ac": 1000
   },
-
-  {
-    "type": "ios",
-    "rules": [ { "res": [ 640, 960 ] } ],
-    "dpi": [ 325.1, 328.4 ],
-    "bw": 4,
-    "ac": 1000
-  },
-
   {
     "type": "ios",
     "rules": [ { "res": [ 640, 1136 ] } ],
@@ -924,15 +834,6 @@ var DPDB_CACHE = {
     "bw": 3,
     "ac": 1000
   },
-
-  {
-    "type": "ios",
-    "rules": [ { "res": [ 640, 1136 ] } ],
-    "dpi": [ 317.1, 320.2 ],
-    "bw": 3,
-    "ac": 1000
-  },
-
   {
     "type": "ios",
     "rules": [ { "res": [ 750, 1334 ] } ],
@@ -940,15 +841,6 @@ var DPDB_CACHE = {
     "bw": 4,
     "ac": 1000
   },
-
-  {
-    "type": "ios",
-    "rules": [ { "res": [ 750, 1334 ] } ],
-    "dpi": 326.4,
-    "bw": 4,
-    "ac": 1000
-  },
-
   {
     "type": "ios",
     "rules": [ { "res": [ 1242, 2208 ] } ],
@@ -956,11 +848,10 @@ var DPDB_CACHE = {
     "bw": 4,
     "ac": 1000
   },
-
   {
     "type": "ios",
-    "rules": [ { "res": [ 1242, 2208 ] } ],
-    "dpi": [ 453.6, 458.4 ],
+    "rules": [ { "res": [ 1125, 2001 ] } ],
+    "dpi": [ 410.9, 415.4 ],
     "bw": 4,
     "ac": 1000
   }
