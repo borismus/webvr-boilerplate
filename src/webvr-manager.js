@@ -473,7 +473,8 @@ WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
       return;
     }
     if (hmd.deviceName.indexOf('webvr-polyfill') === -1) {
-      // webvr-polyfill not in use, assume params are provided by browser/WebVR API
+      // The HMDVRDevice is not provided by WebVR Polyfill,
+      // so we assume the browser implements WebVR and has taken care of setting parameters.
       return;
     }
     // If we can set fields of view, do that now.
