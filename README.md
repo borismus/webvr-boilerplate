@@ -46,9 +46,9 @@ The manager handles going in and out of VR mode. Instead of calling
 renders in monocular view by default, or side-by-side binocular view when in VR
 mode.
 
-The polyfill and boilerplate are also available via bower. Easy install:
+The polyfill and boilerplate are also available via npm. Easy install:
 
-    bower install webvr-boilerplate
+    npm install webvr-boilerplate
 
 ## Features and known issues
 
