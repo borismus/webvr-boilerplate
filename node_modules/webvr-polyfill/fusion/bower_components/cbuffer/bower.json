@@ -1,0 +1,9 @@
+{
+  "name": "cbuffer",
+  "version": "1.1.0",
+  "author": "trevnorris",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/trevnorris/cbuffer.git"
+  }
+}

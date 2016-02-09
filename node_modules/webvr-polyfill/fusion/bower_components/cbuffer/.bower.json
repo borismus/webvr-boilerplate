@@ -1,0 +1,20 @@
+{
+  "name": "cbuffer",
+  "version": "1.1.0",
+  "author": "trevnorris",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/trevnorris/cbuffer.git"
+  },
+  "homepage": "https://github.com/trevnorris/cbuffer",
+  "_release": "1.1.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "1.1.0",
+    "commit": "ab3793478cc42700ca44187d2e1f1a0859a34133"
+  },
+  "_source": "git://github.com/trevnorris/cbuffer.git",
+  "_target": "~1.1.0",
+  "_originalSource": "trevnorris/cbuffer",
+  "_direct": true
+}

@@ -1,0 +1,46 @@
+{
+  "name": "mathbox",
+  "version": "0.0.3",
+  "description": "Presentation-quality WebGL math graphing",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/unconed/mathbox.git"
+  },
+  "main": "build/mathbox-bundle.js",
+  "keywords": [
+    "three",
+    "threejs",
+    "three.js",
+    "3D",
+    "webgl",
+    "math",
+    "mathbox",
+    "graph",
+    "graphing"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "*.md",
+    "bower.json",
+    "package.json",
+    "docs",
+    "editor",
+    "examples",
+    "src",
+    "test",
+    "utils",
+    "LICENSE"
+  ],
+  "homepage": "https://github.com/unconed/mathbox",
+  "_release": "0.0.3",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.0.3",
+    "commit": "9b7c2a93cbbab5602456981154bedc6f371d5640"
+  },
+  "_source": "git://github.com/unconed/mathbox.git",
+  "_target": "~0.0.3",
+  "_originalSource": "mathbox",
+  "_direct": true
+}

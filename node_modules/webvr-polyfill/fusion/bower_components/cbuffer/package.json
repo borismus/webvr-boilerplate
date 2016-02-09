@@ -1,0 +1,26 @@
+{
+	"name" : "CBuffer",
+	"version" : "1.1.0",
+	"description" : "Circular Buffer JavaScript implementation",
+	"homepage" : "https://github.com/trevnorris/cbuffer",
+	"main" : "./cbuffer.js",
+	"author" : {
+		"name" : "Trevor Norris",
+		"email" : "trev.norris@gmail.com",
+		"url" : "http://trevorjnorris.com"
+	},
+	"licenses" : [{
+		"type" : "MIT",
+		"url" : "http://www.opensource.org/licenses/mit-license.php"
+	}],
+	"devDependencies" : {
+		"vows" : "latest"
+	},
+	"scripts" : {
+		"test" : "node ./node_modules/.bin/vows"
+	},
+	"repository" : {
+		"type" : "git",
+		"url" : "https://github.com/trevnorris/cbuffer.git"
+	}
+}
