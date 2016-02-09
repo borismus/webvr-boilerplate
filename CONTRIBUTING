@@ -19,6 +19,3 @@ following commands:
     npm version <NEW_VERSION>
     npm publish
     git push
-
-
-#
