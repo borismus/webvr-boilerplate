@@ -98,9 +98,10 @@ function WebVRManager(renderer, effect, params) {
       this.isVRCompatible = true;
     } else if (hmd) {
       this.isVRCompatible = true;
+      this.usingPolyfill = hmd.deviceName.indexOf('webvr-polyfill') == 0;
       // Only enable distortion if we are dealing using the polyfill, we have a
       // perfect device match, and it's not prevented via configuration.
-      if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && this.deviceInfo.getDevice() &&
+      if (this.usingPolyfill && this.deviceInfo.getDevice() &&
           !WebVRConfig.PREVENT_DISTORTION) {
         this.distorter.setActive(true);
       }
@@ -430,13 +431,19 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 
 WebVRManager.prototype.requestFullscreen_ = function() {
   var canvas = document.body;
+  var vrDisplayOptions = {vrDisplay: this.hmd};
   //var canvas = this.renderer.domElement;
   if (canvas.requestFullscreen) {
     canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
-    canvas.mozRequestFullScreen({vrDisplay: this.hmd});
+    // Stable Firefox for Android does not like it when 
+    // you pass in a fake vrDisplay.
+    if (Util.isFirefox() && this.usingPolyfill) {
+      vrDisplayOptions = null;
+    }
+    canvas.mozRequestFullScreen(vrDisplayOptions);
   } else if (canvas.webkitRequestFullscreen) {
-    canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
+    canvas.webkitRequestFullscreen(vrDisplayOptions);
   }
 };
 
