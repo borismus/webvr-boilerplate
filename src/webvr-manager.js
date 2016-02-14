@@ -438,7 +438,7 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   } else if (canvas.mozRequestFullScreen) {
     // Stable Firefox for Android does not like it when 
     // you pass in a fake vrDisplay.
-    if (Util.isFirefox() && this.usingPolyfill) {
+    if (this.usingPolyfill) {
       vrDisplayOptions = null;
     }
     canvas.mozRequestFullScreen(vrDisplayOptions);
