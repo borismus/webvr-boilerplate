@@ -197,6 +197,8 @@ DeviceInfo.prototype.getUndistortedViewportLeftEye = function() {
   var viewer = this.viewer;
   var device = this.device;
 
+  // Distances stored in local variables are in tan-angle units unless otherwise
+  // noted.
   var eyeToScreenDistance = viewer.screenLensDistance;
   var screenWidth = device.widthMeters / eyeToScreenDistance;
   var screenHeight = device.heightMeters / eyeToScreenDistance;

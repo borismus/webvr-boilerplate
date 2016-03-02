@@ -191,6 +191,8 @@ WebVRManager.prototype.getDeviceInfo = function() {
 };
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
+  this.camera = camera;
+
   this.resizeIfNeeded_(camera);
 
   if (this.isVRMode()) {
@@ -360,14 +362,16 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   // Only resize the canvas if it needs to be resized.
   var size = this.renderer.getSize();
   if (size.width != window.innerWidth || size.height != window.innerHeight) {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
     this.resize_();
   }
 };
 
 WebVRManager.prototype.resize_ = function() {
   this.effect.setSize(window.innerWidth, window.innerHeight);
+  if (this.camera) {
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
+  }
 };
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {
@@ -484,12 +488,6 @@ WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
     if (hmd.setInterpupillaryDistance) {
       hmd.setInterpupillaryDistance(viewer.interLensDistance);
     }
-
-    if (hmd.setRenderRect) {
-      // TODO(smus): If we can set the render rect, do it.
-      //var renderRect = this.deviceInfo.getUndistortedViewportLeftEye();
-      //hmd.setRenderRect(renderRect, renderRect);
-    }
   }.bind(this));
 };
 
@@ -497,6 +495,6 @@ WebVRManager.prototype.onDeviceParamsUpdated_ = function(newParams) {
   console.log('DPDB reported that device params were updated.');
   this.deviceInfo.updateDeviceParams(newParams);
   this.distorter.updateDeviceInfo(this.deviceInfo);
-}
+};
 
 module.exports = WebVRManager;
