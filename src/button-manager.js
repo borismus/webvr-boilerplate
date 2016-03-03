@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-var Aligner = require('./aligner.js');
 var Emitter = require('./emitter.js');
 var Modes = require('./modes.js');
 var Util = require('./util.js');
@@ -58,22 +57,7 @@ function ButtonManager() {
   document.body.appendChild(backButton);
   this.backButton = backButton;
 
-  // Make the settings button, but only for mobile.
-  var settingsButton = this.createButton();
-  settingsButton.title = 'Configure viewer';
-  var s = settingsButton.style;
-  s.left = '50%';
-  s.marginLeft = '-24px';
-  s.bottom = 0;
-  s.zIndex = 0;
-  settingsButton.src = this.ICONS.settings;
-  settingsButton.addEventListener('click', this.createClickHandler_('settings'));
-  document.body.appendChild(settingsButton);
-  this.settingsButton = settingsButton;
-
   this.isVisible = true;
-
-  this.aligner = new Aligner();
 
 }
 ButtonManager.prototype = new Emitter();
@@ -113,6 +97,7 @@ ButtonManager.prototype.createButton = function() {
 };
 
 ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
+  isVRCompatible = isVRCompatible || WebVRConfig.FORCE_ENABLE_VR;
   if (!this.isVisible) {
     return;
   }
@@ -122,16 +107,12 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
       this.fsButton.src = this.ICONS.fullscreen;
       this.vrButton.style.display = (isVRCompatible ? 'block' : 'none');
       this.backButton.style.display = 'none';
-      this.settingsButton.style.display = 'none';
-      this.aligner.hide();
       break;
     case Modes.MAGIC_WINDOW:
       this.fsButton.style.display = 'block';
       this.fsButton.src = this.ICONS.exitFullscreen;
       this.vrButton.style.display = (isVRCompatible ? 'block' : 'none');
       this.backButton.style.display = 'block';
-      this.settingsButton.style.display = 'none';
-      this.aligner.hide();
       break;
     case Modes.VR:
       this.fsButton.style.display = 'none';
@@ -139,10 +120,6 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
       // Hack for Firefox, since it doesn't display HTML content correctly in
       // VR at the moment.
       this.backButton.style.display = Util.isFirefox() ? 'none' : 'block';
-      // Only show the settings button on mobile.
-      var isSettingsVisible = Util.isMobile() || WebVRConfig.FORCE_ENABLE_VR;
-      this.settingsButton.style.display = isSettingsVisible ? 'block' : 'none';
-      this.aligner.show();
       break;
   }
 
