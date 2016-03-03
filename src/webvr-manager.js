@@ -136,6 +136,8 @@ function WebVRManager(renderer, effect, params) {
       this.onFullscreenChange_.bind(this));
   document.addEventListener('mozfullscreenchange',
       this.onFullscreenChange_.bind(this));
+  document.addEventListener('MSFullscreenChange',
+      this.onFullscreenChange_.bind(this));
   window.addEventListener('orientationchange',
       this.onOrientationChange_.bind(this));
 
@@ -441,6 +443,8 @@ WebVRManager.prototype.requestFullscreen_ = function() {
     canvas.mozRequestFullScreen({vrDisplay: this.hmd});
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
+  } else if (canvas.msRequestFullscreen) {
+    canvas.msRequestFullscreen({vrDisplay: this.hmd});
   }
 };
 
@@ -451,6 +455,8 @@ WebVRManager.prototype.exitFullscreen_ = function() {
     document.mozCancelFullScreen();
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) {
+    document.msExitFullscreen();
   }
 };
 
