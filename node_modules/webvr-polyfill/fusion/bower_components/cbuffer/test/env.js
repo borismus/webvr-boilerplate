@@ -1,1 +1,0 @@
-CBuffer = require('../cbuffer');

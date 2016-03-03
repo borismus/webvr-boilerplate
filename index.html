@@ -36,7 +36,7 @@ WebVRConfig = {
    */
 
   // Forces availability of VR mode.
-  //FORCE_ENABLE_VR: true, // Default: false.
+  FORCE_ENABLE_VR: true, // Default: false.
   // Complementary filter coefficient. 0 for accelerometer, 1 for gyro.
   //K_FILTER: 0.98, // Default: 0.98.
   // How far into the future to predict during fast motion.
@@ -46,6 +46,8 @@ WebVRConfig = {
   // Enable yaw panning only, disabling roll and pitch. This can be useful for
   // panoramas with nothing interesting above or below.
   //YAW_ONLY: true, // Default: false.
+  // Enables the deprecated (pre-1.0) WebVR API.
+  //ENABLE_DEPRECATED_API: true, // Default: false.
 
   /**
    * webvr-boilerplate configuration
@@ -71,7 +73,7 @@ WebVRConfig = {
 <!--
   three.js 3d library
   -->
-<script src="node_modules/three/three.min.js"></script>
+<script src="node_modules/three/three.js"></script>
 
 <!--
   VRControls.js acquires positional information from connected VR devices and applies the transformations to a three.js camera object.

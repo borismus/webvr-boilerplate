@@ -19,7 +19,9 @@
   "scripts": {
     "build": "browserify src/main.js | derequire > build/webvr-manager.js",
     "watch": "watchify src/main.js -v -d -o build/webvr-manager.js",
-    "test": "browserify test/device-info-test.js  > build/device-info-test.js"
+    "test": "browserify test/device-info-test.js  > build/device-info-test.js",
+    "copy-polyfill": "cp ../webvr-polyfill/build/webvr-polyfill.js node_modules/webvr-polyfill/build/webvr-polyfill.js",
+    "copy-three": "./scripts/copy-three.sh"
   },
   "repository": {
     "type": "git",
