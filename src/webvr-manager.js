@@ -36,9 +36,12 @@ function WebVRManager(renderer, effect, params) {
   // Save the THREE.js renderer and effect for later.
   this.renderer = renderer;
   this.effect = effect;
-  this.button = new ButtonManager();
+  var polyfillWrapper = document.querySelector('.webvr-polyfill-fullscreen-wrapper');
+  this.button = new ButtonManager(polyfillWrapper);
 
-  this.isVRCompatible = false;
+  // Only enable VR mode if we're on a mobile device.
+  this.isVRCompatible = Util.isMobile();
+
   this.isFullscreenDisabled = !!Util.getQueryParameter('no_fullscreen');
   this.startMode = Modes.NORMAL;
   var startModeParam = parseInt(Util.getQueryParameter('start_mode'));
@@ -52,8 +55,6 @@ function WebVRManager(renderer, effect, params) {
 
   // Check if the browser is compatible with WebVR.
   this.getDeviceByType_(VRDisplay).then(function(hmd) {
-    // Only enable VR mode if we're on a mobile device.
-    this.isVRCompatible = Util.isMobile();
     this.hmd = hmd;
 
     this.emit('initialized');
@@ -73,7 +74,6 @@ function WebVRManager(renderer, effect, params) {
   // Hook up button listeners.
   this.button.on('fs', this.onFSClick_.bind(this));
   this.button.on('vr', this.onVRClick_.bind(this));
-  this.button.on('back', this.onBackClick_.bind(this));
 
   document.addEventListener('webkitfullscreenchange',
       this.onFullscreenChange_.bind(this));
