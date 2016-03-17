@@ -426,6 +426,8 @@ function WebVRManager(renderer, effect, params) {
       this.onFullscreenChange_.bind(this));
   window.addEventListener('vrdisplaypresentchange',
       this.onVRDisplayPresentChange_.bind(this));
+  window.addEventListener('vrdisplaydeviceparamschange',
+      this.onVRDisplayDeviceParamsChange_.bind(this));
 }
 
 WebVRManager.prototype = new Emitter();
@@ -583,6 +585,10 @@ WebVRManager.prototype.exitFullscreen_ = function() {
 
 WebVRManager.prototype.onVRDisplayPresentChange_ = function(e) {
   console.log('onVRDisplayPresentChange_', e);
+};
+
+WebVRManager.prototype.onVRDisplayDeviceParamsChange_ = function(e) {
+  console.log('onVRDisplayDeviceParamsChange_', e);
 };
 
 WebVRManager.prototype.onFullscreenChange_ = function(e) {
