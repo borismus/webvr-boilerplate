@@ -1759,7 +1759,7 @@ Dpdb.prototype.recalculateDeviceParams_ = function() {
       this.onDeviceParamsUpdated(this.deviceParams);
     }
   } else {
-    console.error('Failed to recalculate device parameters.');
+    console.warn('Failed to recalculate device parameters.');
   }
 };
 
@@ -2897,7 +2897,7 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   var canvas = document.body;
   //var canvas = this.renderer.domElement;
   if (canvas.requestFullscreen) {
-    canvas.requestFullscreen();
+    canvas.requestFullscreen({vrDisplay: this.hmd});
   } else if (canvas.mozRequestFullScreen) {
     canvas.mozRequestFullScreen({vrDisplay: this.hmd});
   } else if (canvas.webkitRequestFullscreen) {
