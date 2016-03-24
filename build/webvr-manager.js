@@ -2897,7 +2897,7 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   var canvas = document.body;
   //var canvas = this.renderer.domElement;
   if (canvas.requestFullscreen) {
-    canvas.requestFullscreen();
+    canvas.requestFullscreen({vrDisplay: this.hmd});
   } else if (canvas.mozRequestFullScreen) {
     canvas.mozRequestFullScreen({vrDisplay: this.hmd});
   } else if (canvas.webkitRequestFullscreen) {
