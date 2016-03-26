@@ -100,5 +100,4 @@ Util.leftProjectionVectorToRight_ = function(left) {
   return out;
 };
 
-
 module.exports = Util;

@@ -98,7 +98,7 @@ function WebVRManager(renderer, effect, params) {
       this.isVRCompatible = true;
     } else if (hmd) {
       this.isVRCompatible = true;
-      this.usingPolyfill = hmd.deviceName.indexOf('webvr-polyfill') == 0;
+      this.usingPolyfill = hmd.deviceName.indexOf('webvr-polyfill') === 0;
       // Only enable distortion if we are dealing using the polyfill, we have a
       // perfect device match, and it's not prevented via configuration.
       if (this.usingPolyfill && this.deviceInfo.getDevice() &&
@@ -136,6 +136,8 @@ function WebVRManager(renderer, effect, params) {
   document.addEventListener('webkitfullscreenchange',
       this.onFullscreenChange_.bind(this));
   document.addEventListener('mozfullscreenchange',
+      this.onFullscreenChange_.bind(this));
+  document.addEventListener('MSFullscreenChange',
       this.onFullscreenChange_.bind(this));
   window.addEventListener('orientationchange',
       this.onOrientationChange_.bind(this));
@@ -192,6 +194,8 @@ WebVRManager.prototype.getDeviceInfo = function() {
 };
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
+  this.camera = camera;
+
   this.resizeIfNeeded_(camera);
 
   if (this.isVRMode()) {
@@ -343,7 +347,7 @@ WebVRManager.prototype.vrToMagicWindow_ = function() {
 
   // Android bug: when returning from VR, resize the effect.
   this.resize_();
-}
+};
 
 WebVRManager.prototype.anyModeToNormal_ = function() {
   //this.effect.setFullScreen(false);
@@ -361,14 +365,16 @@ WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
   // Only resize the canvas if it needs to be resized.
   var size = this.renderer.getSize();
   if (size.width != window.innerWidth || size.height != window.innerHeight) {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
     this.resize_();
   }
 };
 
 WebVRManager.prototype.resize_ = function() {
   this.effect.setSize(window.innerWidth, window.innerHeight);
+  if (this.camera) {
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
+  }
 };
 
 WebVRManager.prototype.onOrientationChange_ = function(e) {
@@ -431,19 +437,21 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 
 WebVRManager.prototype.requestFullscreen_ = function() {
   var canvas = document.body;
-  var vrDisplayOptions = {vrDisplay: this.hmd};
+  var vrDisplayOptions;
+  // Don't bother passing a fake VR display to requestFullscreen.
+  // (non-WebVR browsers may reject it)
+  if (!this.usingPolyfill) {
+    vrDisplayOptions = {vrDisplay: this.hmd};
+  }
   //var canvas = this.renderer.domElement;
   if (canvas.requestFullscreen) {
-    canvas.requestFullscreen();
+    canvas.requestFullscreen(vrDisplayOptions);
   } else if (canvas.mozRequestFullScreen) {
-    // Stable Firefox for Android does not like it when 
-    // you pass in a fake vrDisplay.
-    if (this.usingPolyfill) {
-      vrDisplayOptions = null;
-    }
     canvas.mozRequestFullScreen(vrDisplayOptions);
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen(vrDisplayOptions);
+  } else if (canvas.msRequestFullscreen) {
+    canvas.msRequestFullscreen(vrDisplayOptions);
   }
 };
 
@@ -454,6 +462,8 @@ WebVRManager.prototype.exitFullscreen_ = function() {
     document.mozCancelFullScreen();
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) {
+    document.msExitFullscreen();
   }
 };
 
@@ -491,12 +501,6 @@ WebVRManager.prototype.setHMDVRDeviceParams_ = function(viewer) {
     if (hmd.setInterpupillaryDistance) {
       hmd.setInterpupillaryDistance(viewer.interLensDistance);
     }
-
-    if (hmd.setRenderRect) {
-      // TODO(smus): If we can set the render rect, do it.
-      //var renderRect = this.deviceInfo.getUndistortedViewportLeftEye();
-      //hmd.setRenderRect(renderRect, renderRect);
-    }
   }.bind(this));
 };
 
@@ -504,6 +508,6 @@ WebVRManager.prototype.onDeviceParamsUpdated_ = function(newParams) {
   console.log('DPDB reported that device params were updated.');
   this.deviceInfo.updateDeviceParams(newParams);
   this.distorter.updateDeviceInfo(this.deviceInfo);
-}
+};
 
 module.exports = WebVRManager;
