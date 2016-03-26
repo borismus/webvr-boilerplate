@@ -98,9 +98,10 @@ function WebVRManager(renderer, effect, params) {
       this.isVRCompatible = true;
     } else if (hmd) {
       this.isVRCompatible = true;
+      this.usingPolyfill = hmd.deviceName.indexOf('webvr-polyfill') === 0;
       // Only enable distortion if we are dealing using the polyfill, we have a
       // perfect device match, and it's not prevented via configuration.
-      if (hmd.deviceName.indexOf('webvr-polyfill') == 0 && this.deviceInfo.getDevice() &&
+      if (this.usingPolyfill && this.deviceInfo.getDevice() &&
           !WebVRConfig.PREVENT_DISTORTION) {
         this.distorter.setActive(true);
       }
@@ -346,7 +347,7 @@ WebVRManager.prototype.vrToMagicWindow_ = function() {
 
   // Android bug: when returning from VR, resize the effect.
   this.resize_();
-}
+};
 
 WebVRManager.prototype.anyModeToNormal_ = function() {
   //this.effect.setFullScreen(false);
@@ -436,15 +437,21 @@ WebVRManager.prototype.releaseOrientationLock_ = function() {
 
 WebVRManager.prototype.requestFullscreen_ = function() {
   var canvas = document.body;
+  var vrDisplayOptions;
+  // Don't bother passing a fake VR display to requestFullscreen.
+  // (non-WebVR browsers may reject it)
+  if (!this.usingPolyfill) {
+    vrDisplayOptions = {vrDisplay: this.hmd};
+  }
   //var canvas = this.renderer.domElement;
   if (canvas.requestFullscreen) {
-    canvas.requestFullscreen({vrDisplay: this.hmd});
+    canvas.requestFullscreen(vrDisplayOptions);
   } else if (canvas.mozRequestFullScreen) {
-    canvas.mozRequestFullScreen({vrDisplay: this.hmd});
+    canvas.mozRequestFullScreen(vrDisplayOptions);
   } else if (canvas.webkitRequestFullscreen) {
-    canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
+    canvas.webkitRequestFullscreen(vrDisplayOptions);
   } else if (canvas.msRequestFullscreen) {
-    canvas.msRequestFullscreen({vrDisplay: this.hmd});
+    canvas.msRequestFullscreen(vrDisplayOptions);
   }
 };
 
