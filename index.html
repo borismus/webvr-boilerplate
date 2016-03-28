@@ -8,7 +8,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<link rel="manifest" href="/manifest.json">
 <style>
 body {
   width: 100%;
@@ -46,20 +45,20 @@ WebVRConfig = {
   // Enable yaw panning only, disabling roll and pitch. This can be useful for
   // panoramas with nothing interesting above or below.
   //YAW_ONLY: true, // Default: false.
-
-  /**
-   * webvr-boilerplate configuration
-   */
-  // Forces distortion in VR mode.
-  //FORCE_DISTORTION: true, // Default: false.
-  // Override the distortion background color.
-  // DISTORTION_BGCOLOR: {x: 1, y: 0, z: 0, w: 1}, // Default: (0,0,0,1).
-  // Prevent distortion from happening.
-  //PREVENT_DISTORTION: true, // Default: false.
-  // Show eye centers for debugging.
-  // SHOW_EYE_CENTERS: true, // Default: false.
-  // Prevent the online DPDB from being fetched.
-  // NO_DPDB_FETCH: true,  // Default: false.
+  // Enable the deprecated version of the API (navigator.getVRDevices).
+  //ENABLE_DEPRECATED_API: true, // Default: false.
+  // Scales the recommended buffer size reported by WebVR, which can improve
+  // performance. Making this very small can lower the effective resolution of
+  // your scene.
+  BUFFER_SCALE: 0.5, // default: 1.0
+  // Allow VRDisplay.submitFrame to change gl bindings, which is more
+  // efficient if the application code will re-bind it's resources on the
+  // next frame anyway.
+  // Dirty bindings include: gl.FRAMEBUFFER_BINDING, gl.CURRENT_PROGRAM,
+  // gl.ARRAY_BUFFER_BINDING, gl.ELEMENT_ARRAY_BUFFER_BINDING,
+  // and gl.TEXTURE_BINDING_2D for texture unit 0
+  // Warning: enabling this might lead to rendering issues.
+  //DIRTY_SUBMIT_FRAME_BINDINGS: true // default: false
 };
 </script>
 
@@ -71,7 +70,7 @@ WebVRConfig = {
 <!--
   three.js 3d library
   -->
-<script src="node_modules/three/three.min.js"></script>
+<script src="node_modules/three/three.js"></script>
 
 <!--
   VRControls.js acquires positional information from connected VR devices and applies the transformations to a three.js camera object.

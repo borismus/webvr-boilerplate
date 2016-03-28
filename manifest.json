@@ -1,7 +1,0 @@
-{
-  "short_name": "WebVR Boilerplate",
-  "name": "WebVR Boilerplate",
-  "start_url": "/index.html",
-  "display": "fullscreen",
-  "orientation": "landscape"
-}
