@@ -29,6 +29,16 @@ THREE.Vector3.prototype = {
 
 	},
 
+	setScalar: function ( scalar ) {
+
+		this.x = scalar;
+		this.y = scalar;
+		this.z = scalar;
+
+		return this;
+
+	},
+
 	setX: function ( x ) {
 
 		this.x = x;
@@ -199,13 +209,17 @@ THREE.Vector3.prototype = {
 	multiplyScalar: function ( scalar ) {
 
 		if ( isFinite( scalar ) ) {
+
 			this.x *= scalar;
 			this.y *= scalar;
 			this.z *= scalar;
+
 		} else {
+
 			this.x = 0;
 			this.y = 0;
 			this.z = 0;
+
 		}
 
 		return this;
@@ -230,7 +244,7 @@ THREE.Vector3.prototype = {
 
 			if ( euler instanceof THREE.Euler === false ) {
 
-				console.error( 'THREE.Vector3: .applyEuler() now expects a Euler rotation rather than a Vector3 and order.' );
+				console.error( 'THREE.Vector3: .applyEuler() now expects an Euler rotation rather than a Vector3 and order.' );
 
 			}
 
@@ -632,7 +646,7 @@ THREE.Vector3.prototype = {
 
 			return this.sub( v1 );
 
-		}
+		};
 
 	}(),
 
@@ -649,13 +663,13 @@ THREE.Vector3.prototype = {
 
 			return this.sub( v1.copy( normal ).multiplyScalar( 2 * this.dot( normal ) ) );
 
-		}
+		};
 
 	}(),
 
 	angleTo: function ( v ) {
 
-		var theta = this.dot( v ) / ( this.length() * v.length() );
+		var theta = this.dot( v ) / ( Math.sqrt( this.lengthSq() * v.lengthSq() ) );
 
 		// clamp, to handle numerical problems
 
@@ -679,57 +693,29 @@ THREE.Vector3.prototype = {
 
 	},
 
-	setEulerFromRotationMatrix: function ( m, order ) {
+	setFromSpherical: function( s ) {
 
-		console.error( 'THREE.Vector3: .setEulerFromRotationMatrix() has been removed. Use Euler.setFromRotationMatrix() instead.' );
+		var sinPhiRadius = Math.sin( s.phi ) * s.radius;
 
-	},
-
-	setEulerFromQuaternion: function ( q, order ) {
-
-		console.error( 'THREE.Vector3: .setEulerFromQuaternion() has been removed. Use Euler.setFromQuaternion() instead.' );
-
-	},
-
-	getPositionFromMatrix: function ( m ) {
-
-		console.warn( 'THREE.Vector3: .getPositionFromMatrix() has been renamed to .setFromMatrixPosition().' );
-
-		return this.setFromMatrixPosition( m );
-
-	},
-
-	getScaleFromMatrix: function ( m ) {
-
-		console.warn( 'THREE.Vector3: .getScaleFromMatrix() has been renamed to .setFromMatrixScale().' );
-
-		return this.setFromMatrixScale( m );
-
-	},
-
-	getColumnFromMatrix: function ( index, matrix ) {
-
-		console.warn( 'THREE.Vector3: .getColumnFromMatrix() has been renamed to .setFromMatrixColumn().' );
-
-		return this.setFromMatrixColumn( index, matrix );
-
-	},
-
-	setFromMatrixPosition: function ( m ) {
-
-		this.x = m.elements[ 12 ];
-		this.y = m.elements[ 13 ];
-		this.z = m.elements[ 14 ];
+		this.x = sinPhiRadius * Math.sin( s.theta );
+		this.y = Math.cos( s.phi ) * s.radius;
+		this.z = sinPhiRadius * Math.cos( s.theta );
 
 		return this;
 
 	},
 
+	setFromMatrixPosition: function ( m ) {
+
+		return this.setFromMatrixColumn( m, 3 );
+
+	},
+
 	setFromMatrixScale: function ( m ) {
 
-		var sx = this.set( m.elements[ 0 ], m.elements[ 1 ], m.elements[ 2 ] ).length();
-		var sy = this.set( m.elements[ 4 ], m.elements[ 5 ], m.elements[ 6 ] ).length();
-		var sz = this.set( m.elements[ 8 ], m.elements[ 9 ], m.elements[ 10 ] ).length();
+		var sx = this.setFromMatrixColumn( m, 0 ).length();
+		var sy = this.setFromMatrixColumn( m, 1 ).length();
+		var sz = this.setFromMatrixColumn( m, 2 ).length();
 
 		this.x = sx;
 		this.y = sy;
@@ -739,17 +725,18 @@ THREE.Vector3.prototype = {
 
 	},
 
-	setFromMatrixColumn: function ( index, matrix ) {
+	setFromMatrixColumn: function ( m, index ) {
 
-		var offset = index * 4;
+		if ( typeof m === 'number' ) {
 
-		var me = matrix.elements;
+			console.warn( 'THREE.Vector3: setFromMatrixColumn now expects ( matrix, index ).' );
 
-		this.x = me[ offset ];
-		this.y = me[ offset + 1 ];
-		this.z = me[ offset + 2 ];
+			m = arguments[ 1 ];
+			index = arguments[ 0 ];
 
-		return this;
+		}
+
+		return this.fromArray( m.elements, index * 4 );
 
 	},
 

@@ -2,91 +2,17 @@
  * @author mrdoob / http://mrdoob.com/
  */
 
-var THREE = { REVISION: '73' };
+var THREE = { REVISION: '75' };
 
 //
 
 if ( typeof define === 'function' && define.amd ) {
 
-		define( 'three', THREE );
+	define( 'three', THREE );
 
 } else if ( 'undefined' !== typeof exports && 'undefined' !== typeof module ) {
 
-		module.exports = THREE;
-
-}
-
-
-// polyfills
-
-if ( self.requestAnimationFrame === undefined || self.cancelAnimationFrame === undefined ) {
-
-	// Missing in Android stock browser.
-
-	( function () {
-
-		var lastTime = 0;
-		var vendors = [ 'ms', 'moz', 'webkit', 'o' ];
-
-		for ( var x = 0; x < vendors.length && ! self.requestAnimationFrame; ++ x ) {
-
-			self.requestAnimationFrame = self[ vendors[ x ] + 'RequestAnimationFrame' ];
-			self.cancelAnimationFrame = self[ vendors[ x ] + 'CancelAnimationFrame' ] || self[ vendors[ x ] + 'CancelRequestAnimationFrame' ];
-
-		}
-
-		if ( self.requestAnimationFrame === undefined && self.setTimeout !== undefined ) {
-
-			self.requestAnimationFrame = function ( callback ) {
-
-				var currTime = Date.now(), timeToCall = Math.max( 0, 16 - ( currTime - lastTime ) );
-				var id = self.setTimeout( function () {
-
-					callback( currTime + timeToCall );
-
-				}, timeToCall );
-				lastTime = currTime + timeToCall;
-				return id;
-
-			};
-
-		}
-
-		if ( self.cancelAnimationFrame === undefined && self.clearTimeout !== undefined ) {
-
-			self.cancelAnimationFrame = function ( id ) {
-
-				self.clearTimeout( id );
-
-			};
-
-		}
-
-	} )();
-
-}
-
-//
-
-if ( self.performance === undefined ) {
-
-	self.performance = {};
-
-}
-
-if ( self.performance.now === undefined ) {
-
-	( function () {
-
-		var start = Date.now();
-
-		self.performance.now = function () {
-
-			return Date.now() - start;
-
-		}
-
-	} )();
+	module.exports = THREE;
 
 }
 
@@ -94,7 +20,7 @@ if ( self.performance.now === undefined ) {
 
 if ( Number.EPSILON === undefined ) {
 
-	Number.EPSILON = Math.pow( 2, -52 );
+	Number.EPSILON = Math.pow( 2, - 52 );
 
 }
 
@@ -122,6 +48,60 @@ if ( Function.prototype.name === undefined && Object.defineProperty !== undefine
 		get: function () {
 
 			return this.toString().match( /^\s*function\s*(\S*)\s*\(/ )[ 1 ];
+
+		}
+
+	} );
+
+}
+
+if ( Object.assign === undefined ) {
+
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+
+	Object.defineProperty( Object, 'assign', {
+
+		writable: true,
+		configurable: true,
+
+		value: function ( target ) {
+
+			'use strict';
+
+			if ( target === undefined || target === null ) {
+
+				throw new TypeError( "Cannot convert first argument to object" );
+
+			}
+
+			var to = Object( target );
+
+			for ( var i = 1, n = arguments.length; i !== n; ++ i ) {
+
+				var nextSource = arguments[ i ];
+
+				if ( nextSource === undefined || nextSource === null ) continue;
+
+				nextSource = Object( nextSource );
+
+				var keysArray = Object.keys( nextSource );
+
+				for ( var nextIndex = 0, len = keysArray.length; nextIndex !== len; ++ nextIndex ) {
+
+					var nextKey = keysArray[ nextIndex ];
+					var desc = Object.getOwnPropertyDescriptor( nextSource, nextKey );
+
+					if ( desc !== undefined && desc.enumerable ) {
+
+						to[ nextKey ] = nextSource[ nextKey ];
+
+					}
+
+				}
+
+			}
+
+			return to;
 
 		}
 
@@ -228,6 +208,14 @@ THREE.MultiplyOperation = 0;
 THREE.MixOperation = 1;
 THREE.AddOperation = 2;
 
+// Tone Mapping modes
+
+THREE.NoToneMapping = 0; // do not do any tone mapping, not even exposure (required for special purpose passes.)
+THREE.LinearToneMapping = 1; // only apply exposure.
+THREE.ReinhardToneMapping = 2;
+THREE.Uncharted2ToneMapping = 3; // John Hable
+THREE.CineonToneMapping = 4;  // optimized filmic operator by Jim Hejl and Richard Burgess-Dawson
+
 // Mapping modes
 
 THREE.UVMapping = 300;
@@ -239,6 +227,8 @@ THREE.EquirectangularReflectionMapping = 303;
 THREE.EquirectangularRefractionMapping = 304;
 
 THREE.SphericalReflectionMapping = 305;
+THREE.CubeUVReflectionMapping = 306;
+THREE.CubeUVRefractionMapping = 307;
 
 // Wrapping modes
 
@@ -298,48 +288,44 @@ THREE.RGB_PVRTC_2BPPV1_Format = 2101;
 THREE.RGBA_PVRTC_4BPPV1_Format = 2102;
 THREE.RGBA_PVRTC_2BPPV1_Format = 2103;
 
+// ETC compressed texture formats
+
+THREE.RGB_ETC1_Format = 2151;
+
 // Loop styles for AnimationAction
 
 THREE.LoopOnce = 2200;
 THREE.LoopRepeat = 2201;
 THREE.LoopPingPong = 2202;
 
-// DEPRECATED
+// Interpolation
 
-THREE.Projector = function () {
+THREE.InterpolateDiscrete = 2300;
+THREE.InterpolateLinear = 2301;
+THREE.InterpolateSmooth = 2302;
 
-	console.error( 'THREE.Projector has been moved to /examples/js/renderers/Projector.js.' );
+// Interpolant ending modes
 
-	this.projectVector = function ( vector, camera ) {
+THREE.ZeroCurvatureEnding = 2400;
+THREE.ZeroSlopeEnding = 2401;
+THREE.WrapAroundEnding = 2402;
 
-		console.warn( 'THREE.Projector: .projectVector() is now vector.project().' );
-		vector.project( camera );
+// Triangle Draw modes
 
-	};
+THREE.TrianglesDrawMode = 0;
+THREE.TriangleStripDrawMode = 1;
+THREE.TriangleFanDrawMode = 2;
 
-	this.unprojectVector = function ( vector, camera ) {
+// Texture Encodings
 
-		console.warn( 'THREE.Projector: .unprojectVector() is now vector.unproject().' );
-		vector.unproject( camera );
+THREE.LinearEncoding = 3000; // No encoding at all.
+THREE.sRGBEncoding = 3001;
+THREE.GammaEncoding = 3007; // uses GAMMA_FACTOR, for backwards compatibility with WebGLRenderer.gammaInput/gammaOutput
 
-	};
-
-	this.pickingRay = function ( vector, camera ) {
-
-		console.error( 'THREE.Projector: .pickingRay() is now raycaster.setFromCamera().' );
-
-	};
-
-};
-
-THREE.CanvasRenderer = function () {
-
-	console.error( 'THREE.CanvasRenderer has been moved to /examples/js/renderers/CanvasRenderer.js' );
-
-	this.domElement = document.createElement( 'canvas' );
-	this.clear = function () {};
-	this.render = function () {};
-	this.setClearColor = function () {};
-	this.setSize = function () {};
-
-};
+// The following Texture Encodings are for RGB-only (no alpha) HDR light emission sources.
+// These encodings should not specified as output encodings except in rare situations.
+THREE.RGBEEncoding = 3002; // AKA Radiance.
+THREE.LogLuvEncoding = 3003;
+THREE.RGBM7Encoding = 3004;
+THREE.RGBM16Encoding = 3005;
+THREE.RGBDEncoding = 3006; // MaxRange is 256.

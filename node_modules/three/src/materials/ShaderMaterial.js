@@ -9,9 +9,6 @@
  *  vertexShader: <string>,
  *
  *  shading: THREE.SmoothShading,
- *  blending: THREE.NormalBlending,
- *  depthTest: <bool>,
- *  depthWrite: <bool>,
  *
  *  wireframe: <boolean>,
  *  wireframeLinewidth: <float>,
@@ -58,7 +55,12 @@ THREE.ShaderMaterial = function ( parameters ) {
 	this.morphTargets = false; // set to use morph targets
 	this.morphNormals = false; // set to use morph normals
 
-	this.derivatives = false; // set to use derivatives
+	this.extensions = {
+		derivatives: false, // set to use derivatives
+		fragDepth: false, // set to use fragment depth values
+		drawBuffers: false, // set to use draw buffers
+		shaderTextureLOD: false // set to use shader texture LOD
+	};
 
 	// When rendered geometry doesn't include these attributes but the material does,
 	// use these default values in WebGL. This avoids errors when buffer data is missing.
@@ -96,7 +98,6 @@ THREE.ShaderMaterial.prototype.copy = function ( source ) {
 
 	this.uniforms = THREE.UniformsUtils.clone( source.uniforms );
 
-	this.attributes = source.attributes;
 	this.defines = source.defines;
 
 	this.shading = source.shading;
@@ -115,7 +116,7 @@ THREE.ShaderMaterial.prototype.copy = function ( source ) {
 	this.morphTargets = source.morphTargets;
 	this.morphNormals = source.morphNormals;
 
-	this.derivatives = source.derivatives;
+	this.extensions = source.extensions;
 
 	return this;
 
@@ -126,7 +127,6 @@ THREE.ShaderMaterial.prototype.toJSON = function ( meta ) {
 	var data = THREE.Material.prototype.toJSON.call( this, meta );
 
 	data.uniforms = this.uniforms;
-	data.attributes = this.attributes;
 	data.vertexShader = this.vertexShader;
 	data.fragmentShader = this.fragmentShader;
 

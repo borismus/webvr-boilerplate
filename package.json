@@ -8,8 +8,8 @@
   },
   "dependencies": {
     "es6-promise": "^3.0.2",
-    "webvr-polyfill": "^0.2.4",
-    "three": "^0.73"
+    "webvr-polyfill": "^0.9.0",
+    "three": "^0.75"
   },
   "devDependencies": {
     "browserify": "latest",

@@ -33,6 +33,8 @@ THREE.PointsMaterial = function ( parameters ) {
 	this.size = 1;
 	this.sizeAttenuation = true;
 
+	this.blending = THREE.NormalBlending;
+
 	this.vertexColors = THREE.NoColors;
 
 	this.fog = true;
@@ -60,28 +62,5 @@ THREE.PointsMaterial.prototype.copy = function ( source ) {
 	this.fog = source.fog;
 
 	return this;
-
-};
-
-// backwards compatibility
-
-THREE.PointCloudMaterial = function ( parameters ) {
-
-	console.warn( 'THREE.PointCloudMaterial has been renamed to THREE.PointsMaterial.' );
-	return new THREE.PointsMaterial( parameters );
-
-};
-
-THREE.ParticleBasicMaterial = function ( parameters ) {
-
-	console.warn( 'THREE.ParticleBasicMaterial has been renamed to THREE.PointsMaterial.' );
-	return new THREE.PointsMaterial( parameters );
-
-};
-
-THREE.ParticleSystemMaterial = function ( parameters ) {
-
-	console.warn( 'THREE.ParticleSystemMaterial has been renamed to THREE.PointsMaterial.' );
-	return new THREE.PointsMaterial( parameters );
 
 };
