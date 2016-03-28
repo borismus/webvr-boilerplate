@@ -75,12 +75,15 @@ function WebVRManager(renderer, effect, params) {
   this.button.on('fs', this.onFSClick_.bind(this));
   this.button.on('vr', this.onVRClick_.bind(this));
 
+  // Bind to fullscreen events.
   document.addEventListener('webkitfullscreenchange',
       this.onFullscreenChange_.bind(this));
   document.addEventListener('mozfullscreenchange',
       this.onFullscreenChange_.bind(this));
   document.addEventListener('msfullscreenchange',
       this.onFullscreenChange_.bind(this));
+
+  // Bind to VR* specific events.
   window.addEventListener('vrdisplaypresentchange',
       this.onVRDisplayPresentChange_.bind(this));
   window.addEventListener('vrdisplaydeviceparamschange',
@@ -118,10 +121,6 @@ WebVRManager.prototype.isVRMode = function() {
 };
 
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
-  this.camera = camera;
-
-  this.resizeIfNeeded_(camera);
-
   // Scene may be an array of two scenes, one for each eye.
   if (scene instanceof Array) {
     this.effect.render(scene[0], camera);
@@ -200,22 +199,6 @@ WebVRManager.prototype.onBackClick_ = function() {
   }
   this.setMode_(Modes.NORMAL);
   this.exitFullscreen_();
-};
-
-WebVRManager.prototype.resizeIfNeeded_ = function(camera) {
-  // Only resize the canvas if it needs to be resized.
-  var size = this.renderer.getSize();
-  if (size.width != window.innerWidth || size.height != window.innerHeight) {
-    this.resize_();
-  }
-};
-
-WebVRManager.prototype.resize_ = function() {
-  this.effect.setSize(window.innerWidth, window.innerHeight);
-  if (this.camera) {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
-    this.camera.updateProjectionMatrix();
-  }
 };
 
 WebVRManager.prototype.requestFullscreen_ = function() {

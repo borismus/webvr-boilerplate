@@ -178,14 +178,14 @@ function animate(timestamp) {
 // Kick off animation loop
 animate(performance ? performance.now() : Date.now());
 
-// Reset the position sensor when 'z' pressed.
-function onKey(event) {
-  if (event.keyCode == 90) { // z
-    controls.resetSensor();
-  }
+function onResize(e) {
+  effect.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
 }
 
-window.addEventListener('keydown', onKey, true);
+window.addEventListener('resize', onResize, true);
+window.addEventListener('vrdisplaypresentchange', onResize, true);
 
 </script>
 
