@@ -565,11 +565,13 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   var canvas = document.body;
   //var canvas = this.renderer.domElement;
   if (canvas.requestFullscreen) {
-    canvas.requestFullscreen();
+    canvas.requestFullscreen({vrDisplay: this.hmd});
   } else if (canvas.mozRequestFullScreen) {
     canvas.mozRequestFullScreen();
   } else if (canvas.webkitRequestFullscreen) {
-    canvas.webkitRequestFullscreen();
+    canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
+  } else if (canvas.msRequestFullscreen) {
+    canvas.msRequestFullscreen({vrDisplay: this.hmd});
   }
 };
 
@@ -580,6 +582,8 @@ WebVRManager.prototype.exitFullscreen_ = function() {
     document.mozCancelFullScreen();
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) {
+    document.msExitFullscreen();
   }
 };
 

@@ -227,6 +227,8 @@ WebVRManager.prototype.requestFullscreen_ = function() {
     canvas.mozRequestFullScreen();
   } else if (canvas.webkitRequestFullscreen) {
     canvas.webkitRequestFullscreen();
+  } else if (canvas.msRequestFullscreen) {
+    canvas.msRequestFullscreen();
   }
 };
 
@@ -237,6 +239,8 @@ WebVRManager.prototype.exitFullscreen_ = function() {
     document.mozCancelFullScreen();
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) {
+    document.msExitFullscreen();
   }
 };
 
