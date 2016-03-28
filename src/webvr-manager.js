@@ -116,10 +116,6 @@ WebVRManager.prototype.getDeviceByType_ = function(type) {
   });
 };
 
-WebVRManager.prototype.isVRMode = function() {
-  return this.mode == Modes.VR;
-};
-
 WebVRManager.prototype.render = function(scene, camera, timestamp) {
   // Scene may be an array of two scenes, one for each eye.
   if (scene instanceof Array) {
@@ -189,18 +185,6 @@ WebVRManager.prototype.onVRClick_ = function() {
   this.setMode_(Modes.VR);
 };
 
-/**
- * Back button was clicked.
- */
-WebVRManager.prototype.onBackClick_ = function() {
-  if (this.isFullscreenDisabled) {
-    window.history.back();
-    return;
-  }
-  this.setMode_(Modes.NORMAL);
-  this.exitFullscreen_();
-};
-
 WebVRManager.prototype.requestFullscreen_ = function() {
   var canvas = document.body;
   //var canvas = this.renderer.domElement;
@@ -229,6 +213,11 @@ WebVRManager.prototype.exitFullscreen_ = function() {
 
 WebVRManager.prototype.onVRDisplayPresentChange_ = function(e) {
   console.log('onVRDisplayPresentChange_', e);
+  if (this.hmd.isPresenting) {
+    this.setMode_(Modes.VR);
+  } else {
+    this.setMode_(Modes.NORMAL);
+  }
 };
 
 WebVRManager.prototype.onVRDisplayDeviceParamsChange_ = function(e) {
