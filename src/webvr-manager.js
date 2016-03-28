@@ -222,13 +222,13 @@ WebVRManager.prototype.requestFullscreen_ = function() {
   var canvas = document.body;
   //var canvas = this.renderer.domElement;
   if (canvas.requestFullscreen) {
-    canvas.requestFullscreen({vrDisplay: this.hmd});
+    canvas.requestFullscreen();
   } else if (canvas.mozRequestFullScreen) {
     canvas.mozRequestFullScreen();
   } else if (canvas.webkitRequestFullscreen) {
-    canvas.webkitRequestFullscreen({vrDisplay: this.hmd});
+    canvas.webkitRequestFullscreen();
   } else if (canvas.msRequestFullscreen) {
-    canvas.msRequestFullscreen({vrDisplay: this.hmd});
+    canvas.msRequestFullscreen();
   }
 };
 
