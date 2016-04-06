@@ -5,7 +5,7 @@ both Google Cardboard and other VR headsets. Also provides a fallback for
 experiencing the same content without requiring a VR device.
 
 This project relies heavily on the [webvr-polyfill][polyfill] to provide VR
-support if the WebVR spec is not implemented.
+support if the [WebVR API](spec) is not implemented.
 
 [three]: http://threejs.org/
 [polyfill]: https://github.com/borismus/webvr-polyfill
@@ -14,7 +14,7 @@ support if the WebVR spec is not implemented.
 
 Assorted platforms:
 
-- [Aframe](https://github.com/aframevr/aframe/) - Building blocks for the
+- [A-Frame](https://github.com/aframevr/aframe/) - Building blocks for the
 virtual reality web
 - [Archilogic](http://spaces.archilogic.com/3d/template/new?mode=edit&view-menu=none) - Floor plans into 3D virtual tours
 - [Vizor](http://vizor.io/) - Create and share VR in your browser
@@ -28,13 +28,13 @@ Assorted real-world examples:
 
 Assorted samples:
 
-- [WebVR 1.0 Samples](http://toji.github.io/webvr-samples/) - Simple example applications to demonstrate various aspects of the WebVR API.
+- [WebVR 1.0 Samples](https://toji.github.io/webvr-samples/) - Simple example applications to demonstrate various aspects of the WebVR API
 
 
 ## Features
 
 As of WebVR 1.0, this project relies on the polyfill for even more. Core
-features like lens distortion and device detection have moved into the polyfill.
+features like [lens distortion][distortion] and device detection have moved into the polyfill.
 This project now acts as a getting started example, and provides a reasonable
 user experience for getting in and out of Virtual Reality and Magic Window
 modes.
@@ -56,15 +56,15 @@ The boilerplate is also available via npm. Easy install:
 ## Thanks
 
 - [Brandon Jones][bj] and [Vladimir Vukicevic][vv] for their work on the [WebVR
-  spec][spec]
+  spec][spec].
 - [Ricardo Cabello][doob] for THREE.js.
 - [Diego Marcos][dm] for VREffect and VRControls.
 - [Dmitry Kovalev][dk] for help with [lens distortion correction][distortion].
 
 [dk]: https://plus.google.com/+DmitryKovalev1
-[distortion]: https://github.com/borismus/webvr-boilerplate/blob/master/src/cardboard-distorter.js
+[distortion]: https://github.com/borismus/webvr-polyfill/blob/master/src/distortion/distortion.js
 [bj]: https://twitter.com/tojiro
 [vv]: https://twitter.com/vvuk
-[spec]: http://mozvr.github.io/webvr-spec/webvr.html
+[spec]: https://mozvr.github.io/webvr-spec/
 [dm]: https://twitter.com/dmarcos
 [doob]: https://twitter.com/mrdoob
