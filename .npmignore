@@ -11,6 +11,7 @@
 Session.vim
 [._]*.s[a-w][a-z]
 [._]s[a-w][a-z]
+examples
 logs
 node_modules
 pids
