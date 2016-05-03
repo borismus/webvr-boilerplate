@@ -7,8 +7,8 @@
     "test": "test"
   },
   "dependencies": {
-    "webvr-polyfill": "^0.9.0",
-    "three": "^0.75"
+    "three": "^0.75.0",
+    "webvr-polyfill": "^0.9.5"
   },
   "devDependencies": {
     "browserify": "latest",
@@ -17,7 +17,7 @@
   },
   "scripts": {
     "build": "browserify src/main.js | derequire > build/webvr-manager.js",
-    "watch": "watchify src/main.js -v -d -o build/webvr-manager.js",
+    "watch": "watchify src/main.js -v -d -o 'derequire > build/webvr-manager.js'",
     "test": "browserify test/device-info-test.js  > build/device-info-test.js",
     "copy-polyfill": "cp ../webvr-polyfill/build/webvr-polyfill.js node_modules/webvr-polyfill/build/webvr-polyfill.js",
     "copy-three": "./scripts/copy-three.sh"

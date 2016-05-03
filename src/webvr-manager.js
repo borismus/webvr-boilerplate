@@ -31,7 +31,7 @@ function WebVRManager(renderer, effect, params) {
   // Whether or not the FOV should be distorted or un-distorted. By default, it
   // should be distorted, but in the case of vertex shader based distortion,
   // ensure that we use undistorted parameters.
-  this.isUndistorted = !!this.params.isUndistorted;
+  this.predistorted = !!this.params.predistorted;
 
   // Save the THREE.js renderer and effect for later.
   this.renderer = renderer;
@@ -57,19 +57,20 @@ function WebVRManager(renderer, effect, params) {
   this.getDeviceByType_(VRDisplay).then(function(hmd) {
     this.hmd = hmd;
 
+    switch (this.startMode) {
+      case Modes.MAGIC_WINDOW:
+        this.setMode_(Modes.MAGIC_WINDOW);
+        break;
+      case Modes.VR:
+        this.enterVRMode_();
+        this.setMode_(Modes.VR);
+        break;
+      default:
+        this.setMode_(Modes.NORMAL);
+    }
+
     this.emit('initialized');
   }.bind(this));
-
-  switch (this.startMode) {
-    case Modes.MAGIC_WINDOW:
-      this.setMode_(Modes.MAGIC_WINDOW);
-      break;
-    case Modes.VR:
-      this.setMode_(Modes.VR);
-      break;
-    default:
-      this.setMode_(Modes.NORMAL);
-  }
 
   // Hook up button listeners.
   this.button.on('fs', this.onFSClick_.bind(this));
@@ -125,10 +126,20 @@ WebVRManager.prototype.render = function(scene, camera, timestamp) {
   }
 };
 
+/**
+ * Helper for entering VR mode.
+ */
+WebVRManager.prototype.enterVRMode_ = function() {
+  this.hmd.requestPresent({
+    source: this.renderer.domElement,
+    predistorted: this.predistorted
+  });
+};
+
 WebVRManager.prototype.setMode_ = function(mode) {
   var oldMode = this.mode;
   if (mode == this.mode) {
-    console.error('Not changing modes, already in %s', mode);
+    console.warn('Not changing modes, already in %s', mode);
     return;
   }
   console.log('Mode change: %s => %s', this.mode, mode);
@@ -181,11 +192,7 @@ WebVRManager.prototype.onVRClick_ = function() {
     top.location.href = url;
     return;
   }
-  this.hmd.requestPresent({
-    source: this.renderer.domElement,
-    predistorted: this.isUndistorted
-  });
-  this.setMode_(Modes.VR);
+  this.enterVRMode_();
 };
 
 WebVRManager.prototype.requestFullscreen_ = function() {
