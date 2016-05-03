@@ -15,7 +15,7 @@
 
 var PositionSensorVRDevice = require('./base.js').PositionSensorVRDevice;
 var headtrackr = require('./deps/headtrackr.js');
-var THREE = require('./three-math.js');
+var MathUtil = require('./math-util.js');
 
 // What's the range of the position changes? Use 1m for now.
 var X_SCALE = 2;
@@ -26,7 +26,7 @@ function WebcamPositionSensorVRDevice() {
   this.deviceId = 'webvr-polyfill:webcam';
   this.deviceName = 'VR Position Device (webvr-polyfill:webcam)';
 
-  this.position = new THREE.Vector3();
+  this.position = new MathUtil.Vector3();
 
   var videoInput = document.createElement('video');
   videoInput.autoplay = true;

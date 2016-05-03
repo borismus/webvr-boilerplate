@@ -142,7 +142,7 @@ WebVRPolyfill.prototype.getVRDevices = function() {
           return (navigator.getVRDDevices || navigator.mozGetVRDevices)(function(devices) {
             for (var i = 0; i < devices.length; ++i) {
               if (devices[i] instanceof HMDVRDevice) {
-                self.devices.push(displays[i]);
+                self.devices.push(devices[i]);
               }
               if (devices[i] instanceof PositionSensorVRDevice) {
                 self.devices.push(devices[i]);

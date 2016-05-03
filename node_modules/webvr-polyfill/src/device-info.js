@@ -14,7 +14,7 @@
  */
 
 var Distortion = require('./distortion/distortion.js');
-var THREE = require('./three-math.js');
+var MathUtil = require('./math-util.js');
 var Util = require('./util.js');
 
 function Device(params) {
@@ -141,14 +141,14 @@ DeviceInfo.prototype.getDistortedFieldOfViewLeftEye = function() {
   var bottomDist = viewer.baselineLensDistance - device.bevelMeters;
   var topDist = device.heightMeters - bottomDist;
 
-  var outerAngle = THREE.Math.radToDeg(Math.atan(
-      distortion.distort(outerDist / eyeToScreenDistance)));
-  var innerAngle = THREE.Math.radToDeg(Math.atan(
-      distortion.distort(innerDist / eyeToScreenDistance)));
-  var bottomAngle = THREE.Math.radToDeg(Math.atan(
-      distortion.distort(bottomDist / eyeToScreenDistance)));
-  var topAngle = THREE.Math.radToDeg(Math.atan(
-      distortion.distort(topDist / eyeToScreenDistance)));
+  var outerAngle = MathUtil.radToDeg * Math.atan(
+      distortion.distort(outerDist / eyeToScreenDistance));
+  var innerAngle = MathUtil.radToDeg * Math.atan(
+      distortion.distort(innerDist / eyeToScreenDistance));
+  var bottomAngle = MathUtil.radToDeg * Math.atan(
+      distortion.distort(bottomDist / eyeToScreenDistance));
+  var topAngle = MathUtil.radToDeg * Math.atan(
+      distortion.distort(topDist / eyeToScreenDistance));
 
   return {
     leftDegrees: Math.min(outerAngle, viewer.fov),
@@ -168,10 +168,10 @@ DeviceInfo.prototype.getLeftEyeVisibleTanAngles = function() {
   var distortion = this.distortion;
 
   // Tan-angles from the max FOV.
-  var fovLeft = Math.tan(-THREE.Math.degToRad(viewer.fov));
-  var fovTop = Math.tan(THREE.Math.degToRad(viewer.fov));
-  var fovRight = Math.tan(THREE.Math.degToRad(viewer.fov));
-  var fovBottom = Math.tan(-THREE.Math.degToRad(viewer.fov));
+  var fovLeft = Math.tan(-MathUtil.degToRad * viewer.fov);
+  var fovTop = Math.tan(MathUtil.degToRad * viewer.fov);
+  var fovRight = Math.tan(MathUtil.degToRad * viewer.fov);
+  var fovBottom = Math.tan(-MathUtil.degToRad * viewer.fov);
   // Viewport size.
   var halfWidth = device.widthMeters / 4;
   var halfHeight = device.heightMeters / 2;
@@ -205,10 +205,10 @@ DeviceInfo.prototype.getLeftEyeNoLensTanAngles = function() {
 
   var result = new Float32Array(4);
   // Tan-angles from the max FOV.
-  var fovLeft = distortion.distortInverse(Math.tan(-THREE.Math.degToRad(viewer.fov)));
-  var fovTop = distortion.distortInverse(Math.tan(THREE.Math.degToRad(viewer.fov)));
-  var fovRight = distortion.distortInverse(Math.tan(THREE.Math.degToRad(viewer.fov)));
-  var fovBottom = distortion.distortInverse(Math.tan(-THREE.Math.degToRad(viewer.fov)));
+  var fovLeft = distortion.distortInverse(Math.tan(-MathUtil.degToRad * viewer.fov));
+  var fovTop = distortion.distortInverse(Math.tan(MathUtil.degToRad * viewer.fov));
+  var fovRight = distortion.distortInverse(Math.tan(MathUtil.degToRad * viewer.fov));
+  var fovBottom = distortion.distortInverse(Math.tan(-MathUtil.degToRad * viewer.fov));
   // Viewport size.
   var halfWidth = device.widthMeters / 4;
   var halfHeight = device.heightMeters / 2;
@@ -269,58 +269,16 @@ DeviceInfo.prototype.getFieldOfViewRightEye = function(opt_isUndistorted) {
 };
 
 /**
- * Calculates a projection matrix for the left eye.
- */
-DeviceInfo.prototype.getProjectionMatrixLeftEye = function(opt_isUndistorted) {
-  var fov = this.getFieldOfViewLeftEye(opt_isUndistorted);
-
-  var projectionMatrix = new THREE.Matrix4();
-  var near = 0.1;
-  var far = 1000;
-  var left = Math.tan(THREE.Math.degToRad(fov.leftDegrees)) * near;
-  var right = Math.tan(THREE.Math.degToRad(fov.rightDegrees)) * near;
-  var bottom = Math.tan(THREE.Math.degToRad(fov.downDegrees)) * near;
-  var top = Math.tan(THREE.Math.degToRad(fov.upDegrees)) * near;
-
-  // makeFrustum expects units in tan-angle space.
-  projectionMatrix.makeFrustum(-left, right, -bottom, top, near, far);
-
-  return projectionMatrix;
-};
-
-
-DeviceInfo.prototype.getUndistortedViewportLeftEye = function() {
-  var p = this.getUndistortedParams_();
-  var viewer = this.viewer;
-  var device = this.device;
-
-  var eyeToScreenDistance = viewer.screenLensDistance;
-  var screenWidth = device.widthMeters / eyeToScreenDistance;
-  var screenHeight = device.heightMeters / eyeToScreenDistance;
-  var xPxPerTanAngle = device.width / screenWidth;
-  var yPxPerTanAngle = device.height / screenHeight;
-
-  var x = Math.round((p.eyePosX - p.outerDist) * xPxPerTanAngle);
-  var y = Math.round((p.eyePosY - p.bottomDist) * yPxPerTanAngle);
-  return {
-    x: x,
-    y: y,
-    width: Math.round((p.eyePosX + p.innerDist) * xPxPerTanAngle) - x,
-    height: Math.round((p.eyePosY + p.topDist) * yPxPerTanAngle) - y
-  };
-};
-
-/**
  * Calculates undistorted field of view for the left eye.
  */
 DeviceInfo.prototype.getUndistortedFieldOfViewLeftEye = function() {
   var p = this.getUndistortedParams_();
 
   return {
-    leftDegrees: THREE.Math.radToDeg(Math.atan(p.outerDist)),
-    rightDegrees: THREE.Math.radToDeg(Math.atan(p.innerDist)),
-    downDegrees: THREE.Math.radToDeg(Math.atan(p.bottomDist)),
-    upDegrees: THREE.Math.radToDeg(Math.atan(p.topDist))
+    leftDegrees: MathUtil.radToDeg * Math.atan(p.outerDist),
+    rightDegrees: MathUtil.radToDeg * Math.atan(p.innerDist),
+    downDegrees: MathUtil.radToDeg * Math.atan(p.bottomDist),
+    upDegrees: MathUtil.radToDeg * Math.atan(p.topDist)
   };
 };
 
@@ -339,7 +297,7 @@ DeviceInfo.prototype.getUndistortedParams_ = function() {
   var eyePosY = (viewer.baselineLensDistance - device.bevelMeters) / eyeToScreenDistance;
 
   var maxFov = viewer.fov;
-  var viewerMax = distortion.distortInverse(Math.tan(THREE.Math.degToRad(maxFov)));
+  var viewerMax = distortion.distortInverse(Math.tan(MathUtil.degToRad * maxFov));
   var outerDist = Math.min(eyePosX, viewerMax);
   var innerDist = Math.min(halfLensDistance, viewerMax);
   var bottomDist = Math.min(eyePosY, viewerMax);

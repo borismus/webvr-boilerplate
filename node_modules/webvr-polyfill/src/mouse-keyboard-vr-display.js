@@ -14,7 +14,7 @@
  */
 
 var VRDisplay = require('./base.js').VRDisplay;
-var THREE = require('./three-math.js');
+var MathUtil = require('./math-util.js');
 var Util = require('./util.js');
 
 // How much to rotate per key stroke.
@@ -49,13 +49,12 @@ function MouseKeyboardVRDisplay() {
   this.angleAnimation_ = null;
 
   // State variables for calculations.
-  this.euler_ = new THREE.Euler();
-  this.orientation_ = new THREE.Quaternion();
+  this.orientation_ = new MathUtil.Quaternion();
 
   // Variables for mouse-based rotation.
-  this.rotateStart_ = new THREE.Vector2();
-  this.rotateEnd_ = new THREE.Vector2();
-  this.rotateDelta_ = new THREE.Vector2();
+  this.rotateStart_ = new MathUtil.Vector2();
+  this.rotateEnd_ = new MathUtil.Vector2();
+  this.rotateDelta_ = new MathUtil.Vector2();
   this.isDragging_ = false;
 
   this.orientationOut_ = new Float32Array(4);
@@ -63,8 +62,7 @@ function MouseKeyboardVRDisplay() {
 MouseKeyboardVRDisplay.prototype = new VRDisplay();
 
 MouseKeyboardVRDisplay.prototype.getImmediatePose = function() {
-  this.euler_.set(this.phi_, this.theta_, 0, 'YXZ');
-  this.orientation_.setFromEuler(this.euler_);
+  this.orientation_.setFromEulerYXZ(this.phi_, this.theta_, 0);
 
   this.orientationOut_[0] = this.orientation_.x;
   this.orientationOut_[1] = this.orientation_.y;

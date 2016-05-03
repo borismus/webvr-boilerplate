@@ -12,8 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var THREE = require('../three-math.js');
-
+var MathUtil = require('../math-util.js');
 var DEBUG = false;
 
 /**
@@ -29,14 +28,14 @@ function PosePredictor(predictionTimeS) {
   this.predictionTimeS = predictionTimeS;
 
   // The quaternion corresponding to the previous state.
-  this.previousQ = new THREE.Quaternion();
+  this.previousQ = new MathUtil.Quaternion();
   // Previous time a prediction occurred.
   this.previousTimestampS = null;
 
   // The delta quaternion that adjusts the current pose.
-  this.deltaQ = new THREE.Quaternion();
+  this.deltaQ = new MathUtil.Quaternion();
   // The output quaternion.
-  this.outQ = new THREE.Quaternion();
+  this.outQ = new MathUtil.Quaternion();
 }
 
 PosePredictor.prototype.getPrediction = function(currentQ, gyro, timestampS) {
@@ -47,17 +46,17 @@ PosePredictor.prototype.getPrediction = function(currentQ, gyro, timestampS) {
   }
 
   // Calculate axis and angle based on gyroscope rotation rate data.
-  var axis = new THREE.Vector3();
+  var axis = new MathUtil.Vector3();
   axis.copy(gyro);
   axis.normalize();
 
   var angularSpeed = gyro.length();
 
   // If we're rotating slowly, don't do prediction.
-  if (angularSpeed < THREE.Math.degToRad(20)) {
+  if (angularSpeed < MathUtil.degToRad * 20) {
     if (DEBUG) {
       console.log('Moving slowly, at %s deg/s: no prediction',
-                  THREE.Math.radToDeg(angularSpeed).toFixed(1));
+                  (MathUtil.radToDeg * angularSpeed).toFixed(1));
     }
     this.outQ.copy(currentQ);
     this.previousQ.copy(currentQ);

@@ -43,17 +43,16 @@ are supported:
 
 ```javascript
 WebVRConfig = {
-
   // Forces availability of VR mode, even for non-mobile devices.
   FORCE_ENABLE_VR: true, // Default: false.
 
   // Complementary filter coefficient. 0 for accelerometer, 1 for gyro.
   K_FILTER: 0.98, // Default: 0.98.
 
-  // How far into the future to predict during fast motion.
-  PREDICTION_TIME_S: 0.050, // Default: 0.050s.
+  // How far into the future to predict during fast motion (in seconds).
+  PREDICTION_TIME_S: 0.040, // Default: 0.040.
 
-  // Flag to disable touch panner. In case you have your own touch controls
+  // Flag to disable touch panner. In case you have your own touch controls.
   TOUCH_PANNER_DISABLED: true, // Default: false.
 
   // Enable yaw panning only, disabling roll and pitch. This can be useful
@@ -64,11 +63,11 @@ WebVRConfig = {
   // implementation.
   MOUSE_KEYBOARD_CONTROLS_DISABLED: true, // Default: false.
 
-  // Prevent the polyfill from initializing immediately. Requiures the app
+  // Prevent the polyfill from initializing immediately. Requires the app
   // to call InitializeWebVRPolyfill() before it can be used.
   DEFER_INITIALIZATION: true, // Default: false.
 
-  // Enable the deprecated version of the API (navigator.getVRDevices)
+  // Enable the deprecated version of the API (navigator.getVRDevices).
   ENABLE_DEPRECATED_API: true, // Default: false.
 
   // Scales the recommended buffer size reported by WebVR, which can improve
@@ -76,18 +75,36 @@ WebVRConfig = {
   BUFFER_SCALE: 0.5, // Default: 1.0.
 
   // Allow VRDisplay.submitFrame to change gl bindings, which is more
-  // efficient if the application code will re-bind it's resources on the
+  // efficient if the application code will re-bind its resources on the
   // next frame anyway. This has been seen to cause rendering glitches with
   // THREE.js.
   // Dirty bindings include: gl.FRAMEBUFFER_BINDING, gl.CURRENT_PROGRAM,
   // gl.ARRAY_BUFFER_BINDING, gl.ELEMENT_ARRAY_BUFFER_BINDING,
-  // and gl.TEXTURE_BINDING_2D for texture unit 0
+  // and gl.TEXTURE_BINDING_2D for texture unit 0.
   DIRTY_SUBMIT_FRAME_BINDINGS: true // Default: false.
 }
 ```
 
-## A note on performance
+## Performance
 
 Performance is critical for VR. If you find your application is too sluggish,
 consider tweaking some of the above parameters. In particular, reducing
 `BUFFER_SCALE` to 0.5 (from its default 1.0) will likely help a lot.
+
+## Development
+
+If you'd like to contribute to the `webvr-poyfill` library, check out
+the repository and install
+[Node](https://nodejs.org/en/download/package-manager/) and the dependencies:
+
+```bash
+git clone https://github.com/borismus/webvr-polyfill
+cd webvr-polyfill
+npm install
+```
+
+
+## License
+
+This program is free software for both commercial and non-commercial use,
+distributed under the [Apache 2.0 License](COPYING).

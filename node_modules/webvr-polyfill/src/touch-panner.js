@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var THREE = require('./three-math.js');
+var MathUtil = require('./math-util.js');
 var Util = require('./util.js');
 
 var ROTATE_SPEED = 0.5;
@@ -26,16 +26,16 @@ function TouchPanner() {
   window.addEventListener('touchend', this.onTouchEnd_.bind(this));
 
   this.isTouching = false;
-  this.rotateStart = new THREE.Vector2();
-  this.rotateEnd = new THREE.Vector2();
-  this.rotateDelta = new THREE.Vector2();
+  this.rotateStart = new MathUtil.Vector2();
+  this.rotateEnd = new MathUtil.Vector2();
+  this.rotateDelta = new MathUtil.Vector2();
 
   this.theta = 0;
-  this.orientation = new THREE.Quaternion();
+  this.orientation = new MathUtil.Quaternion();
 }
 
 TouchPanner.prototype.getOrientation = function() {
-  this.orientation.setFromEuler(new THREE.Euler(0, 0, this.theta));
+  this.orientation.setFromEulerXYZ(0, 0, this.theta);
   return this.orientation;
 };
 

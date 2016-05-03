@@ -23,7 +23,7 @@ function VRDisplayHMDDevice(display) {
   this.display = display;
 
   this.hardwareUnitId = display.displayId;
-  this.deviceId = 'webvr-pollyfill:HMD:' + display.displayId;
+  this.deviceId = 'webvr-polyfill:HMD:' + display.displayId;
   this.deviceName = display.displayName + ' (HMD)';
 }
 VRDisplayHMDDevice.prototype = new HMDVRDevice();
@@ -63,7 +63,7 @@ function VRDisplayPositionSensorDevice(display) {
   this.display = display;
 
   this.hardwareUnitId = display.displayId;
-  this.deviceId = 'webvr-pollyfill:PositionSensor: ' + display.displayId;
+  this.deviceId = 'webvr-polyfill:PositionSensor: ' + display.displayId;
   this.deviceName = display.displayName + ' (PositionSensor)';
 }
 VRDisplayPositionSensorDevice.prototype = new PositionSensorVRDevice();

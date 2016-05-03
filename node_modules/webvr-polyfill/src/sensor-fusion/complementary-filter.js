@@ -17,7 +17,7 @@
  * TODO: Fix up all "new THREE" instantiations to improve performance.
  */
 var SensorSample = require('./sensor-sample.js');
-var THREE = require('../three-math.js');
+var MathUtil = require('../math-util.js');
 var Util = require('../util.js');
 
 var DEBUG = false;
@@ -45,20 +45,20 @@ function ComplementaryFilter(kFilter) {
   this.previousGyroMeasurement = new SensorSample();
 
   // Current filter orientation
-  this.filterQ = new THREE.Quaternion();
-  this.previousFilterQ = new THREE.Quaternion();
+  this.filterQ = new MathUtil.Quaternion();
+  this.previousFilterQ = new MathUtil.Quaternion();
 
   // Orientation based on the accelerometer.
-  this.accelQ = new THREE.Quaternion();
+  this.accelQ = new MathUtil.Quaternion();
   // Whether or not the orientation has been initialized.
   this.isOrientationInitialized = false;
   // Running estimate of gravity based on the current orientation.
-  this.estimatedGravity = new THREE.Vector3();
+  this.estimatedGravity = new MathUtil.Vector3();
   // Measured gravity based on accelerometer.
-  this.measuredGravity = new THREE.Vector3();
+  this.measuredGravity = new MathUtil.Vector3();
 
   // Debug only quaternion of gyro-based orientation.
-  this.gyroIntegralQ = new THREE.Quaternion();
+  this.gyroIntegralQ = new MathUtil.Quaternion();
 }
 
 ComplementaryFilter.prototype.addAccelMeasurement = function(vector, timestampS) {
@@ -72,7 +72,7 @@ ComplementaryFilter.prototype.addGyroMeasurement = function(vector, timestampS) 
   if (Util.isTimestampDeltaValid(deltaT)) {
     this.run_();
   }
-  
+
   this.previousGyroMeasurement.copy(this.currentGyroMeasurement);
 };
 
@@ -98,7 +98,7 @@ ComplementaryFilter.prototype.run_ = function() {
 
   // Calculate the delta between the current estimated gravity and the real
   // gravity vector from accelerometer.
-  var invFilterQ = new THREE.Quaternion();
+  var invFilterQ = new MathUtil.Quaternion();
   invFilterQ.copy(this.filterQ);
   invFilterQ.inverse();
 
@@ -111,13 +111,13 @@ ComplementaryFilter.prototype.run_ = function() {
 
   // Compare estimated gravity with measured gravity, get the delta quaternion
   // between the two.
-  var deltaQ = new THREE.Quaternion();
+  var deltaQ = new MathUtil.Quaternion();
   deltaQ.setFromUnitVectors(this.estimatedGravity, this.measuredGravity);
   deltaQ.inverse();
 
   if (DEBUG) {
     console.log('Delta: %d deg, G_est: (%s, %s, %s), G_meas: (%s, %s, %s)',
-                THREE.Math.radToDeg(Util.getQuaternionAngle(deltaQ)),
+                MathUtil.radToDeg * Util.getQuaternionAngle(deltaQ),
                 (this.estimatedGravity.x).toFixed(1),
                 (this.estimatedGravity.y).toFixed(1),
                 (this.estimatedGravity.z).toFixed(1),
@@ -128,7 +128,7 @@ ComplementaryFilter.prototype.run_ = function() {
 
   // Calculate the SLERP target: current orientation plus the measured-estimated
   // quaternion delta.
-  var targetQ = new THREE.Quaternion();
+  var targetQ = new MathUtil.Quaternion();
   targetQ.copy(this.filterQ);
   targetQ.multiply(deltaQ);
 
@@ -143,19 +143,19 @@ ComplementaryFilter.prototype.getOrientation = function() {
 };
 
 ComplementaryFilter.prototype.accelToQuaternion_ = function(accel) {
-  var normAccel = new THREE.Vector3();
+  var normAccel = new MathUtil.Vector3();
   normAccel.copy(accel);
   normAccel.normalize();
-  var quat = new THREE.Quaternion();
-  quat.setFromUnitVectors(new THREE.Vector3(0, 0, -1), normAccel);
+  var quat = new MathUtil.Quaternion();
+  quat.setFromUnitVectors(new MathUtil.Vector3(0, 0, -1), normAccel);
   quat.inverse();
   return quat;
 };
 
 ComplementaryFilter.prototype.gyroToQuaternionDelta_ = function(gyro, dt) {
   // Extract axis and angle from the gyroscope data.
-  var quat = new THREE.Quaternion();
-  var axis = new THREE.Vector3();
+  var quat = new MathUtil.Quaternion();
+  var axis = new MathUtil.Vector3();
   axis.copy(gyro);
   axis.normalize();
   quat.setFromAxisAngle(axis, gyro.length() * dt);

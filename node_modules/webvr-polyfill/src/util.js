@@ -12,6 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+var objectAssign = require('object-assign');
+
 var Util = window.Util || {};
 
 Util.MIN_TIMESTEP = 0.001;
@@ -184,5 +187,6 @@ Util.isMobile = function() {
   return check;
 };
 
+Util.extend = objectAssign;
 
 module.exports = Util;

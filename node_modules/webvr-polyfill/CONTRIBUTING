@@ -1,0 +1,21 @@
+# Building
+
+This project uses browserify to manage dependencies and build. Watchify is
+especially convenient to preserve the write-and-reload model of development.
+This package lives in the npm index.
+
+Relevant commands:
+
+    npm install - installs the dependencies.
+    npm build - builds the module.
+    npm watch - auto-builds the module whenever any source changes.
+
+
+# Updating the npm entry
+
+Once changes are made, a new version can be published to the index using the
+following commands:
+
+    npm version <NEW_VERSION>
+    npm publish
+    git push --tags

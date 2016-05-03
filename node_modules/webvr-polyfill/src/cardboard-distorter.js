@@ -53,7 +53,7 @@ function CardboardDistorter(gl) {
   this.meshWidth = 20;
   this.meshHeight = 20;
 
-  this.bufferScale = WebVRConfig.BUFFER_SCALE ? WebVRConfig.BUFFER_SCALE : 1.0;
+  this.bufferScale = WebVRConfig.BUFFER_SCALE;
 
   this.bufferWidth = gl.drawingBufferWidth;
   this.bufferHeight = gl.drawingBufferHeight;

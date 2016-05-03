@@ -38,7 +38,7 @@ function CardboardVRDisplay() {
   this.capabilities.canPresent = true;
 
   // "Private" members.
-  this.bufferScale_ = WebVRConfig.BUFFER_SCALE ? WebVRConfig.BUFFER_SCALE : 1.0;
+  this.bufferScale_ = WebVRConfig.BUFFER_SCALE;
   this.poseSensor_ = new FusionPoseSensor();
   this.distorter_ = null;
   this.cardboardUI_ = null;

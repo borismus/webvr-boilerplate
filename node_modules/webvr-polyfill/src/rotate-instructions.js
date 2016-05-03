@@ -65,6 +65,7 @@ function RotateInstructions() {
   var snackbarButton = document.createElement('a');
   snackbarButton.href = 'https://www.google.com/get/cardboard/get-cardboard/';
   snackbarButton.innerHTML = 'get one';
+  snackbarButton.target = '_blank';
   var s = snackbarButton.style;
   s.float = 'right';
   s.fontWeight = 600;
