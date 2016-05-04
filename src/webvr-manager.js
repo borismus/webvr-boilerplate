@@ -56,6 +56,7 @@ function WebVRManager(renderer, effect, params) {
   // Check if the browser is compatible with WebVR.
   this.getDeviceByType_(VRDisplay).then(function(hmd) {
     this.hmd = hmd;
+    this.isVRCompatible = true;
 
     switch (this.startMode) {
       case Modes.MAGIC_WINDOW:
