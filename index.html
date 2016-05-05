@@ -195,7 +195,7 @@ navigator.getVRDisplays().then(function(displays) {
     if (display.stageParameters) {
       cube.position.set(
           display.stageParameters.sizeX/2,
-          AVERAGE_HUMAN_HEIGHT,
+          1.7, // Average human height.
           display.stageParameters.sizeZ/2);
     }
   }
