@@ -135,6 +135,10 @@ function onTextureLoaded(texture) {
 
   skybox = new THREE.Mesh(geometry, material);
   scene.add(skybox);
+
+  // For high end VR devices like Vive and Oculus, take into account the stage
+  // parameters provided.
+  setupStage();
 }
 
 
@@ -158,10 +162,6 @@ scene.add(cube);
 
 // Kick off animation loop
 requestAnimationFrame(animate);
-
-// For high end VR devices like Vive and Oculus, take into account the stage
-// parameters provided.
-setupStage();
 
 window.addEventListener('resize', onResize, true);
 window.addEventListener('vrdisplaypresentchange', onResize, true);
