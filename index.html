@@ -199,20 +199,22 @@ function setupStage() {
     if (displays.length > 0) {
       var display = displays[0];
       if (display.stageParameters) {
-        var stage = display.stageParameters;
-
-        // Make the skybox fit the stage.
-        var material = skybox.material;
-        scene.remove(skybox);
-        var geometry = new THREE.BoxGeometry(stage.sizeX, HUMAN_HEIGHT * 3, stage.sizeZ);
-        skybox = new THREE.Mesh(geometry, material);
-        scene.add(skybox);
-
-        // Place the cube in the middle of the scene.
-        cube.position.set(stage.sizeX/2, HUMAN_HEIGHT, stage.sizeZ/2);
+        setStageDimensions(display.stageParameters);
       }
     }
   });
+}
+
+function setStageDimensions(stage) {
+  // Make the skybox fit the stage.
+  var material = skybox.material;
+  scene.remove(skybox);
+  var geometry = new THREE.BoxGeometry(stage.sizeX, 2.4, stage.sizeZ);
+  skybox = new THREE.Mesh(geometry, material);
+  scene.add(skybox);
+
+  // Place the cube in the middle of the scene.
+  cube.position.set(0, HUMAN_HEIGHT, 0);
 }
 
 </script>
