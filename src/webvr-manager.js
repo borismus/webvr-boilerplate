@@ -102,17 +102,17 @@ WebVRManager.Modes = Modes;
  */
 WebVRManager.prototype.getDeviceByType_ = function(type) {
   return new Promise(function(resolve, reject) {
-    navigator.getVRDisplays().then(function(devices) {
-      // Promise succeeds, but check if there are any devices actually.
-      for (var i = 0; i < devices.length; i++) {
-        if (devices[i] instanceof type) {
-          resolve(devices[i]);
+    navigator.getVRDisplays().then(function(displays) {
+      // Promise succeeds, but check if there are any displays actually.
+      for (var i = 0; i < displays.length; i++) {
+        if (displays[i] instanceof type) {
+          resolve(displays[i]);
           break;
         }
       }
       resolve(null);
     }, function() {
-      // No devices are found.
+      // No displays are found.
       resolve(null);
     });
   });
