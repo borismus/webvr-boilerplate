@@ -133,7 +133,7 @@ function onTextureLoaded(texture) {
     side: THREE.BackSide
   });
 
-  var skybox = new THREE.Mesh(geometry, material);
+  skybox = new THREE.Mesh(geometry, material);
   scene.add(skybox);
 }
 
@@ -187,16 +187,25 @@ function onResize(e) {
 window.addEventListener('resize', onResize, true);
 window.addEventListener('vrdisplaypresentchange', onResize, true);
 
+var HUMAN_HEIGHT = 1.7;
+
 // Get the HMD, and if we're dealing with something that specifies
-// stageParameters, we should place the cube in the middle of the stage.
+// stageParameters, rearrange the scene.
 navigator.getVRDisplays().then(function(displays) {
   if (displays.length > 0) {
     var display = displays[0];
     if (display.stageParameters) {
-      cube.position.set(
-          display.stageParameters.sizeX/2,
-          1.7, // Average human height.
-          display.stageParameters.sizeZ/2);
+      var stage = display.stageParameters;
+
+      // Make the skybox fit the stage.
+      var material = skybox.material;
+      scene.remove(skybox);
+      var geometry = new THREE.BoxGeometry(stage.sizeX, HUMAN_HEIGHT * 3, stage.sizeZ);
+      var newSkybox = new THREE.Mesh(geometry, material);
+      scene.add(newSkybox);
+
+      // Place the cube in the middle of the scene.
+      cube.position.set(stage.sizeX/2, HUMAN_HEIGHT, stage.sizeZ/2);
     }
   }
 });
