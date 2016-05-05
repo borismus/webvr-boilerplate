@@ -153,9 +153,18 @@ var cube = new THREE.Mesh(geometry, material);
 // Position cube mesh
 cube.position.z = -1;
 
-
 // Add cube mesh to your three.js scene
 scene.add(cube);
+
+// Kick off animation loop
+requestAnimationFrame(animate);
+
+// For high end VR devices like Vive and Oculus, take into account the stage
+// parameters provided.
+setupStage();
+
+window.addEventListener('resize', onResize, true);
+window.addEventListener('vrdisplaypresentchange', onResize, true);
 
 // Request animation frame loop function
 var lastRender = 0;
@@ -175,40 +184,36 @@ function animate(timestamp) {
   requestAnimationFrame(animate);
 }
 
-// Kick off animation loop
-animate(performance ? performance.now() : Date.now());
-
 function onResize(e) {
   effect.setSize(window.innerWidth, window.innerHeight);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 }
 
-window.addEventListener('resize', onResize, true);
-window.addEventListener('vrdisplaypresentchange', onResize, true);
-
 var HUMAN_HEIGHT = 1.7;
 
 // Get the HMD, and if we're dealing with something that specifies
 // stageParameters, rearrange the scene.
-navigator.getVRDisplays().then(function(displays) {
-  if (displays.length > 0) {
-    var display = displays[0];
-    if (display.stageParameters) {
-      var stage = display.stageParameters;
+function setupStage() {
+  navigator.getVRDisplays().then(function(displays) {
+    if (displays.length > 0) {
+      var display = displays[0];
+      if (display.stageParameters) {
+        var stage = display.stageParameters;
 
-      // Make the skybox fit the stage.
-      var material = skybox.material;
-      scene.remove(skybox);
-      var geometry = new THREE.BoxGeometry(stage.sizeX, HUMAN_HEIGHT * 3, stage.sizeZ);
-      var newSkybox = new THREE.Mesh(geometry, material);
-      scene.add(newSkybox);
+        // Make the skybox fit the stage.
+        var material = skybox.material;
+        scene.remove(skybox);
+        var geometry = new THREE.BoxGeometry(stage.sizeX, HUMAN_HEIGHT * 3, stage.sizeZ);
+        var newSkybox = new THREE.Mesh(geometry, material);
+        scene.add(newSkybox);
 
-      // Place the cube in the middle of the scene.
-      cube.position.set(stage.sizeX/2, HUMAN_HEIGHT, stage.sizeZ/2);
+        // Place the cube in the middle of the scene.
+        cube.position.set(stage.sizeX/2, HUMAN_HEIGHT, stage.sizeZ/2);
+      }
     }
-  }
-});
+  });
+}
 
 </script>
 
