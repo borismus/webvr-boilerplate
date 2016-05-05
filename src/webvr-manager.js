@@ -39,9 +39,6 @@ function WebVRManager(renderer, effect, params) {
   var polyfillWrapper = document.querySelector('.webvr-polyfill-fullscreen-wrapper');
   this.button = new ButtonManager(polyfillWrapper);
 
-  // Only enable VR mode if we're on a mobile device.
-  this.isVRCompatible = Util.isMobile();
-
   this.isFullscreenDisabled = !!Util.getQueryParameter('no_fullscreen');
   this.startMode = Modes.NORMAL;
   var startModeParam = parseInt(Util.getQueryParameter('start_mode'));
@@ -56,6 +53,10 @@ function WebVRManager(renderer, effect, params) {
   // Check if the browser is compatible with WebVR.
   this.getDeviceByType_(VRDisplay).then(function(hmd) {
     this.hmd = hmd;
+
+    // Only enable VR mode if there's a VR device attached or we are running the
+    // polyfill on mobile.
+    this.isVRCompatible =  !hmd.isPolyfilled || Util.isMobile();
 
     switch (this.startMode) {
       case Modes.MAGIC_WINDOW:
