@@ -187,6 +187,20 @@ function onResize(e) {
 window.addEventListener('resize', onResize, true);
 window.addEventListener('vrdisplaypresentchange', onResize, true);
 
+// Get the HMD, and if we're dealing with something that specifies
+// stageParameters, we should place the cube in the middle of the stage.
+navigator.getVRDisplays().then(function(displays) {
+  if (displays.length > 0) {
+    var display = displays[0];
+    if (display.stageParameters) {
+      cube.position.set(
+          display.stageParameters.sizeX/2,
+          AVERAGE_HUMAN_HEIGHT,
+          display.stageParameters.sizeZ/2);
+    }
+  }
+});
+
 </script>
 
 </html>
