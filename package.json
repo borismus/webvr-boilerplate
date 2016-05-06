@@ -7,7 +7,7 @@
     "test": "test"
   },
   "dependencies": {
-    "three": "^0.75.0",
+    "three": "^0.76.1",
     "webvr-polyfill": "^0.9.5"
   },
   "devDependencies": {
