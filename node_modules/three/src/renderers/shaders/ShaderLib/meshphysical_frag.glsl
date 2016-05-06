@@ -1,4 +1,4 @@
-#define STANDARD
+#define PHYSICAL
 
 uniform vec3 diffuse;
 uniform vec3 emissive;
@@ -17,6 +17,7 @@ varying vec3 vViewPosition;
 #endif
 
 #include <common>
+#include <packing>
 #include <color_pars_fragment>
 #include <uv_pars_fragment>
 #include <uv2_pars_fragment>
@@ -30,15 +31,18 @@ varying vec3 vViewPosition;
 #include <bsdfs>
 #include <cube_uv_reflection_fragment>
 #include <lights_pars>
-#include <lights_standard_pars_fragment>
+#include <lights_physical_pars_fragment>
 #include <shadowmap_pars_fragment>
 #include <bumpmap_pars_fragment>
 #include <normalmap_pars_fragment>
 #include <roughnessmap_pars_fragment>
 #include <metalnessmap_pars_fragment>
 #include <logdepthbuf_pars_fragment>
+#include <clipping_planes_pars_fragment>
 
 void main() {
+
+	#include <clipping_planes_fragment>
 
 	vec4 diffuseColor = vec4( diffuse, opacity );
 	ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
@@ -56,7 +60,7 @@ void main() {
 	#include <emissivemap_fragment>
 
 	// accumulation
-	#include <lights_standard_fragment>
+	#include <lights_physical_fragment>
 	#include <lights_template>
 
 	// modulation
