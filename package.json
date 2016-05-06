@@ -1,14 +1,16 @@
 {
-  "name": "webvr-boilerplate",
+  "name": "TwiVR",
   "version": "0.4.2",
-  "description": "A starting point for web-based VR experiences that work in both Cardboard and Oculus.",
+  "description": "A VR Twitter stream",
   "main": "src/main.js",
   "directories": {
     "test": "test"
   },
   "dependencies": {
     "three": "^0.75.0",
-    "webvr-polyfill": "^0.9.5"
+    "webvr-polyfill": "^0.9.5",
+    "express": "~4.10.2",
+    "socket.io": "~1.4.5"
   },
   "devDependencies": {
     "browserify": "latest",
