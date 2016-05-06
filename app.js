@@ -22,30 +22,27 @@ var server = require('http').createServer(app).listen(port, function(){
 app.use(express.static(path.join(__dirname, '')));
 //app.use('/images', express.static(__dirname + 'images'));
 app.get('/', function(request, response) {
-    response.sendFile(__dirname + 'index.html');
+    response.sendFile(__dirname + '/views/index.html');
 });
 
 var io = require('socket.io').listen(server);
 io.on('connection', function(socket){
     console.log('user connected');
-    var params = {screen_name: 'butterfieldjb'};
-    //var params = {track: 'donald trump'};
-    client.get('statuses/user_timeline', params, function(error, tweets, response){
-        if (!error){
-            for (var i = 0; i < tweets.length; i++){
-                console.log(tweets[i]['text']);
-                io.emit('chat message', {
-                    'user':tweets[i]['user']['screen_name'],
-                    'text':tweets[i]['text']
-                });
-            }
-        }
+    //var params = {screen_name: 'butterfieldjb'};
+    var params = {track: 'donald trump'};
+    client.stream('statuses/filter', params, function(stream){
+        stream.on('data', function(tweet){
+            io.emit('message', {
+                'user':tweet['user']['screen_name'],
+                'text':tweet['text']
+            });
+        });
+
+        stream.on('error', function(error){
+            console.log(error)
+        });
     });
     socket.on('disconnect', function(){
         console.log('user disconnected');
     });
-    socket.on('chat message', function(msg){
-        io.emit('chat message', msg);
-    });
 });
-
