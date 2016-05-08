@@ -28,7 +28,18 @@ app.get('/', function(request, response) {
 var io = require('socket.io').listen(server);
 io.on('connection', function(socket){
     console.log('user connected');
-    //var params = {screen_name: 'butterfieldjb'};
+    var params = {screen_name: 'butterfieldjb'};
+    client.get('statuses/user_timeline', params, function(error, tweets, response){
+        if(!error){
+            for(var i = 0; i < tweets.length; i++){
+                io.emit('message', {
+                    'user': tweets[i]['user']['screen_name'],
+                    'text': tweets[i]['text']
+                });
+            }
+        }
+    });
+    /*
     var params = {track: 'donald trump'};
     client.stream('statuses/filter', params, function(stream){
         stream.on('data', function(tweet){
@@ -42,6 +53,7 @@ io.on('connection', function(socket){
             console.log(error)
         });
     });
+    */
     socket.on('disconnect', function(){
         console.log('user disconnected');
     });

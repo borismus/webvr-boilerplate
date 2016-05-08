@@ -2,8 +2,7 @@ VR_APP['screens']['main'] = (function() {
 
     var framesBetween = 5000,
         currentFrame = 0,
-        canAdd = false,
-        textMaterial = new THREE.MeshBasicMaterial();
+        canAdd = false;
 
     function onResize(e) {
         VR_APP['effect'].setSize(window.innerWidth, window.innerHeight);
@@ -32,6 +31,36 @@ VR_APP['screens']['main'] = (function() {
         return false;
     }
 
+    function createMessageText2d(index){
+        var canvas = document.createElement('canvas');
+        var size = 512; // CHANGED
+        canvas.width = size;
+        canvas.height = size;
+        var context = canvas.getContext('2d');
+        context.fillStyle = '#ff0000'; // CHANGED
+        context.textAlign = 'center';
+        context.font = '16px Arial';
+        var str = VR_APP['messages'][index]['text'];
+        context.fillText(str.substring(0, str.length / 2), size / 2, size / 2);
+        context.fillText(str.substring(str.length / 2, str.length), size / 2, size / 2 + 20);
+
+        var amap = new THREE.Texture(canvas);
+        amap.needsUpdate = true;
+
+        var mat = new THREE.SpriteMaterial({
+            map: amap,
+            transparent: false,
+            color: 0xffffff // CHANGED
+        });
+
+        var sp = new THREE.Sprite(mat);
+        sp.scale.set( 5, 5, 1 ); // CHANGED
+        sp.position.set(0, 10, -3);
+        VR_APP['scene'].add(sp);
+        VR_APP['messages'][index]['mesh'] = sp;
+        return true;
+    }
+
     function initialize(){
         VR_APP['lastRender'] = 0;
 
@@ -39,7 +68,7 @@ VR_APP['screens']['main'] = (function() {
         window.addEventListener('vrdisplaypresentchange', onResize, true);
 
         // Add a repeating grid as a skybox.
-        var boxWidth = 30;
+        var boxWidth = 20;
         var loader = new THREE.TextureLoader();
         loader.load('img/box.png', onTextureLoaded);
 
@@ -51,7 +80,7 @@ VR_APP['screens']['main'] = (function() {
             var geometry = new THREE.BoxGeometry(boxWidth, boxWidth, boxWidth);
             var material = new THREE.MeshBasicMaterial({
                 map: texture,
-                color: 0x01BE00,
+                //color: 0x01BE00,
                 side: THREE.BackSide
             });
 
@@ -60,26 +89,25 @@ VR_APP['screens']['main'] = (function() {
         }
     }
 
-    function animate(timestamp) {
-        var delta = Math.min(timestamp - VR_APP['lastRender'], 500);
-        VR_APP['lastRender'] = timestamp;
-
+    function updateMessages(){
         var numberOfMesseges = 0;
         for(var i = VR_APP['messages'].length - 1; i >= 0; i--){
             if(VR_APP['messages'][i]['initialized']){
+
                 numberOfMesseges += 1;
                 VR_APP['messages'][i]['mesh'].position.y -= 0.02;
-                if(VR_APP['messages'][i]['mesh'].position.y < 0){
+                if(VR_APP['messages'][i]['mesh'].position.y < -10){
                     VR_APP['scene'].remove(VR_APP['messages'][i]['mesh']);
                     VR_APP['messages'].splice(i, 1);
                     currentFrame = 0;
                 }
+
             } else {
                 if(canAdd){
                     currentFrame += 1;
                     if(currentFrame >= framesBetween){
                         currentFrame = 0;
-                        VR_APP['messages'][i]['initialized'] = createMessageText(i);
+                        VR_APP['messages'][i]['initialized'] = createMessageText2d(i);
                         canAdd = false;
                         console.log('ADDING...')
                     }
@@ -93,6 +121,13 @@ VR_APP['screens']['main'] = (function() {
             currentFrame = 0;
             canAdd = true;
         }
+    }
+
+    function animate(timestamp) {
+        var delta = Math.min(timestamp - VR_APP['lastRender'], 500);
+        VR_APP['lastRender'] = timestamp;
+
+        updateMessages();
 
         // Update VR headset position and apply to camera.
         VR_APP['controls'].update();
