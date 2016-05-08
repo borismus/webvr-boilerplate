@@ -87,9 +87,7 @@ MathUtil.Vector3.prototype = {
     if ( scalar !== 0 ) {
       var invScalar = 1 / scalar;
 
-      this.x *= invScalar;
-      this.y *= invScalar;
-      this.z *= invScalar;
+      this.multiplyScalar(invScalar);
     } else {
       this.x = 0;
       this.y = 0;
@@ -97,6 +95,12 @@ MathUtil.Vector3.prototype = {
     }
 
     return this;
+  },
+
+  multiplyScalar: function ( scalar ) {
+    this.x *= scalar;
+    this.y *= scalar;
+    this.z *= scalar;
   },
 
   applyQuaternion: function ( q ) {
