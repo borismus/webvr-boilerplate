@@ -28,6 +28,7 @@ app.get('/', function(request, response) {
 var io = require('socket.io').listen(server);
 io.on('connection', function(socket){
     console.log('user connected');
+    /*
     var params = {screen_name: 'butterfieldjb'};
     client.get('statuses/user_timeline', params, function(error, tweets, response){
         if(!error){
@@ -39,7 +40,7 @@ io.on('connection', function(socket){
             }
         }
     });
-    /*
+    // getting Twitter data using different API calls
     var params = {track: 'donald trump'};
     client.stream('statuses/filter', params, function(stream){
         stream.on('data', function(tweet){
