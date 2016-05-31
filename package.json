@@ -7,6 +7,7 @@
     "test": "test"
   },
   "dependencies": {
+    "express": "^4.13.4",
     "three": "^0.76.1",
     "webvr-polyfill": "^0.9.5"
   },
