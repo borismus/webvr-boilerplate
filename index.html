@@ -120,8 +120,9 @@ effect.setSize(window.innerWidth, window.innerHeight);
 // Add a repeating grid as a skybox.
 var boxSize = 10;
 var loader = new THREE.TextureLoader();
-loader.load('img/box.png', onTextureLoaded);
-// loader.load('img/box_wire.png', onTextureLoaded);
+var skybox;
+// loader.load('img/box.png', onTextureLoaded);
+loader.load('img/box_wire.png', onTextureLoaded);
 
 function onTextureLoaded(texture) {
   texture.wrapS = THREE.RepeatWrapping;
@@ -178,6 +179,10 @@ function animate(timestamp) {
 
   // Apply rotation to cube mesh
   cube.rotation.y += delta * 0.0006;
+
+  if (skybox != undefined) {
+    skybox.rotation.y -= delta * 0.000006;
+  }
 
   // Update VR headset position and apply to camera.
   controls.update();
