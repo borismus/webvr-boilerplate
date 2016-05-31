@@ -118,9 +118,10 @@ effect.setSize(window.innerWidth, window.innerHeight);
 
 
 // Add a repeating grid as a skybox.
-var boxSize = 5;
+var boxSize = 10;
 var loader = new THREE.TextureLoader();
 loader.load('img/box.png', onTextureLoaded);
+// loader.load('img/box_wire.png', onTextureLoaded);
 
 function onTextureLoaded(texture) {
   texture.wrapS = THREE.RepeatWrapping;
@@ -130,7 +131,7 @@ function onTextureLoaded(texture) {
   var geometry = new THREE.BoxGeometry(boxSize, boxSize, boxSize);
   var material = new THREE.MeshBasicMaterial({
     map: texture,
-    color: 0x01BE00,
+    color: 0xfffec1,
     side: THREE.BackSide
   });
 
