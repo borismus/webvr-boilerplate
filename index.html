@@ -73,6 +73,14 @@ WebVRConfig = {
 <script src="node_modules/three/three.js"></script>
 
 <!--
+To support CanvasRenderer for browsers not supporting webGL
+-->
+<script src="node_modules/three/examples/js/renderers/Projector.js"></script>
+<script src="node_modules/three/examples/js/renderers/CanvasRenderer.js"></script>
+
+
+
+<!--
   VRControls.js acquires positional information from connected VR devices and applies the transformations to a three.js camera object.
    -->
 <script src="node_modules/three/examples/js/controls/VRControls.js"></script>
@@ -96,9 +104,32 @@ WebVRConfig = {
 <script>
 // Setup three.js WebGL renderer. Note: Antialiasing is a big performance hit.
 // Only enable it if you actually need to.
-var renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setPixelRatio(window.devicePixelRatio);
+var renderer = null;
+function webglAvailable() {
+    try {
+        var canvas = document.createElement( 'canvas' );
+        return !!( window.WebGLRenderingContext && (
+            canvas.getContext( 'webgl' ) ||
+            canvas.getContext( 'experimental-webgl' ) )
+        );
+    } catch ( e ) {
+        return false;
+    }
+}    
+if(webglAvailable()){
+    //Create WebGL renderer if broser supports WebGL
+    renderer = new THREE.WebGLRenderer({antialias: true});
+    self.renderer.setPixelRatio(window.devicePixelRatio);
+}
+else{
+    //May fallback to CanvasRenderer but also needs to add support for the
+    //getSize method not available in source.
+    renderer = new THREE.CanvasRenderer({antialias: true});
+    THREE.CanvasRenderer.prototype.getSize = function(){
+        return {width:window.innerWidth,height:window.innerHeight};
+    }
 
+}
 // Append the canvas element created by the renderer to document body element.
 document.body.appendChild(renderer.domElement);
 
@@ -131,7 +162,8 @@ function onTextureLoaded(texture) {
   var material = new THREE.MeshBasicMaterial({
     map: texture,
     color: 0x01BE00,
-    side: THREE.BackSide
+    side: THREE.BackSide,
+    overdraw:true
   });
 
   // Align the skybox to the floor (which is at y=0).
@@ -154,7 +186,7 @@ var manager = new WebVRManager(renderer, effect, params);
 
 // Create 3D objects.
 var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-var material = new THREE.MeshNormalMaterial();
+var material = new THREE.MeshNormalMaterial({overdraw:true});
 var cube = new THREE.Mesh(geometry, material);
 
 // Position cube mesh to be right in front of you.
