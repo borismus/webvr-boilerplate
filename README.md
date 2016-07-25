@@ -59,7 +59,7 @@ The boilerplate is also available via npm. Easy install:
   spec][spec].
 - [Ricardo Cabello][doob] for THREE.js.
 - [Diego Marcos][dm] for VREffect and VRControls.
-- [Dmitry Kovalev][dk] for help with [lens distortion correction][distortion].
+- [Dmitriy Kovalev][dk] for help with [lens distortion correction][distortion].
 
 [dk]: https://github.com/dmitriykovalev/
 [distortion]: https://github.com/borismus/webvr-polyfill/blob/master/src/distortion/distortion.js
