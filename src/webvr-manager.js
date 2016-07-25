@@ -153,7 +153,7 @@ WebVRManager.prototype.setMode_ = function(mode) {
     console.warn('Not changing modes, already in %s', mode);
     return;
   }
-  console.log('Mode change: %s => %s', this.mode, mode);
+  // console.log('Mode change: %s => %s', this.mode, mode);
   this.mode = mode;
   this.button.setMode(mode, this.isVRCompatible);
 
