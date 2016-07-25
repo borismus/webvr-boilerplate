@@ -61,7 +61,7 @@ The boilerplate is also available via npm. Easy install:
 - [Diego Marcos][dm] for VREffect and VRControls.
 - [Dmitry Kovalev][dk] for help with [lens distortion correction][distortion].
 
-[dk]: https://plus.google.com/+DmitryKovalev1
+[dk]: https://github.com/dmitriykovalev/
 [distortion]: https://github.com/borismus/webvr-polyfill/blob/master/src/distortion/distortion.js
 [bj]: https://twitter.com/tojiro
 [vv]: https://twitter.com/vvuk
