@@ -141,10 +141,10 @@ WebVRManager.prototype.getDeviceByType_ = function(type) {
  * Helper for entering VR mode.
  */
 WebVRManager.prototype.enterVRMode_ = function() {
-  this.hmd.requestPresent({
+  this.hmd.requestPresent([{
     source: this.renderer.domElement,
     predistorted: this.predistorted
-  });
+  }]);
 };
 
 WebVRManager.prototype.setMode_ = function(mode) {

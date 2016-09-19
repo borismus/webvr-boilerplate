@@ -57,7 +57,7 @@ ButtonManager.prototype.createButton = function() {
   var button = document.createElement('img');
   button.className = 'webvr-button';
   var s = button.style;
-  s.position = 'fixed';
+  s.position = 'absolute';
   s.width = '24px'
   s.height = '24px';
   s.backgroundSize = 'cover';
@@ -434,10 +434,10 @@ WebVRManager.prototype.getDeviceByType_ = function(type) {
  * Helper for entering VR mode.
  */
 WebVRManager.prototype.enterVRMode_ = function() {
-  this.hmd.requestPresent({
+  this.hmd.requestPresent([{
     source: this.renderer.domElement,
     predistorted: this.predistorted
-  });
+  }]);
 };
 
 WebVRManager.prototype.setMode_ = function(mode) {
