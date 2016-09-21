@@ -409,6 +409,18 @@ WebVRManager.prototype.setVRCompatibleOverride = function(isVRCompatible) {
   this.button.setMode(this.mode, this.isVRCompatible);
 };
 
+WebVRManager.prototype.setFullscreenCallback = function(callback) {
+  this.fullscreenCallback = callback;
+};
+
+WebVRManager.prototype.setVRCallback = function(callback) {
+  this.vrCallback = callback;
+};
+
+WebVRManager.prototype.setExitFullscreenCallback = function(callback) {
+  this.exitFullscreenCallback = callback;
+}
+
 /**
  * Promise returns true if there is at least one HMD device available.
  */
@@ -463,11 +475,15 @@ WebVRManager.prototype.onFSClick_ = function() {
       // TODO: Remove this hack if/when iOS gets real fullscreen mode.
       // If this is an iframe on iOS, break out and open in no_fullscreen mode.
       if (Util.isIOS() && Util.isIFrame()) {
-        var url = window.location.href;
-        url = Util.appendQueryParameter(url, 'no_fullscreen', 'true');
-        url = Util.appendQueryParameter(url, 'start_mode', Modes.MAGIC_WINDOW);
-        top.location.href = url;
-        return;
+        if (this.fullscreenCallback) {
+          this.fullscreenCallback();
+        } else {
+          var url = window.location.href;
+          url = Util.appendQueryParameter(url, 'no_fullscreen', 'true');
+          url = Util.appendQueryParameter(url, 'start_mode', Modes.MAGIC_WINDOW);
+          top.location.href = url;
+          return;
+        }
       }
       this.setMode_(Modes.MAGIC_WINDOW);
       this.requestFullscreen_();
@@ -476,6 +492,9 @@ WebVRManager.prototype.onFSClick_ = function() {
       if (this.isFullscreenDisabled) {
         window.history.back();
         return;
+      }
+      if (this.exitFullscreenCallback) {
+        this.exitFullscreenCallback();
       }
       this.setMode_(Modes.NORMAL);
       this.exitFullscreen_();
@@ -490,11 +509,15 @@ WebVRManager.prototype.onVRClick_ = function() {
   // TODO: Remove this hack when iOS has fullscreen mode.
   // If this is an iframe on iOS, break out and open in no_fullscreen mode.
   if (this.mode == Modes.NORMAL && Util.isIOS() && Util.isIFrame()) {
-    var url = window.location.href;
-    url = Util.appendQueryParameter(url, 'no_fullscreen', 'true');
-    url = Util.appendQueryParameter(url, 'start_mode', Modes.VR);
-    top.location.href = url;
-    return;
+    if (this.vrCallback) {
+      this.vrCallback();
+    } else {
+      var url = window.location.href;
+      url = Util.appendQueryParameter(url, 'no_fullscreen', 'true');
+      url = Util.appendQueryParameter(url, 'start_mode', Modes.VR);
+      top.location.href = url;
+      return;
+    }
   }
   this.enterVRMode_();
 };
