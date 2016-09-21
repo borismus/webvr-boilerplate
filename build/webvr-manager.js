@@ -102,7 +102,7 @@ ButtonManager.prototype.setMode = function(mode, isVRCompatible) {
     case Modes.MAGIC_WINDOW:
       this.fsButton.style.display = 'block';
       this.fsButton.src = this.ICONS.exitFullscreen;
-      this.vrButton.style.display = (isVRCompatible ? 'block' : 'none');
+      this.vrButton.style.display = 'none';
       break;
     case Modes.VR:
       this.fsButton.style.display = 'none';
