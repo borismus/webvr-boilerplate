@@ -7,7 +7,9 @@
     "test": "test"
   },
   "dependencies": {
-    "webvr-polyfill": "^0.9.5"
+    "es6-promise": "^4.0.5",
+    "three": "^0.81.2",
+    "webvr-polyfill": "^0.9.3"
   },
   "devDependencies": {
     "browserify": "latest",
