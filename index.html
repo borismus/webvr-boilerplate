@@ -70,7 +70,7 @@ WebVRConfig = {
 <!--
   three.js 3d library
   -->
-<script src="node_modules/three/three.js"></script>
+<script src="node_modules/three/build/three.min.js"></script>
 
 <!--
   VRControls.js acquires positional information from connected VR devices and applies the transformations to a three.js camera object.
@@ -108,8 +108,8 @@ var scene = new THREE.Scene();
 // Create a three.js camera.
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 
-// Apply VR headset positional data to camera.
 var controls = new THREE.VRControls(camera);
+controls.standing = true;
 controls.standing = true;
 
 // Apply VR stereo rendering to renderer.
@@ -163,9 +163,6 @@ cube.position.set(0, controls.userHeight, -1);
 // Add cube mesh to your three.js scene
 scene.add(cube);
 
-// Kick off animation loop
-requestAnimationFrame(animate);
-
 window.addEventListener('resize', onResize, true);
 window.addEventListener('vrdisplaypresentchange', onResize, true);
 
@@ -178,13 +175,12 @@ function animate(timestamp) {
   // Apply rotation to cube mesh
   cube.rotation.y += delta * 0.0006;
 
-  // Update VR headset position and apply to camera.
   controls.update();
-
   // Render the scene through the manager.
   manager.render(scene, camera, timestamp);
+  effect.render(scene, camera);
 
-  requestAnimationFrame(animate);
+  vrDisplay.requestAnimationFrame(animate);
 }
 
 function onResize(e) {
@@ -193,17 +189,18 @@ function onResize(e) {
   camera.updateProjectionMatrix();
 }
 
-var display;
+var vrDisplay;
 
 // Get the HMD, and if we're dealing with something that specifies
 // stageParameters, rearrange the scene.
 function setupStage() {
   navigator.getVRDisplays().then(function(displays) {
     if (displays.length > 0) {
-      display = displays[0];
-      if (display.stageParameters) {
-        setStageDimensions(display.stageParameters);
+      vrDisplay = displays[0];
+      if (vrDisplay.stageParameters) {
+        setStageDimensions(vrDisplay.stageParameters);
       }
+      vrDisplay.requestAnimationFrame(animate);
     }
   });
 }
