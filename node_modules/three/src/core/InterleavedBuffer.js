@@ -1,36 +1,29 @@
+import { _Math } from '../math/Math';
+
 /**
  * @author benaadams / https://twitter.com/ben_a_adams
  */
 
-THREE.InterleavedBuffer = function ( array, stride ) {
+function InterleavedBuffer( array, stride ) {
 
-	this.uuid = THREE.Math.generateUUID();
+	this.uuid = _Math.generateUUID();
 
 	this.array = array;
 	this.stride = stride;
+	this.count = array !== undefined ? array.length / stride : 0;
 
 	this.dynamic = false;
 	this.updateRange = { offset: 0, count: - 1 };
 
 	this.version = 0;
 
-};
+}
 
-THREE.InterleavedBuffer.prototype = {
+InterleavedBuffer.prototype = {
 
-	constructor: THREE.InterleavedBuffer,
+	constructor: InterleavedBuffer,
 
-	get length () {
-
-		return this.array.length;
-
-	},
-
-	get count () {
-
-		return this.array.length / this.stride;
-
-	},
+	isInterleavedBuffer: true,
 
 	set needsUpdate( value ) {
 
@@ -49,6 +42,7 @@ THREE.InterleavedBuffer.prototype = {
 	copy: function ( source ) {
 
 		this.array = new source.array.constructor( source.array );
+		this.count = source.count;
 		this.stride = source.stride;
 		this.dynamic = source.dynamic;
 
@@ -88,3 +82,6 @@ THREE.InterleavedBuffer.prototype = {
 	}
 
 };
+
+
+export { InterleavedBuffer };

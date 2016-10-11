@@ -1,9 +1,11 @@
+var _Math;
+
 /**
  * @author alteredq / http://alteredqualia.com/
  * @author mrdoob / http://mrdoob.com/
  */
 
-THREE.Math = {
+_Math = {
 
 	DEG2RAD: Math.PI / 180,
 	RAD2DEG: 180 / Math.PI,
@@ -16,7 +18,7 @@ THREE.Math = {
 		var uuid = new Array( 36 );
 		var rnd = 0, r;
 
-		return function () {
+		return function generateUUID() {
 
 			for ( var i = 0; i < 36; i ++ ) {
 
@@ -125,13 +127,13 @@ THREE.Math = {
 
 	degToRad: function ( degrees ) {
 
-		return degrees * THREE.Math.DEG2RAD;
+		return degrees * _Math.DEG2RAD;
 
 	},
 
 	radToDeg: function ( radians ) {
 
-		return radians * THREE.Math.RAD2DEG;
+		return radians * _Math.RAD2DEG;
 
 	},
 
@@ -162,3 +164,6 @@ THREE.Math = {
 	}
 
 };
+
+
+export { _Math };

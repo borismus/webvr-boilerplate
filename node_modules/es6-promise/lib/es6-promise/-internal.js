@@ -10,13 +10,15 @@ import {
 import originalThen from './then';
 import originalResolve from './promise/resolve';
 
+export const PROMISE_ID = Math.random().toString(36).substring(16);
+
 function noop() {}
 
-var PENDING   = void 0;
-var FULFILLED = 1;
-var REJECTED  = 2;
+const PENDING   = void 0;
+const FULFILLED = 1;
+const REJECTED  = 2;
 
-var GET_THEN_ERROR = new ErrorObject();
+const GET_THEN_ERROR = new ErrorObject();
 
 function selfFulfillment() {
   return new TypeError("You cannot resolve a promise with itself");
@@ -44,9 +46,9 @@ function tryThen(then, value, fulfillmentHandler, rejectionHandler) {
 }
 
 function handleForeignThenable(promise, thenable, then) {
-   asap(function(promise) {
+   asap(promise => {
     var sealed = false;
-    var error = tryThen(then, thenable, function(value) {
+    var error = tryThen(then, thenable, value => {
       if (sealed) { return; }
       sealed = true;
       if (thenable !== value) {
@@ -54,7 +56,7 @@ function handleForeignThenable(promise, thenable, then) {
       } else {
         fulfill(promise, value);
       }
-    }, function(reason) {
+    }, reason => {
       if (sealed) { return; }
       sealed = true;
 
@@ -74,18 +76,15 @@ function handleOwnThenable(promise, thenable) {
   } else if (thenable._state === REJECTED) {
     reject(promise, thenable._result);
   } else {
-    subscribe(thenable, undefined, function(value) {
-      resolve(promise, value);
-    }, function(reason) {
-      reject(promise, reason);
-    });
+    subscribe(thenable, undefined, value  => resolve(promise, value),
+                                   reason => reject(promise, reason))
   }
 }
 
 function handleMaybeThenable(promise, maybeThenable, then) {
   if (maybeThenable.constructor === promise.constructor &&
       then === originalThen &&
-      constructor.resolve === originalResolve) {
+      maybeThenable.constructor.resolve === originalResolve) {
     handleOwnThenable(promise, maybeThenable);
   } else {
     if (then === GET_THEN_ERROR) {
@@ -138,14 +137,14 @@ function reject(promise, reason) {
 }
 
 function subscribe(parent, child, onFulfillment, onRejection) {
-  var subscribers = parent._subscribers;
-  var length = subscribers.length;
+  let { _subscribers } = parent;
+  let { length } = _subscribers;
 
   parent._onerror = null;
 
-  subscribers[length] = child;
-  subscribers[length + FULFILLED] = onFulfillment;
-  subscribers[length + REJECTED]  = onRejection;
+  _subscribers[length] = child;
+  _subscribers[length + FULFILLED] = onFulfillment;
+  _subscribers[length + REJECTED]  = onRejection;
 
   if (length === 0 && parent._state) {
     asap(publish, parent);
@@ -153,14 +152,14 @@ function subscribe(parent, child, onFulfillment, onRejection) {
 }
 
 function publish(promise) {
-  var subscribers = promise._subscribers;
-  var settled = promise._state;
+  let subscribers = promise._subscribers;
+  let settled = promise._state;
 
   if (subscribers.length === 0) { return; }
 
-  var child, callback, detail = promise._result;
+  let child, callback, detail = promise._result;
 
-  for (var i = 0; i < subscribers.length; i += 3) {
+  for (let i = 0; i < subscribers.length; i += 3) {
     child = subscribers[i];
     callback = subscribers[i + settled];
 
@@ -178,7 +177,7 @@ function ErrorObject() {
   this.error = null;
 }
 
-var TRY_CATCH_ERROR = new ErrorObject();
+const TRY_CATCH_ERROR = new ErrorObject();
 
 function tryCatch(callback, detail) {
   try {
@@ -190,7 +189,7 @@ function tryCatch(callback, detail) {
 }
 
 function invokeCallback(settled, promise, callback, detail) {
-  var hasCallback = isFunction(callback),
+  let hasCallback = isFunction(callback),
       value, error, succeeded, failed;
 
   if (hasCallback) {
@@ -239,7 +238,21 @@ function initializePromise(promise, resolver) {
   }
 }
 
+let id = 0;
+function nextId() {
+  return id++;
+}
+
+function makePromise(promise) {
+  promise[PROMISE_ID] = id++;
+  promise._state = undefined;
+  promise._result = undefined;
+  promise._subscribers = [];
+}
+
 export {
+  nextId,
+  makePromise,
   getThen,
   noop,
   resolve,

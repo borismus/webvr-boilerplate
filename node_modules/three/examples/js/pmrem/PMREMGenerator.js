@@ -101,7 +101,7 @@ THREE.PMREMGenerator.prototype = {
 			this.shader.uniforms[ 'mapSize' ].value = size;
 			this.renderToCubeMapTarget( renderer, this.cubeLods[ i ] );
 
-			if ( i < 5 ) this.shader.uniforms[ 'envMap' ].value = this.cubeLods[ i ];
+			if ( i < 5 ) this.shader.uniforms[ 'envMap' ].value = this.cubeLods[ i ].texture;
 
 		}
 
@@ -135,11 +135,11 @@ THREE.PMREMGenerator.prototype = {
 		return new THREE.ShaderMaterial( {
 
 			uniforms: {
-				"faceIndex": { type: 'i', value: 0 },
-				"roughness": { type: 'f', value: 0.5 },
-				"mapSize": { type: 'f', value: 0.5 },
-				"envMap": { type: 't', value: null },
-				"testColor": { type: 'v3', value: new THREE.Vector3( 1, 1, 1 ) }
+				"faceIndex": { value: 0 },
+				"roughness": { value: 0.5 },
+				"mapSize": { value: 0.5 },
+				"envMap": { value: null },
+				"testColor": { value: new THREE.Vector3( 1, 1, 1 ) }
 			},
 
 			vertexShader:

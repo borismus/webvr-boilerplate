@@ -2,14 +2,6 @@ import {
   isArray
 } from "../utils";
 
-import {
-  noop,
-  resolve,
-  reject,
-  subscribe,
-  PENDING
-} from '../-internal';
-
 /**
   `Promise.race` returns a new promise which is settled in the same way as the
   first passed promise to settle.
@@ -17,13 +9,13 @@ import {
   Example:
 
   ```javascript
-  var promise1 = new Promise(function(resolve, reject){
+  let promise1 = new Promise(function(resolve, reject){
     setTimeout(function(){
       resolve('promise 1');
     }, 200);
   });
 
-  var promise2 = new Promise(function(resolve, reject){
+  let promise2 = new Promise(function(resolve, reject){
     setTimeout(function(){
       resolve('promise 2');
     }, 100);
@@ -42,13 +34,13 @@ import {
   promise will become rejected:
 
   ```javascript
-  var promise1 = new Promise(function(resolve, reject){
+  let promise1 = new Promise(function(resolve, reject){
     setTimeout(function(){
       resolve('promise 1');
     }, 200);
   });
 
-  var promise2 = new Promise(function(resolve, reject){
+  let promise2 = new Promise(function(resolve, reject){
     setTimeout(function(){
       reject(new Error('promise 2'));
     }, 100);
@@ -77,28 +69,16 @@ import {
 */
 export default function race(entries) {
   /*jshint validthis:true */
-  var Constructor = this;
-
-  var promise = new Constructor(noop);
+  let Constructor = this;
 
   if (!isArray(entries)) {
-    reject(promise, new TypeError('You must pass an array to race.'));
-    return promise;
+    return new Constructor((_, reject) => reject(new TypeError('You must pass an array to race.')));
+  } else {
+    return new Constructor((resolve, reject) => {
+      let length = entries.length;
+      for (let i = 0; i < length; i++) {
+        Constructor.resolve(entries[i]).then(resolve, reject);
+      }
+    });
   }
-
-  var length = entries.length;
-
-  function onFulfillment(value) {
-    resolve(promise, value);
-  }
-
-  function onRejection(reason) {
-    reject(promise, reason);
-  }
-
-  for (var i = 0; promise._state === PENDING && i < length; i++) {
-    subscribe(Constructor.resolve(entries[i]), undefined, onFulfillment, onRejection);
-  }
-
-  return promise;
 }

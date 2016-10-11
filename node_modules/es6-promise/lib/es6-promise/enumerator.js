@@ -19,13 +19,18 @@ import then from './then';
 import Promise from './promise';
 import originalResolve from './promise/resolve';
 import originalThen from './then';
+import { makePromise, PROMISE_ID } from './-internal';
 
 export default Enumerator;
 function Enumerator(Constructor, input) {
   this._instanceConstructor = Constructor;
   this.promise = new Constructor(noop);
 
-  if (Array.isArray(input)) {
+  if (!this.promise[PROMISE_ID]) {
+    makePromise(this.promise);
+  }
+
+  if (isArray(input)) {
     this._input     = input;
     this.length     = input.length;
     this._remaining = input.length;
@@ -42,29 +47,28 @@ function Enumerator(Constructor, input) {
       }
     }
   } else {
-    reject(this.promise, this._validationError());
+    reject(this.promise, validationError());
   }
 }
 
-Enumerator.prototype._validationError = function() {
+function validationError() {
   return new Error('Array Methods must be provided an Array');
 };
 
 Enumerator.prototype._enumerate = function() {
-  var length  = this.length;
-  var input   = this._input;
+  let { length, _input } = this;
 
-  for (var i = 0; this._state === PENDING && i < length; i++) {
-    this._eachEntry(input[i], i);
+  for (let i = 0; this._state === PENDING && i < length; i++) {
+    this._eachEntry(_input[i], i);
   }
 };
 
 Enumerator.prototype._eachEntry = function(entry, i) {
-  var c = this._instanceConstructor;
-  var resolve = c.resolve;
+  let c = this._instanceConstructor;
+  let { resolve } = c;
 
   if (resolve === originalResolve) {
-    var then = getThen(entry);
+    let then = getThen(entry);
 
     if (then === originalThen &&
         entry._state !== PENDING) {
@@ -73,11 +77,11 @@ Enumerator.prototype._eachEntry = function(entry, i) {
       this._remaining--;
       this._result[i] = entry;
     } else if (c === Promise) {
-      var promise = new c(noop);
+      let promise = new c(noop);
       handleMaybeThenable(promise, entry, then);
       this._willSettleAt(promise, i);
     } else {
-      this._willSettleAt(new c(function(resolve) { resolve(entry); }), i);
+      this._willSettleAt(new c(resolve => resolve(entry)), i);
     }
   } else {
     this._willSettleAt(resolve(entry), i);
@@ -85,7 +89,7 @@ Enumerator.prototype._eachEntry = function(entry, i) {
 };
 
 Enumerator.prototype._settledAt = function(state, i, value) {
-  var promise = this.promise;
+  let { promise } = this;
 
   if (promise._state === PENDING) {
     this._remaining--;
@@ -103,11 +107,8 @@ Enumerator.prototype._settledAt = function(state, i, value) {
 };
 
 Enumerator.prototype._willSettleAt = function(promise, i) {
-  var enumerator = this;
+  let enumerator = this;
 
-  subscribe(promise, undefined, function(value) {
-    enumerator._settledAt(FULFILLED, i, value);
-  }, function(reason) {
-    enumerator._settledAt(REJECTED, i, reason);
-  });
+  subscribe(promise, undefined, value => enumerator._settledAt(FULFILLED, i, value),
+                               reason => enumerator._settledAt(REJECTED, i, reason));
 };

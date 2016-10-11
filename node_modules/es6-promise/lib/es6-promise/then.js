@@ -3,27 +3,27 @@ import {
   subscribe,
   FULFILLED,
   REJECTED,
-  noop
+  noop,
+  makePromise,
+  PROMISE_ID
 } from './-internal';
 
 import { asap } from './asap';
 
 export default function then(onFulfillment, onRejection) {
-  var parent = this;
-  var state = parent._state;
+  const parent = this;
 
-  if (state === FULFILLED && !onFulfillment || state === REJECTED && !onRejection) {
-    return this;
+  const child = new this.constructor(noop);
+
+  if (child[PROMISE_ID] === undefined) {
+    makePromise(child);
   }
 
-  var child = new this.constructor(noop);
-  var result = parent._result;
+  const { _state } = parent;
 
-  if (state) {
-    var callback = arguments[state - 1];
-    asap(function(){
-      invokeCallback(state, child, callback, result);
-    });
+  if (_state) {
+    const callback = arguments[_state - 1];
+    asap(() => invokeCallback(_state, child, callback, parent._result));
   } else {
     subscribe(parent, child, onFulfillment, onRejection);
   }

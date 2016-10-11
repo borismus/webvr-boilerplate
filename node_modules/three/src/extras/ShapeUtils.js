@@ -1,8 +1,10 @@
+var ShapeUtils;
+
 /**
  * @author zz85 / http://www.lab4games.net/zz85/blog
  */
 
-THREE.ShapeUtils = {
+ShapeUtils = {
 
 	// calculate area of the contour polygon
 
@@ -91,7 +93,7 @@ THREE.ShapeUtils = {
 
 		// takes in an contour array and returns
 
-		return function ( contour, indices ) {
+		return function triangulate( contour, indices ) {
 
 			var n = contour.length;
 
@@ -105,7 +107,7 @@ THREE.ShapeUtils = {
 
 			var u, v, w;
 
-			if ( THREE.ShapeUtils.area( contour ) > 0.0 ) {
+			if ( ShapeUtils.area( contour ) > 0.0 ) {
 
 				for ( v = 0; v < n; v ++ ) verts[ v ] = v;
 
@@ -190,6 +192,21 @@ THREE.ShapeUtils = {
 	} )(),
 
 	triangulateShape: function ( contour, holes ) {
+
+		function removeDupEndPts(points) {
+
+			var l = points.length;
+
+			if ( l > 2 && points[ l - 1 ].equals( points[ 0 ] ) ) {
+
+				points.pop();
+
+			}
+
+		}
+
+		removeDupEndPts( contour );
+		holes.forEach( removeDupEndPts );
 
 		function point_in_segment_2D_colin( inSegPt1, inSegPt2, inOtherPt ) {
 
@@ -628,7 +645,7 @@ THREE.ShapeUtils = {
 
 			if ( allPointsMap[ key ] !== undefined ) {
 
-				console.warn( "THREE.Shape: Duplicate point", key );
+				console.warn( "THREE.ShapeUtils: Duplicate point", key, i );
 
 			}
 
@@ -639,7 +656,7 @@ THREE.ShapeUtils = {
 		// remove holes by cutting paths to holes and adding them to the shape
 		var shapeWithoutHoles = removeHoles( contour, holes );
 
-		var triangles = THREE.ShapeUtils.triangulate( shapeWithoutHoles, false ); // True returns indices for points of spooled shape
+		var triangles = ShapeUtils.triangulate( shapeWithoutHoles, false ); // True returns indices for points of spooled shape
 		//console.log( "triangles",triangles, triangles.length );
 
 		// check all face vertices against all points map
@@ -670,7 +687,7 @@ THREE.ShapeUtils = {
 
 	isClockWise: function ( pts ) {
 
-		return THREE.ShapeUtils.area( pts ) < 0;
+		return ShapeUtils.area( pts ) < 0;
 
 	},
 
@@ -700,7 +717,7 @@ THREE.ShapeUtils = {
 
 		}
 
-		return function ( t, p0, p1, p2 ) {
+		return function b2( t, p0, p1, p2 ) {
 
 			return b2p0( t, p0 ) + b2p1( t, p1 ) + b2p2( t, p2 );
 
@@ -739,7 +756,7 @@ THREE.ShapeUtils = {
 
 		}
 
-		return function ( t, p0, p1, p2, p3 ) {
+		return function b3( t, p0, p1, p2, p3 ) {
 
 			return b3p0( t, p0 ) + b3p1( t, p1 ) + b3p2( t, p2 ) + b3p3( t, p3 );
 
@@ -748,3 +765,6 @@ THREE.ShapeUtils = {
 	} )()
 
 };
+
+
+export { ShapeUtils };

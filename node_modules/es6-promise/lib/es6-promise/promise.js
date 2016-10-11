@@ -4,6 +4,8 @@ import {
 
 import {
   noop,
+  nextId,
+  PROMISE_ID,
   initializePromise
 } from './-internal';
 
@@ -19,7 +21,6 @@ import Resolve from './promise/resolve';
 import Reject from './promise/reject';
 import then from './then';
 
-var counter = 0;
 
 function needsResolver() {
   throw new TypeError('You must pass a resolver function as the first argument to the promise constructor');
@@ -29,7 +30,6 @@ function needsNew() {
   throw new TypeError("Failed to construct 'Promise': Please use the 'new' operator, this object constructor cannot be called as a function.");
 }
 
-export default Promise;
 /**
   Promise objects represent the eventual result of an asynchronous operation. The
   primary way of interacting with a promise is through its `then` method, which
@@ -63,7 +63,7 @@ export default Promise;
   ------------
 
   ```js
-  var promise = new Promise(function(resolve, reject) {
+  let promise = new Promise(function(resolve, reject) {
     // on success
     resolve(value);
 
@@ -87,7 +87,7 @@ export default Promise;
   ```js
   function getJSON(url) {
     return new Promise(function(resolve, reject){
-      var xhr = new XMLHttpRequest();
+      let xhr = new XMLHttpRequest();
 
       xhr.open('GET', url);
       xhr.onreadystatechange = handler;
@@ -133,10 +133,9 @@ export default Promise;
   Useful for tooling.
   @constructor
 */
-function Promise(resolver) {
-  this._id = counter++;
-  this._state = undefined;
-  this._result = undefined;
+export default function Promise(resolver) {
+  this[PROMISE_ID] = nextId();
+  this._result = this._state = undefined;
   this._subscribers = [];
 
   if (noop !== resolver) {
@@ -245,7 +244,7 @@ Promise.prototype = {
   Synchronous Example
 
   ```javascript
-  var result;
+  let result;
 
   try {
     result = findResult();
@@ -283,7 +282,7 @@ Promise.prototype = {
   Synchronous Example
 
   ```javascript
-  var author, books;
+  let author, books;
 
   try {
     author = findAuthor();
@@ -378,7 +377,7 @@ Promise.prototype = {
   Useful for tooling.
   @return {Promise}
 */
-  'catch': function(onRejection) {
+  catch(onRejection) {
     return this.then(null, onRejection);
   }
 };

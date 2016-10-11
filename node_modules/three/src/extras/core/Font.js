@@ -1,17 +1,20 @@
+import { ShapeUtils } from '../ShapeUtils';
+import { ShapePath } from './Path';
+
 /**
  * @author zz85 / http://www.lab4games.net/zz85/blog
  * @author mrdoob / http://mrdoob.com/
  */
 
-THREE.Font = function ( data ) {
+function Font( data ) {
 
 	this.data = data;
 
-};
+}
 
-THREE.Font.prototype = {
+Object.assign( Font.prototype, {
 
-	constructor: THREE.Font,
+	isFont: true,
 
 	generateShapes: function ( text, size, divisions ) {
 
@@ -42,9 +45,9 @@ THREE.Font.prototype = {
 
 			if ( ! glyph ) return;
 
-			var path = new THREE.Path();
+			var path = new ShapePath();
 
-			var pts = [], b2 = THREE.ShapeUtils.b2, b3 = THREE.ShapeUtils.b3;
+			var pts = [], b2 = ShapeUtils.b2, b3 = ShapeUtils.b3;
 			var x, y, cpx, cpy, cpx0, cpy0, cpx1, cpy1, cpx2, cpy2, laste;
 
 			if ( glyph.o ) {
@@ -163,4 +166,7 @@ THREE.Font.prototype = {
 
 	}
 
-};
+} );
+
+
+export { Font };
