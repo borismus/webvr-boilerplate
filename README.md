@@ -68,3 +68,9 @@ The boilerplate is also available via npm. Easy install:
 [spec]: https://mozvr.github.io/webvr-spec/
 [dm]: https://twitter.com/dmarcos
 [doob]: https://twitter.com/mrdoob
+
+
+## License
+
+This program is free software for both commercial and non-commercial use,
+distributed under the [Apache 2.0 License](COPYING).
