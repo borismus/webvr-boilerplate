@@ -7,10 +7,21 @@
     "test": "test"
   },
   "dependencies": {
+    "body-parser": "~1.15.1",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.2.0",
+    "ejs": "^2.5.2",
+    "express": "~4.13.4",
+    "express-session": "^1.14.1",
+    "jade": "~1.11.0",
+    "morgan": "~1.7.0",
+    "passport": "^0.3.2",
+    "passport-twitter": "^1.0.4",
+    "path": "^0.12.7",
+    "serve-favicon": "~2.3.0",
+    "socket.io": "~1.4.5",
     "three": "^0.75.0",
-    "webvr-polyfill": "^0.9.5",
-    "express": "~4.10.2",
-    "socket.io": "~1.4.5"
+    "webvr-polyfill": "^0.9.5"
   },
   "devDependencies": {
     "browserify": "latest",
@@ -22,7 +33,8 @@
     "watch": "watchify src/main.js -v -d -o 'derequire > build/webvr-manager.js'",
     "test": "browserify test/device-info-test.js  > build/device-info-test.js",
     "copy-polyfill": "cp ../webvr-polyfill/build/webvr-polyfill.js node_modules/webvr-polyfill/build/webvr-polyfill.js",
-    "copy-three": "./scripts/copy-three.sh"
+    "copy-three": "./scripts/copy-three.sh",
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",

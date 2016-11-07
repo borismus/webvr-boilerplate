@@ -5,3 +5,5 @@ Session.vim
 .netrwhist
 *~
 .DS_Store
+node_modules
+env.js

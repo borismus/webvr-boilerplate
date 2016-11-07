@@ -42,6 +42,6 @@ var params = {
 VR_APP['manager'] = new WebVRManager(VR_APP['renderer'], VR_APP['effect'], params);
 
 var fontLoader = new THREE.FontLoader();
-fontLoader.load('node_modules/three/examples/fonts/helvetiker_regular.typeface.js', function(fnt){
+fontLoader.load('/node_modules/three/examples/fonts/helvetiker_regular.typeface.js', function(fnt){
     VR_APP['font'] = fnt;
 });

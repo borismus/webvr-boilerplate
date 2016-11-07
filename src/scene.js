@@ -70,7 +70,7 @@ VR_APP['screens']['main'] = (function() {
         // Add a repeating grid as a skybox.
         var boxWidth = 20;
         var loader = new THREE.TextureLoader();
-        loader.load('img/box.png', onTextureLoaded);
+        loader.load('/img/box.png', onTextureLoaded);
 
         function onTextureLoaded(texture) {
             texture.wrapS = THREE.RepeatWrapping;
