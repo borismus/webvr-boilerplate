@@ -1,17 +1,15 @@
-var VR_APP = {
-        'MAX_MESSAGES': 5
-    },
-    socket = io();
+VR_APP['MAX_MESSAGES'] = 5;
+//var socket = io();
 
 VR_APP['screens'] = {};
-VR_APP['messages'] = [];
+//VR_APP['messages'] = [];
 
 VR_APP['message_handler'] = function(msg){
     msg['initialized'] = false;
     VR_APP['messages'].push(msg);
 }
 
-socket.on('message', VR_APP['message_handler']);
+//socket.on('message', VR_APP['message_handler']);
 
 // Setup three.js WebGL renderer. Note: Antialiasing is a big performance hit.
 // Only enable it if you actually need to.

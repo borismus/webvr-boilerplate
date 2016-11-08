@@ -10,8 +10,8 @@ var app = express();
 var port = process.env.PORT || 8000;
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 app.use(session({secret: 'roxana'}));
 
 require('./config/passport')(app);
@@ -42,6 +42,7 @@ var server = require('http').createServer(app).listen(port, function(){
     console.log('listening on ' + port);
 });
 
+/*
 var io = require('socket.io').listen(server);
 io.on('connection', function(socket){
     console.log('user connected');
@@ -75,3 +76,4 @@ io.on('connection', function(socket){
         console.log('user disconnected');
     });
 });
+*/

@@ -33,11 +33,11 @@ VR_APP['screens']['main'] = (function() {
 
     function createMessageText2d(index){
         var canvas = document.createElement('canvas');
-        var size = 512; // CHANGED
+        var size = 512;
         canvas.width = size;
         canvas.height = size;
         var context = canvas.getContext('2d');
-        context.fillStyle = '#ff0000'; // CHANGED
+        context.fillStyle = '#ff0000';
         context.textAlign = 'center';
         context.font = '16px Arial';
         var str = VR_APP['messages'][index]['text'];
@@ -50,11 +50,11 @@ VR_APP['screens']['main'] = (function() {
         var mat = new THREE.SpriteMaterial({
             map: amap,
             transparent: false,
-            color: 0xffffff // CHANGED
+            color: 0xffffff
         });
 
         var sp = new THREE.Sprite(mat);
-        sp.scale.set( 5, 5, 1 ); // CHANGED
+        sp.scale.set( 5, 5, 1 );
         sp.position.set(0, 10, -3);
         VR_APP['scene'].add(sp);
         VR_APP['messages'][index]['mesh'] = sp;
