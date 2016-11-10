@@ -27,12 +27,21 @@ router.get('/', function(req, res, next) {
             console.log("RESULTS");
             console.log(results);
 
-            var texts = [];
+            var tweets = [];
             for(var i = 0; i < results.length; i++) {
-                texts.push({text: results[i].text});
+                tweets.push({
+                    text: results[i].text,
+                    user: {
+                        name: results[i].user.name,
+                        screen_name: results[i].user.screen_name,
+                        profile_image_url: results[i].user.profile_image_url,
+                        text_color: results[i].user.profile_text_color
+                    }
+                });
+                console.log(tweets[i]);
             }
 
-            res.render(path.resolve(__dirname + '/../views/feed.ejs'), { timeline: texts });
+            res.render(path.resolve(__dirname + '/../views/feed.ejs'), { timeline: tweets });
         }
     )
 });
