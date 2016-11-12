@@ -25,6 +25,8 @@ VR_APP['scene'] = new THREE.Scene();
 // Create a three.js camera.
 VR_APP['camera'] = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 
+VR_APP['scene'].add(VR_APP['camera']);
+
 // Apply VR headset positional data to camera.
 VR_APP['controls'] = new THREE.VRControls(VR_APP['camera']);
 

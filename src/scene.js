@@ -3,7 +3,126 @@ VR_APP['screens']['main'] = (function() {
     var framesBetween = 5000,
         currentFrame = 0,
         canAdd = false,
+<<<<<<< HEAD
         loader = new THREE.TextureLoader();
+=======
+        PLANE_SIZE = 20,
+        colors = [];
+
+    function createPlane(size, position, rotation, color){
+        var geometry = new THREE.PlaneGeometry(size, size);
+        var material = new THREE.MeshBasicMaterial( {color: color, side: THREE.DoubleSide} );
+        var plane = new THREE.Mesh( geometry, material );
+        plane.position.set(position.x, position.y, position.z);
+        plane.rotation.set(rotation.x, rotation.y, rotation.z);
+        VR_APP['scene'].add( plane );
+    }
+
+    function randomInArray(array){
+        return array[Math.floor(Math.random() * array.length)];
+    }
+
+    function randomColor(colors, isUsed){
+        var colorObj;
+        var unused = colors.filter(function(obj){
+            return obj.used === isUsed;
+        });
+
+        if(unused.length < 1){
+            colorObj = randomInArray(colors);
+        } else {
+            colorObj = randomInArray(unused);
+            colorObj.used = true;
+        }
+
+        return colorObj.color;
+    }
+
+    function onMouseDown(event){
+        event.preventDefault();
+        var raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(VR_APP.camera.position, VR_APP.camera);
+
+        var intersects = raycaster.intersectObjects(VR_APP.scene.children);
+        for(var i = 0; i < intersects.length; i++){
+            if(intersects[i].object.material.color.equals(VR_APP.target.material.color)){
+                var reset = colors.filter(function(obj){
+                    return obj.color === intersects[i].object.material.color.getHex();
+                });
+                for (var j = 0; j < reset.length; j++){
+                    reset[j].used = false;
+                }
+                VR_APP.scene.remove(intersects[i]['object']);
+                VR_APP.target.material.color.setHex(randomColor(colors, true));
+
+                // Add scoring, more colors, levels, game over, etc.
+            }
+        }
+    }
+
+    function initialize(){
+        colors.push(
+            {color: 0x00ff00, used: false},
+            {color: 0xff0000, used: false},
+            {color: 0x0000ff, used: false},
+            {color: 0xff3399, used: false},
+            {color: 0x00ffff, used: false},
+            {color: 0x009999, used: false},
+            {color: 0x009900, used: false}
+        );
+
+        window.addEventListener('mousedown', onMouseDown, false);
+        window.addEventListener('resize', onResize, true);
+        window.addEventListener('vrdisplaypresentchange', onResize, true);
+
+        // ALL OF THESE WILL HAVE A MATHEMATICAL BASIS (allow for tiles, etc.)
+        // z plane
+        createPlane(PLANE_SIZE, {'x':0, 'y':0, 'z':-PLANE_SIZE / 2}, {'x': 0, 'y': 0, 'z': 0}, randomColor(colors, false));
+        createPlane(PLANE_SIZE, {'x':0, 'y':0, 'z':PLANE_SIZE / 2}, {'x': 0, 'y': 0, 'z': 0}, randomColor(colors, false));
+
+        // y plane
+        createPlane(PLANE_SIZE, {'x':0, 'y':-PLANE_SIZE / 2, 'z':0}, {'x': Math.PI / 2, 'y': 0, 'z': 0}, randomColor(colors, false));
+        createPlane(PLANE_SIZE, {'x':0, 'y':PLANE_SIZE / 2, 'z':0}, {'x': Math.PI / 2, 'y': 0, 'z': 0}, randomColor(colors, false));
+
+        // x plane
+        createPlane(PLANE_SIZE, {'x':-PLANE_SIZE / 2, 'y':0, 'z':0}, {'x': 0, 'y': Math.PI / 2, 'z': 0}, randomColor(colors, false));
+        createPlane(PLANE_SIZE, {'x':PLANE_SIZE / 2, 'y':0, 'z':0}, {'x': 0, 'y': Math.PI / 2, 'z': 0}, randomColor(colors, false));
+
+        var geometry = new THREE.BoxGeometry(0.25, 0.25, 0.25);
+        var material = new THREE.MeshBasicMaterial({color: randomColor(colors, true)});
+        var mesh = new THREE.Mesh(geometry, material);
+        mesh.position.z = -PLANE_SIZE / 4;
+        VR_APP.target = mesh;
+        VR_APP.camera.add( mesh );
+
+        //VR_APP.target.material.color.setHex(0xffffff);
+
+        VR_APP['lastRender'] = 0;
+        /*
+        object.position.set(0, 0, -1);
+        VR_APP.camera.add(object);
+
+        var loader = new THREE.TextureLoader();
+        loader.load('img/box.png', onTextureLoaded);
+
+        function onTextureLoaded(texture) {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(boxWidth, boxWidth);
+
+            var geometry = new THREE.BoxGeometry(boxWidth, boxWidth, boxWidth);
+            var material = new THREE.MeshBasicMaterial({
+                map: texture,
+                //color: 0x01BE00,
+                side: THREE.BackSide
+            });
+
+            var skybox = new THREE.Mesh(geometry, material);
+            VR_APP['scene'].add(skybox);
+        }
+        */
+    }
+>>>>>>> f8be2eb359af3eb021bfadbafb584daa906bae9b
 
     function onResize(e) {
         VR_APP.effect.setSize(window.innerWidth, window.innerHeight);
@@ -11,6 +130,7 @@ VR_APP['screens']['main'] = (function() {
         VR_APP.camera.updateProjectionMatrix();
     }
 
+<<<<<<< HEAD
     function initialize(){
         VR_APP.lastRender = 0;
 
@@ -114,6 +234,8 @@ VR_APP['screens']['main'] = (function() {
         img.src = tweet.user.profile_image_url;
     }
 
+=======
+>>>>>>> f8be2eb359af3eb021bfadbafb584daa906bae9b
     function updateMessages(){
         var numberOfMesseges = 0;
         for(var i = VR_APP.messages.length - 1; i >= 0; i--){
@@ -150,7 +272,7 @@ VR_APP['screens']['main'] = (function() {
         var delta = Math.min(timestamp - VR_APP.lastRender, 500);
         VR_APP.lastRender = timestamp;
 
-        updateMessages();
+        //updateMessages();
 
         // Update VR headset position and apply to camera.
         VR_APP.controls.update();
