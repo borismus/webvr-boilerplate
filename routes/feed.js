@@ -24,9 +24,6 @@ router.get('/', function(req, res, next) {
         req.user.twitter.tokenSecret,
         req.user.twitter.id,
         function(results) {
-            console.log("RESULTS");
-            console.log(results);
-
             var tweets = [];
             for(var i = 0; i < results.length; i++) {
                 tweets.push({
@@ -34,11 +31,12 @@ router.get('/', function(req, res, next) {
                     user: {
                         name: results[i].user.name,
                         screen_name: results[i].user.screen_name,
-                        profile_image_url: results[i].user.profile_image_url,
-                        text_color: results[i].user.profile_text_color
+                        profile_image_url: results[i].user.profile_image_url_https,
+                        text_color: results[i].user.profile_text_color,
+                        profile_banner_url: results[i].user.profile_banner_url
                     }
                 });
-                console.log(tweets[i]);
+                console.log(results[i]);
             }
 
             res.render(path.resolve(__dirname + '/../views/feed.ejs'), { timeline: tweets });
