@@ -53,6 +53,7 @@ function WebVRManager(renderer, effect, params) {
   // Check if the browser is compatible with WebVR.
   this.getDeviceByType_(VRDisplay).then(function(hmd) {
     this.hmd = hmd;
+    this.isVRCompatible = true;
 
     // Only enable VR mode if there's a VR device attached or we are running the
     // polyfill on mobile.
