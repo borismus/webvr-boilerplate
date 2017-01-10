@@ -136,7 +136,7 @@ WebVRManager.prototype.getDeviceByType_ = function(type) {
     navigator.getVRDisplays().then(function(displays) {
       // Promise succeeds, but check if there are any displays actually.
       for (var i = 0; i < displays.length; i++) {
-        if (displays[i] instanceof type) {
+          if (displays[i] instanceof type || displays[i].displayName.includes("HTC") || displays[i].displayName.includes("Oculus")) { // temporary fix for failing instanceof VRDevice
           resolve(displays[i]);
           break;
         }
