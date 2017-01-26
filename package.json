@@ -4,10 +4,10 @@
   "description": "A starting point for web-based VR experiences that work in both Cardboard and Oculus.",
   "main": "index.html",
   "dependencies": {
-    "es6-promise": "^4.0.5",
-    "three": "^0.84.0",
-    "webvr-polyfill": "^0.9.25",
-    "webvr-ui": "^0.9.2"
+    "es6-promise": "latest",
+    "three": "latest",
+    "webvr-polyfill": "latest",
+    "webvr-ui": "latest"
   },
   "devDependencies": {
     "browserify": "latest",
