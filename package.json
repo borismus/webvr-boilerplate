@@ -1,7 +1,7 @@
 {
   "name": "webvr-boilerplate",
-  "version": "0.4.9",
-  "description": "A starting point for web-based VR experiences that work in both Cardboard and Oculus.",
+  "version": "0.5.0",
+  "description": "A starting point for cross-platform web-based VR experiences.",
   "main": "index.html",
   "dependencies": {
     "es6-promise": "latest",
