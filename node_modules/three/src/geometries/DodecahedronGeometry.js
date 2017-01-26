@@ -1,10 +1,35 @@
-import { PolyhedronGeometry } from './PolyhedronGeometry';
-
 /**
  * @author Abe Pazos / https://hamoid.com
  */
 
+import { Geometry } from '../core/Geometry';
+
 function DodecahedronGeometry( radius, detail ) {
+
+	Geometry.call( this );
+
+	this.type = 'DodecahedronGeometry';
+
+	this.parameters = {
+		radius: radius,
+		detail: detail
+	};
+
+	this.fromBufferGeometry( new DodecahedronBufferGeometry( radius, detail ) );
+	this.mergeVertices();
+
+}
+
+DodecahedronGeometry.prototype = Object.create( Geometry.prototype );
+DodecahedronGeometry.prototype.constructor = DodecahedronGeometry;
+
+/**
+ * @author Mugen87 / https://github.com/Mugen87
+ */
+
+import { PolyhedronBufferGeometry } from './PolyhedronGeometry';
+
+function DodecahedronBufferGeometry( radius, detail ) {
 
 	var t = ( 1 + Math.sqrt( 5 ) ) / 2;
 	var r = 1 / t;
@@ -14,8 +39,8 @@ function DodecahedronGeometry( radius, detail ) {
 		// (±1, ±1, ±1)
 		- 1, - 1, - 1,    - 1, - 1,  1,
 		- 1,  1, - 1,    - 1,  1,  1,
-		 1, - 1, - 1,     1, - 1,  1,
-		 1,  1, - 1,     1,  1,  1,
+		  1, - 1, - 1,     1, - 1,  1,
+		  1,  1, - 1,     1,  1,  1,
 
 		// (0, ±1/φ, ±φ)
 		 0, - r, - t,     0, - r,  t,
@@ -45,9 +70,9 @@ function DodecahedronGeometry( radius, detail ) {
 		 1, 12, 14,      1, 14,  5,      1,  5,  9
 	];
 
-	PolyhedronGeometry.call( this, vertices, indices, radius, detail );
+	PolyhedronBufferGeometry.call( this, vertices, indices, radius, detail );
 
-	this.type = 'DodecahedronGeometry';
+	this.type = 'DodecahedronBufferGeometry';
 
 	this.parameters = {
 		radius: radius,
@@ -56,8 +81,7 @@ function DodecahedronGeometry( radius, detail ) {
 
 }
 
-DodecahedronGeometry.prototype = Object.create( PolyhedronGeometry.prototype );
-DodecahedronGeometry.prototype.constructor = DodecahedronGeometry;
+DodecahedronBufferGeometry.prototype = Object.create( PolyhedronBufferGeometry.prototype );
+DodecahedronBufferGeometry.prototype.constructor = DodecahedronBufferGeometry;
 
-
-export { DodecahedronGeometry };
+export { DodecahedronGeometry, DodecahedronBufferGeometry };

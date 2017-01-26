@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var MathUtil = require('../math-util.js');
-var DEBUG = false;
+var MathUtil = require('../math-util');
+var Util = require('../util');
 
 /**
  * Given an orientation and the gyroscope data, predicts the future orientation
@@ -54,7 +54,7 @@ PosePredictor.prototype.getPrediction = function(currentQ, gyro, timestampS) {
 
   // If we're rotating slowly, don't do prediction.
   if (angularSpeed < MathUtil.degToRad * 20) {
-    if (DEBUG) {
+    if (Util.isDebug()) {
       console.log('Moving slowly, at %s deg/s: no prediction',
                   (MathUtil.radToDeg * angularSpeed).toFixed(1));
     }

@@ -59,7 +59,7 @@ WebVRConfig = {
   PREDICTION_TIME_S: 0.040, // Default: 0.040.
 
   // Flag to disable touch panner. In case you have your own touch controls.
-  TOUCH_PANNER_DISABLED: true, // Default: false.
+  TOUCH_PANNER_DISABLED: false, // Default: true.
 
   // Enable yaw panning only, disabling roll and pitch. This can be useful
   // for panoramas with nothing interesting above or below.

@@ -42,7 +42,6 @@ function Dpdb(fetchOnline, onDeviceParamsUpdated) {
     // Set the callback.
     this.onDeviceParamsUpdated = onDeviceParamsUpdated;
 
-    console.log('Fetching DPDB...');
     var xhr = new XMLHttpRequest();
     var obj = this;
     xhr.open('GET', ONLINE_DPDB_URL, true);
@@ -50,7 +49,6 @@ function Dpdb(fetchOnline, onDeviceParamsUpdated) {
       obj.loading = false;
       if (xhr.status >= 200 && xhr.status <= 299) {
         // Success.
-        console.log('Successfully loaded online DPDB.');
         obj.dpdb = JSON.parse(xhr.response);
         obj.recalculateDeviceParams_();
       } else {
@@ -69,10 +67,7 @@ Dpdb.prototype.getDeviceParams = function() {
 
 // Recalculates this device's parameters based on the DPDB.
 Dpdb.prototype.recalculateDeviceParams_ = function() {
-  console.log('Recalculating device params.');
   var newDeviceParams = this.calcDeviceParams_();
-  console.log('New device parameters:');
-  console.log(newDeviceParams);
   if (newDeviceParams) {
     this.deviceParams = newDeviceParams;
     // Invoke callback, if it is set.
@@ -106,9 +101,6 @@ Dpdb.prototype.calcDeviceParams_ = function() {
   var userAgent = navigator.userAgent || navigator.vendor || window.opera;
   var width = Util.getScreenWidth();
   var height = Util.getScreenHeight();
-  console.log('User agent: ' + userAgent);
-  console.log('Pixel width: ' + width);
-  console.log('Pixel height: ' + height);
 
   if (!db.devices) {
     console.error('DPDB has no devices section.');
@@ -135,8 +127,6 @@ Dpdb.prototype.calcDeviceParams_ = function() {
     for (var j = 0; j < device.rules.length; j++) {
       var rule = device.rules[j];
       if (this.matchRule_(rule, userAgent, width, height)) {
-        console.log('Rule matched:');
-        console.log(rule);
         matched = true;
         break;
       }

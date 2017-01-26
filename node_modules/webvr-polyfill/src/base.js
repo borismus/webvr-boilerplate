@@ -211,27 +211,20 @@ VRDisplay.prototype.requestPresent = function(layers) {
     var rightBounds = incomingLayer.rightBounds || defaultRightBounds;
     if (wasPresenting) {
       // Already presenting, just changing configuration
-      var changed = false;
       var layer = self.layer_;
       if (layer.source !== incomingLayer.source) {
         layer.source = incomingLayer.source;
-        changed = true;
       }
 
       for (var i = 0; i < 4; i++) {
         if (layer.leftBounds[i] !== leftBounds[i]) {
           layer.leftBounds[i] = leftBounds[i];
-          changed = true;
         }
         if (layer.rightBounds[i] !== rightBounds[i]) {
           layer.rightBounds[i] = rightBounds[i];
-          changed = true;
         }
       }
 
-      if (changed) {
-        self.fireVRDisplayPresentChange_();
-      }
       resolve();
       return;
     }
@@ -339,7 +332,7 @@ VRDisplay.prototype.getLayers = function() {
 };
 
 VRDisplay.prototype.fireVRDisplayPresentChange_ = function() {
-  var event = new CustomEvent('vrdisplaypresentchange', {detail: {vrdisplay: this}});
+  var event = new CustomEvent('vrdisplaypresentchange', {detail: {display: this}});
   window.dispatchEvent(event);
 };
 

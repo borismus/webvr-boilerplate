@@ -1,10 +1,35 @@
-import { PolyhedronGeometry } from './PolyhedronGeometry';
-
 /**
  * @author timothypratley / https://github.com/timothypratley
  */
 
+import { Geometry } from '../core/Geometry';
+
 function IcosahedronGeometry( radius, detail ) {
+
+ 	Geometry.call( this );
+
+	this.type = 'IcosahedronGeometry';
+
+	this.parameters = {
+		radius: radius,
+		detail: detail
+	};
+
+	this.fromBufferGeometry( new IcosahedronBufferGeometry( radius, detail ) );
+	this.mergeVertices();
+
+}
+
+IcosahedronGeometry.prototype = Object.create( Geometry.prototype );
+IcosahedronGeometry.prototype.constructor = IcosahedronGeometry;
+
+/**
+ * @author Mugen87 / https://github.com/Mugen87
+ */
+
+import { PolyhedronBufferGeometry } from './PolyhedronGeometry';
+
+function IcosahedronBufferGeometry( radius, detail ) {
 
 	var t = ( 1 + Math.sqrt( 5 ) ) / 2;
 
@@ -21,9 +46,9 @@ function IcosahedronGeometry( radius, detail ) {
 		 4,  9,  5,    2,  4, 11,    6,  2, 10,    8,  6,  7,    9,  8,  1
 	];
 
-	PolyhedronGeometry.call( this, vertices, indices, radius, detail );
+	PolyhedronBufferGeometry.call( this, vertices, indices, radius, detail );
 
-	this.type = 'IcosahedronGeometry';
+	this.type = 'IcosahedronBufferGeometry';
 
 	this.parameters = {
 		radius: radius,
@@ -32,8 +57,7 @@ function IcosahedronGeometry( radius, detail ) {
 
 }
 
-IcosahedronGeometry.prototype = Object.create( PolyhedronGeometry.prototype );
-IcosahedronGeometry.prototype.constructor = IcosahedronGeometry;
+IcosahedronBufferGeometry.prototype = Object.create( PolyhedronBufferGeometry.prototype );
+IcosahedronBufferGeometry.prototype.constructor = IcosahedronBufferGeometry;
 
-
-export { IcosahedronGeometry };
+export { IcosahedronGeometry, IcosahedronBufferGeometry };

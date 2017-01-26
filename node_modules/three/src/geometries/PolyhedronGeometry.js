@@ -1,14 +1,10 @@
-import { Geometry } from '../core/Geometry';
-import { Vector2 } from '../math/Vector2';
-import { Face3 } from '../core/Face3';
-import { Vector3 } from '../math/Vector3';
-import { Sphere } from '../math/Sphere';
-
 /**
  * @author clockworkgeek / https://github.com/clockworkgeek
  * @author timothypratley / https://github.com/timothypratley
  * @author WestLangley / http://github.com/WestLangley
 */
+
+import { Geometry } from '../core/Geometry';
 
 function PolyhedronGeometry( vertices, indices, radius, detail ) {
 
@@ -23,143 +19,111 @@ function PolyhedronGeometry( vertices, indices, radius, detail ) {
 		detail: detail
 	};
 
+	this.fromBufferGeometry( new PolyhedronBufferGeometry( vertices, indices, radius, detail ) );
+	this.mergeVertices();
+
+}
+
+PolyhedronGeometry.prototype = Object.create( Geometry.prototype );
+PolyhedronGeometry.prototype.constructor = PolyhedronGeometry;
+
+/**
+ * @author Mugen87 / https://github.com/Mugen87
+ */
+
+import { Float32BufferAttribute } from '../core/BufferAttribute';
+import { BufferGeometry } from '../core/BufferGeometry';
+import { Vector3 } from '../math/Vector3';
+import { Vector2 } from '../math/Vector2';
+
+function PolyhedronBufferGeometry( vertices, indices, radius, detail ) {
+
+	BufferGeometry.call( this );
+
+	this.type = 'PolyhedronBufferGeometry';
+
+	this.parameters = {
+		vertices: vertices,
+		indices: indices,
+		radius: radius,
+		detail: detail
+	};
+
 	radius = radius || 1;
 	detail = detail || 0;
 
-	var that = this;
+	// default buffer data
 
-	for ( var i = 0, l = vertices.length; i < l; i += 3 ) {
+	var vertexBuffer = [];
+	var uvBuffer = [];
 
-		prepare( new Vector3( vertices[ i ], vertices[ i + 1 ], vertices[ i + 2 ] ) );
+	// the subdivision creates the vertex buffer data
 
-	}
+	subdivide( detail );
 
-	var p = this.vertices;
+	// all vertices should lie on a conceptual sphere with a given radius
 
-	var faces = [];
+	appplyRadius( radius );
 
-	for ( var i = 0, j = 0, l = indices.length; i < l; i += 3, j ++ ) {
+	// finally, create the uv data
 
-		var v1 = p[ indices[ i ] ];
-		var v2 = p[ indices[ i + 1 ] ];
-		var v3 = p[ indices[ i + 2 ] ];
+	generateUVs();
 
-		faces[ j ] = new Face3( v1.index, v2.index, v3.index, [ v1.clone(), v2.clone(), v3.clone() ] );
+	// build non-indexed geometry
 
-	}
+	this.addAttribute( 'position', new Float32BufferAttribute( vertexBuffer, 3 ) );
+	this.addAttribute( 'normal', new Float32BufferAttribute( vertexBuffer.slice(), 3 ) );
+	this.addAttribute( 'uv', new Float32BufferAttribute( uvBuffer, 2 ) );
+	this.normalizeNormals();
 
-	var centroid = new Vector3();
+	// helper functions
 
-	for ( var i = 0, l = faces.length; i < l; i ++ ) {
+	function subdivide( detail ) {
 
-		subdivide( faces[ i ], detail );
+		var a = new Vector3();
+		var b = new Vector3();
+		var c = new Vector3();
 
-	}
+		// iterate over all faces and apply a subdivison with the given detail value
 
+		for ( var i = 0; i < indices.length; i += 3 ) {
 
-	// Handle case when face straddles the seam
+			// get the vertices of the face
 
-	for ( var i = 0, l = this.faceVertexUvs[ 0 ].length; i < l; i ++ ) {
+			getVertexByIndex( indices[ i + 0 ], a );
+			getVertexByIndex( indices[ i + 1 ], b );
+			getVertexByIndex( indices[ i + 2 ], c );
 
-		var uvs = this.faceVertexUvs[ 0 ][ i ];
+			// perform subdivision
 
-		var x0 = uvs[ 0 ].x;
-		var x1 = uvs[ 1 ].x;
-		var x2 = uvs[ 2 ].x;
-
-		var max = Math.max( x0, x1, x2 );
-		var min = Math.min( x0, x1, x2 );
-
-		if ( max > 0.9 && min < 0.1 ) {
-
-			// 0.9 is somewhat arbitrary
-
-			if ( x0 < 0.2 ) uvs[ 0 ].x += 1;
-			if ( x1 < 0.2 ) uvs[ 1 ].x += 1;
-			if ( x2 < 0.2 ) uvs[ 2 ].x += 1;
+			subdivideFace( a, b, c, detail );
 
 		}
 
 	}
 
-
-	// Apply radius
-
-	for ( var i = 0, l = this.vertices.length; i < l; i ++ ) {
-
-		this.vertices[ i ].multiplyScalar( radius );
-
-	}
-
-
-	// Merge vertices
-
-	this.mergeVertices();
-
-	this.computeFaceNormals();
-
-	this.boundingSphere = new Sphere( new Vector3(), radius );
-
-
-	// Project vector onto sphere's surface
-
-	function prepare( vector ) {
-
-		var vertex = vector.normalize().clone();
-		vertex.index = that.vertices.push( vertex ) - 1;
-
-		// Texture coords are equivalent to map coords, calculate angle and convert to fraction of a circle.
-
-		var u = azimuth( vector ) / 2 / Math.PI + 0.5;
-		var v = inclination( vector ) / Math.PI + 0.5;
-		vertex.uv = new Vector2( u, 1 - v );
-
-		return vertex;
-
-	}
-
-
-	// Approximate a curved face with recursively sub-divided triangles.
-
-	function make( v1, v2, v3 ) {
-
-		var face = new Face3( v1.index, v2.index, v3.index, [ v1.clone(), v2.clone(), v3.clone() ] );
-		that.faces.push( face );
-
-		centroid.copy( v1 ).add( v2 ).add( v3 ).divideScalar( 3 );
-
-		var azi = azimuth( centroid );
-
-		that.faceVertexUvs[ 0 ].push( [
-			correctUV( v1.uv, v1, azi ),
-			correctUV( v2.uv, v2, azi ),
-			correctUV( v3.uv, v3, azi )
-		] );
-
-	}
-
-
-	// Analytically subdivide a face to the required detail level.
-
-	function subdivide( face, detail ) {
+	function subdivideFace( a, b, c, detail ) {
 
 		var cols = Math.pow( 2, detail );
-		var a = prepare( that.vertices[ face.a ] );
-		var b = prepare( that.vertices[ face.b ] );
-		var c = prepare( that.vertices[ face.c ] );
+
+		// we use this multidimensional array as a data structure for creating the subdivision
+
 		var v = [];
 
-		// Construct all of the vertices for this subdivision.
+		var i, j;
 
-		for ( var i = 0 ; i <= cols; i ++ ) {
+		// construct all of the vertices for this subdivision
+
+		for ( i = 0; i <= cols; i ++ ) {
 
 			v[ i ] = [];
 
-			var aj = prepare( a.clone().lerp( c, i / cols ) );
-			var bj = prepare( b.clone().lerp( c, i / cols ) );
+			var aj = a.clone().lerp( c, i / cols );
+			var bj = b.clone().lerp( c, i / cols );
+
 			var rows = cols - i;
 
-			for ( var j = 0; j <= rows; j ++ ) {
+			for ( j = 0; j <= rows; j ++ ) {
 
 				if ( j === 0 && i === cols ) {
 
@@ -167,7 +131,7 @@ function PolyhedronGeometry( vertices, indices, radius, detail ) {
 
 				} else {
 
-					v[ i ][ j ] = prepare( aj.clone().lerp( bj, j / rows ) );
+					v[ i ][ j ] = aj.clone().lerp( bj, j / rows );
 
 				}
 
@@ -175,29 +139,25 @@ function PolyhedronGeometry( vertices, indices, radius, detail ) {
 
 		}
 
-		// Construct all of the faces.
+		// construct all of the faces
 
-		for ( var i = 0; i < cols ; i ++ ) {
+		for ( i = 0; i < cols; i ++ ) {
 
-			for ( var j = 0; j < 2 * ( cols - i ) - 1; j ++ ) {
+			for ( j = 0; j < 2 * ( cols - i ) - 1; j ++ ) {
 
 				var k = Math.floor( j / 2 );
 
 				if ( j % 2 === 0 ) {
 
-					make(
-						v[ i ][ k + 1 ],
-						v[ i + 1 ][ k ],
-						v[ i ][ k ]
-					);
+					pushVertex( v[ i ][ k + 1 ] );
+					pushVertex( v[ i + 1 ][ k ] );
+					pushVertex( v[ i ][ k ] );
 
 				} else {
 
-					make(
-						v[ i ][ k + 1 ],
-						v[ i + 1 ][ k + 1 ],
-						v[ i + 1 ][ k ]
-					);
+					pushVertex( v[ i ][ k + 1 ] );
+					pushVertex( v[ i + 1 ][ k + 1 ] );
+					pushVertex( v[ i + 1 ][ k ] );
 
 				}
 
@@ -207,6 +167,144 @@ function PolyhedronGeometry( vertices, indices, radius, detail ) {
 
 	}
 
+	function appplyRadius( radius ) {
+
+		var vertex = new Vector3();
+
+		// iterate over the entire buffer and apply the radius to each vertex
+
+		for ( var i = 0; i < vertexBuffer.length; i += 3 ) {
+
+			vertex.x = vertexBuffer[ i + 0 ];
+			vertex.y = vertexBuffer[ i + 1 ];
+			vertex.z = vertexBuffer[ i + 2 ];
+
+			vertex.normalize().multiplyScalar( radius );
+
+			vertexBuffer[ i + 0 ] = vertex.x;
+			vertexBuffer[ i + 1 ] = vertex.y;
+			vertexBuffer[ i + 2 ] = vertex.z;
+
+		}
+
+	}
+
+	function generateUVs() {
+
+		var vertex = new Vector3();
+
+		for ( var i = 0; i < vertexBuffer.length; i += 3 ) {
+
+			vertex.x = vertexBuffer[ i + 0 ];
+			vertex.y = vertexBuffer[ i + 1 ];
+			vertex.z = vertexBuffer[ i + 2 ];
+
+			var u = azimuth( vertex ) / 2 / Math.PI + 0.5;
+			var v = inclination( vertex ) / Math.PI + 0.5;
+			uvBuffer.push( u, 1 - v );
+
+		}
+
+		correctUVs();
+
+		correctSeam();
+
+	}
+
+	function correctSeam() {
+
+		// handle case when face straddles the seam, see #3269
+
+		for ( var i = 0; i < uvBuffer.length; i += 6 ) {
+
+			// uv data of a single face
+
+			var x0 = uvBuffer[ i + 0 ];
+			var x1 = uvBuffer[ i + 2 ];
+			var x2 = uvBuffer[ i + 4 ];
+
+			var max = Math.max( x0, x1, x2 );
+			var min = Math.min( x0, x1, x2 );
+
+			// 0.9 is somewhat arbitrary
+
+			if ( max > 0.9 && min < 0.1 ) {
+
+				if ( x0 < 0.2 ) uvBuffer[ i + 0 ] += 1;
+				if ( x1 < 0.2 ) uvBuffer[ i + 2 ] += 1;
+				if ( x2 < 0.2 ) uvBuffer[ i + 4 ] += 1;
+
+			}
+
+		}
+
+	}
+
+	function pushVertex( vertex ) {
+
+		vertexBuffer.push( vertex.x, vertex.y, vertex.z );
+
+	}
+
+	function getVertexByIndex( index, vertex ) {
+
+		var stride = index * 3;
+
+		vertex.x = vertices[ stride + 0 ];
+		vertex.y = vertices[ stride + 1 ];
+		vertex.z = vertices[ stride + 2 ];
+
+	}
+
+	function correctUVs() {
+
+		var a = new Vector3();
+		var b = new Vector3();
+		var c = new Vector3();
+
+		var centroid = new Vector3();
+
+		var uvA = new Vector2();
+		var uvB = new Vector2();
+		var uvC = new Vector2();
+
+		for ( var i = 0, j = 0; i < vertexBuffer.length; i += 9, j += 6 ) {
+
+			a.set( vertexBuffer[ i + 0 ], vertexBuffer[ i + 1 ], vertexBuffer[ i + 2 ] );
+			b.set( vertexBuffer[ i + 3 ], vertexBuffer[ i + 4 ], vertexBuffer[ i + 5 ] );
+			c.set( vertexBuffer[ i + 6 ], vertexBuffer[ i + 7 ], vertexBuffer[ i + 8 ] );
+
+			uvA.set( uvBuffer[ j + 0 ], uvBuffer[ j + 1 ] );
+			uvB.set( uvBuffer[ j + 2 ], uvBuffer[ j + 3 ] );
+			uvC.set( uvBuffer[ j + 4 ], uvBuffer[ j + 5 ] );
+
+			centroid.copy( a ).add( b ).add( c ).divideScalar( 3 );
+
+			var azi = azimuth( centroid );
+
+			correctUV( uvA, j + 0, a, azi );
+			correctUV( uvB, j + 2, b, azi );
+			correctUV( uvC, j + 4, c, azi );
+
+		}
+
+	}
+
+	function correctUV( uv, stride, vector, azimuth ) {
+
+		if ( ( azimuth < 0 ) && ( uv.x === 1 ) ) {
+
+			uvBuffer[ stride ] = uv.x - 1;
+
+		}
+
+		if ( ( vector.x === 0 ) && ( vector.z === 0 ) ) {
+
+			uvBuffer[ stride ] = azimuth / 2 / Math.PI + 0.5;
+
+		}
+
+	}
 
 	// Angle around the Y axis, counter-clockwise when looking from above.
 
@@ -225,21 +323,9 @@ function PolyhedronGeometry( vertices, indices, radius, detail ) {
 
 	}
 
-
-	// Texture fixing helper. Spheres have some odd behaviours.
-
-	function correctUV( uv, vector, azimuth ) {
-
-		if ( ( azimuth < 0 ) && ( uv.x === 1 ) ) uv = new Vector2( uv.x - 1, uv.y );
-		if ( ( vector.x === 0 ) && ( vector.z === 0 ) ) uv = new Vector2( azimuth / 2 / Math.PI + 0.5, uv.y );
-		return uv.clone();
-
-	}
-
 }
 
-PolyhedronGeometry.prototype = Object.create( Geometry.prototype );
-PolyhedronGeometry.prototype.constructor = PolyhedronGeometry;
+PolyhedronBufferGeometry.prototype = Object.create( BufferGeometry.prototype );
+PolyhedronBufferGeometry.prototype.constructor = PolyhedronBufferGeometry;
 
-
-export { PolyhedronGeometry };
+export { PolyhedronGeometry, PolyhedronBufferGeometry };

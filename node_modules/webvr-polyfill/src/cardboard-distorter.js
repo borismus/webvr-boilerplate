@@ -249,6 +249,7 @@ CardboardDistorter.prototype.patch = function() {
       },
       set: function(value) {
         self.bufferWidth = value;
+        self.realCanvasWidth.set.call(canvas, value);
         self.onResize();
       }
     });
@@ -261,6 +262,7 @@ CardboardDistorter.prototype.patch = function() {
       },
       set: function(value) {
         self.bufferHeight = value;
+        self.realCanvasHeight.set.call(canvas, value);
         self.onResize();
       }
     });

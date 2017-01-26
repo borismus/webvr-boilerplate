@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 
-var Emitter = require('./emitter.js');
-var Util = require('./util.js');
 var DeviceInfo = require('./device-info.js');
+var EventEmitter3 = require('eventemitter3');
+var Util = require('./util.js');
 
 var DEFAULT_VIEWER = 'CardboardV1';
 var VIEWER_KEY = 'WEBVR_CARDBOARD_VIEWER';
@@ -37,13 +37,12 @@ function ViewerSelector() {
   this.dialog = this.createDialog_(DeviceInfo.Viewers);
   this.root = null;
 }
-ViewerSelector.prototype = new Emitter();
+ViewerSelector.prototype = new EventEmitter3();
 
 ViewerSelector.prototype.show = function(root) {
   this.root = root;
 
   root.appendChild(this.dialog);
-  //console.log('ViewerSelector.show');
 
   // Ensure the currently selected item is checked.
   var selected = this.dialog.querySelector('#' + this.selectedKey);
@@ -57,7 +56,6 @@ ViewerSelector.prototype.hide = function() {
   if (this.root && this.root.contains(this.dialog)) {
     this.root.removeChild(this.dialog);
   }
-  //console.log('ViewerSelector.hide');
   this.dialog.style.display = 'none';
 };
 

@@ -1,15 +1,11 @@
-import { Geometry } from '../core/Geometry';
-import { Face3 } from '../core/Face3';
-import { Vector2 } from '../math/Vector2';
-
 /**
  * @author zz85 / https://github.com/zz85
+ *
  * Parametric Surfaces Geometry
  * based on the brilliant article by @prideout http://prideout.net/blog/?p=44
- *
- * new THREE.ParametricGeometry( parametricFunction, uSegments, ySegements );
- *
  */
+
+import { Geometry } from '../core/Geometry';
 
 function ParametricGeometry( func, slices, stacks ) {
 
@@ -23,70 +19,98 @@ function ParametricGeometry( func, slices, stacks ) {
 		stacks: stacks
 	};
 
-	var verts = this.vertices;
-	var faces = this.faces;
-	var uvs = this.faceVertexUvs[ 0 ];
-
-	var i, j, p;
-	var u, v;
-
-	var sliceCount = slices + 1;
-
-	for ( i = 0; i <= stacks; i ++ ) {
-
-		v = i / stacks;
-
-		for ( j = 0; j <= slices; j ++ ) {
-
-			u = j / slices;
-
-			p = func( u, v );
-			verts.push( p );
-
-		}
-
-	}
-
-	var a, b, c, d;
-	var uva, uvb, uvc, uvd;
-
-	for ( i = 0; i < stacks; i ++ ) {
-
-		for ( j = 0; j < slices; j ++ ) {
-
-			a = i * sliceCount + j;
-			b = i * sliceCount + j + 1;
-			c = ( i + 1 ) * sliceCount + j + 1;
-			d = ( i + 1 ) * sliceCount + j;
-
-			uva = new Vector2( j / slices, i / stacks );
-			uvb = new Vector2( ( j + 1 ) / slices, i / stacks );
-			uvc = new Vector2( ( j + 1 ) / slices, ( i + 1 ) / stacks );
-			uvd = new Vector2( j / slices, ( i + 1 ) / stacks );
-
-			faces.push( new Face3( a, b, d ) );
-			uvs.push( [ uva, uvb, uvd ] );
-
-			faces.push( new Face3( b, c, d ) );
-			uvs.push( [ uvb.clone(), uvc, uvd.clone() ] );
-
-		}
-
-	}
-
-	// console.log(this);
-
-	// magic bullet
-	// var diff = this.mergeVertices();
-	// console.log('removed ', diff, ' vertices by merging');
-
-	this.computeFaceNormals();
-	this.computeVertexNormals();
+	this.fromBufferGeometry( new ParametricBufferGeometry( func, slices, stacks ) );
+	this.mergeVertices();
 
 }
 
 ParametricGeometry.prototype = Object.create( Geometry.prototype );
 ParametricGeometry.prototype.constructor = ParametricGeometry;
 
+/**
+ * @author Mugen87 / https://github.com/Mugen87
+ *
+ * Parametric Surfaces Geometry
+ * based on the brilliant article by @prideout http://prideout.net/blog/?p=44
+ */
 
-export { ParametricGeometry };
+import { BufferGeometry } from '../core/BufferGeometry';
+import { Float32BufferAttribute } from '../core/BufferAttribute';
+
+function ParametricBufferGeometry( func, slices, stacks ) {
+
+	BufferGeometry.call( this );
+
+	this.type = 'ParametricBufferGeometry';
+
+	this.parameters = {
+		func: func,
+		slices: slices,
+		stacks: stacks
+	};
+
+	// buffers
+
+	var indices = [];
+	var vertices = [];
+	var uvs = [];
+
+	var i, j;
+
+	// generate vertices and uvs
+
+	var sliceCount = slices + 1;
+
+	for ( i = 0; i <= stacks; i ++ ) {
+
+		var v = i / stacks;
+
+		for ( j = 0; j <= slices; j ++ ) {
+
+			var u = j / slices;
+
+			var p = func( u, v );
+			vertices.push( p.x, p.y, p.z );
+
+			uvs.push( u, v );
+
+		}
+
+	}
+
+	// generate indices
+
+	for ( i = 0; i < stacks; i ++ ) {
+
+		for ( j = 0; j < slices; j ++ ) {
+
+			var a = i * sliceCount + j;
+			var b = i * sliceCount + j + 1;
+			var c = ( i + 1 ) * sliceCount + j + 1;
+			var d = ( i + 1 ) * sliceCount + j;
+
+			// faces one and two
+
+			indices.push( a, b, d );
+			indices.push( b, c, d );
+
+		}
+
+	}
+
+	// build geometry
+
+	this.setIndex( indices );
+	this.addAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
+	this.addAttribute( 'uv', new Float32BufferAttribute( uvs, 2 ) );
+
+	// generate normals
+
+	this.computeVertexNormals();
+
+}
+
+ParametricBufferGeometry.prototype = Object.create( BufferGeometry.prototype );
+ParametricBufferGeometry.prototype.constructor = ParametricBufferGeometry;
+
+export { ParametricGeometry, ParametricBufferGeometry };

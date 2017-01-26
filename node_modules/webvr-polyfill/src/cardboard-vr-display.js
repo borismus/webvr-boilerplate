@@ -103,7 +103,9 @@ CardboardVRDisplay.prototype.getEyeParameters = function(whichEye) {
 };
 
 CardboardVRDisplay.prototype.onDeviceParamsUpdated_ = function(newParams) {
-  console.log('DPDB reported that device params were updated.');
+  if (Util.isDebug()) {
+    console.log('DPDB reported that device params were updated.');
+  }
   this.deviceInfo_.updateDeviceParams(newParams);
 
   if (this.distorter_) {
@@ -215,8 +217,6 @@ CardboardVRDisplay.prototype.submitFrame = function(pose) {
 };
 
 CardboardVRDisplay.prototype.onOrientationChange_ = function(e) {
-  console.log('onOrientationChange_');
-
   // Hide the viewer selector.
   this.viewerSelector_.hide();
 

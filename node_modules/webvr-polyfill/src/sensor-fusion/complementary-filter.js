@@ -17,8 +17,6 @@ var SensorSample = require('./sensor-sample.js');
 var MathUtil = require('../math-util.js');
 var Util = require('../util.js');
 
-var DEBUG = false;
-
 /**
  * An implementation of a simple complementary filter, which fuses gyroscope and
  * accelerometer data from the 'devicemotion' event.
@@ -117,7 +115,7 @@ ComplementaryFilter.prototype.run_ = function() {
   deltaQ.setFromUnitVectors(this.estimatedGravity, this.measuredGravity);
   deltaQ.inverse();
 
-  if (DEBUG) {
+  if (Util.isDebug()) {
     console.log('Delta: %d deg, G_est: (%s, %s, %s), G_meas: (%s, %s, %s)',
                 MathUtil.radToDeg * Util.getQuaternionAngle(deltaQ),
                 (this.estimatedGravity.x).toFixed(1),

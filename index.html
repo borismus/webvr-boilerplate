@@ -87,11 +87,6 @@ WebVRConfig = {
   -->
 <script src="node_modules/webvr-polyfill/build/webvr-polyfill.js"></script>
 
-<!--
-  Helps enter and exit VR mode, provides best practices while in VR.
-  -->
-<script src="build/webvr-manager.js"></script>
-
 
 <script>
 // Setup three.js WebGL renderer. Note: Antialiasing is a big performance hit.
@@ -150,7 +145,6 @@ var params = {
   hideButton: false, // Default: false.
   isUndistorted: false // Default: false.
 };
-var manager = new WebVRManager(renderer, effect, params);
 
 // Create 3D objects.
 var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
@@ -176,8 +170,7 @@ function animate(timestamp) {
   cube.rotation.y += delta * 0.0006;
 
   controls.update();
-  // Render the scene through the manager.
-  manager.render(scene, camera, timestamp);
+  // Render the scene.
   effect.render(scene, camera);
 
   vrDisplay.requestAnimationFrame(animate);
