@@ -18,11 +18,29 @@ body {
   padding: 0;
   overflow: hidden;
 }
+
+/* Position the button on the bottom of the page. */
+#ui {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  display: initial;
+  font-family: 'Karla', sans-serif;
+}
+
+a {
+  color: white;
+}
 </style>
 </head>
 
 <body>
-
+  <div id="ui">
+    <div id="vr-button"></div>
+    <a id="magic-window" href="#">Try it without a headset</a>
+  </div>
 </body>
 
 <script>
@@ -64,58 +82,102 @@ WebVRConfig = {
 
 <!--
   A polyfill for Promises. Needed for IE and Edge.
-  -->
+-->
 <script src="node_modules/es6-promise/dist/es6-promise.js"></script>
 
 <!--
   three.js 3d library
-  -->
+-->
 <script src="node_modules/three/build/three.min.js"></script>
 
 <!--
   VRControls.js acquires positional information from connected VR devices and applies the transformations to a three.js camera object.
-   -->
+-->
 <script src="node_modules/three/examples/js/controls/VRControls.js"></script>
 
 <!--
   VREffect.js handles stereo camera setup and rendering.
-  -->
+-->
 <script src="node_modules/three/examples/js/effects/VREffect.js"></script>
 
 <!--
   A polyfill for WebVR using the Device{Motion,Orientation}Event API.
-  -->
+-->
 <script src="node_modules/webvr-polyfill/build/webvr-polyfill.js"></script>
+
+<!--
+  A set of UI controls for entering VR mode.
+-->
+<script src="node_modules/webvr-ui/build/webvr-ui.js"></script>
 
 
 <script>
-// Setup three.js WebGL renderer. Note: Antialiasing is a big performance hit.
-// Only enable it if you actually need to.
-var renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setPixelRatio(window.devicePixelRatio);
-
-// Append the canvas element created by the renderer to document body element.
-document.body.appendChild(renderer.domElement);
-
-// Create a three.js scene.
-var scene = new THREE.Scene();
-
-// Create a three.js camera.
-var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-
-var controls = new THREE.VRControls(camera);
-controls.standing = true;
-controls.standing = true;
-
-// Apply VR stereo rendering to renderer.
-var effect = new THREE.VREffect(renderer);
-effect.setSize(window.innerWidth, window.innerHeight);
-
-
-// Add a repeating grid as a skybox.
+// Last time the scene was rendered.
+var lastRenderTime = 0;
+// Currently active VRDisplay.
+var vrDisplay;
+// How big of a box to render.
 var boxSize = 5;
-var loader = new THREE.TextureLoader();
-loader.load('img/box.png', onTextureLoaded);
+// Various global THREE.Objects.
+var scene;
+var cube;
+var controls;
+var effect;
+var camera;
+
+
+function onLoad() {
+  // Setup three.js WebGL renderer. Note: Antialiasing is a big performance hit.
+  // Only enable it if you actually need to.
+  var renderer = new THREE.WebGLRenderer({antialias: true});
+  renderer.setPixelRatio(window.devicePixelRatio);
+
+  // Append the canvas element created by the renderer to document body element.
+  document.body.appendChild(renderer.domElement);
+
+  // Create a three.js scene.
+  scene = new THREE.Scene();
+
+  // Create a three.js camera.
+  var aspect = window.innerWidth / window.innerHeight;
+  camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 10000);
+
+  controls = new THREE.VRControls(camera);
+  controls.standing = true;
+
+  // Apply VR stereo rendering to renderer.
+  effect = new THREE.VREffect(renderer);
+  effect.setSize(window.innerWidth, window.innerHeight);
+
+  // Add a repeating grid as a skybox.
+  var loader = new THREE.TextureLoader();
+  loader.load('img/box.png', onTextureLoaded);
+
+  // Create 3D objects.
+  var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+  var material = new THREE.MeshNormalMaterial();
+  cube = new THREE.Mesh(geometry, material);
+
+  // Position cube mesh to be right in front of you.
+  cube.position.set(0, controls.userHeight, -1);
+
+  // Add cube mesh to your three.js scene
+  scene.add(cube);
+
+  window.addEventListener('resize', onResize, true);
+  window.addEventListener('vrdisplaypresentchange', onResize, true);
+
+  // Initialize the WebVR UI.
+  var uiOptions = {
+    color: 'black',
+    background: 'white',
+    corners: 'square'
+  };
+  var enterVR = new webvrui.EnterVRButton(renderer.domElement, uiOptions);
+  document.getElementById('vr-button').appendChild(enterVR.domElement);
+  document.getElementById('magic-window').addEventListener('click',
+      enterVR.requestEnterFullscreen.bind(enterVR));
+}
 
 function onTextureLoaded(texture) {
   texture.wrapS = THREE.RepeatWrapping;
@@ -140,31 +202,11 @@ function onTextureLoaded(texture) {
 }
 
 
-// Create a VR manager helper to enter and exit VR mode.
-var params = {
-  hideButton: false, // Default: false.
-  isUndistorted: false // Default: false.
-};
-
-// Create 3D objects.
-var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-var material = new THREE.MeshNormalMaterial();
-var cube = new THREE.Mesh(geometry, material);
-
-// Position cube mesh to be right in front of you.
-cube.position.set(0, controls.userHeight, -1);
-
-// Add cube mesh to your three.js scene
-scene.add(cube);
-
-window.addEventListener('resize', onResize, true);
-window.addEventListener('vrdisplaypresentchange', onResize, true);
 
 // Request animation frame loop function
-var lastRender = 0;
 function animate(timestamp) {
-  var delta = Math.min(timestamp - lastRender, 500);
-  lastRender = timestamp;
+  var delta = Math.min(timestamp - lastRenderTime, 500);
+  lastRenderTime = timestamp;
 
   // Apply rotation to cube mesh
   cube.rotation.y += delta * 0.0006;
@@ -181,8 +223,6 @@ function onResize(e) {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 }
-
-var vrDisplay;
 
 // Get the HMD, and if we're dealing with something that specifies
 // stageParameters, rearrange the scene.
@@ -214,6 +254,8 @@ function setStageDimensions(stage) {
   // Place the cube in the middle of the scene, at user height.
   cube.position.set(0, controls.userHeight, 0);
 }
+
+window.addEventListener('load', onLoad);
 
 </script>
 
