@@ -26,8 +26,8 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  display: initial;
   font-family: 'Karla', sans-serif;
+  z-index: 1;
 }
 
 a {
@@ -124,6 +124,8 @@ var cube;
 var controls;
 var effect;
 var camera;
+// EnterVRButton for rendering enter/exit UI.
+var vrButton;
 
 
 function onLoad() {
@@ -144,6 +146,7 @@ function onLoad() {
 
   controls = new THREE.VRControls(camera);
   controls.standing = true;
+  camera.position.y = controls.userHeight;
 
   // Apply VR stereo rendering to renderer.
   effect = new THREE.VREffect(renderer);
@@ -173,10 +176,21 @@ function onLoad() {
     background: 'white',
     corners: 'square'
   };
-  var enterVR = new webvrui.EnterVRButton(renderer.domElement, uiOptions);
-  document.getElementById('vr-button').appendChild(enterVR.domElement);
-  document.getElementById('magic-window').addEventListener('click',
-      enterVR.requestEnterFullscreen.bind(enterVR));
+  vrButton = new webvrui.EnterVRButton(renderer.domElement, uiOptions);
+  vrButton.on('exit', function() {
+    camera.quaternion.set(0, 0, 0, 1);
+    camera.position.set(0, controls.userHeight, 0);
+  });
+  vrButton.on('hide', function() {
+    document.getElementById('ui').style.display = 'none';
+  });
+  vrButton.on('show', function() {
+    document.getElementById('ui').style.display = 'inherit';
+  });
+  document.getElementById('vr-button').appendChild(vrButton.domElement);
+  document.getElementById('magic-window').addEventListener('click', function() {
+    vrButton.requestEnterFullscreen();
+  });
 }
 
 function onTextureLoaded(texture) {
@@ -211,7 +225,10 @@ function animate(timestamp) {
   // Apply rotation to cube mesh
   cube.rotation.y += delta * 0.0006;
 
-  controls.update();
+  // Only update controls if we're presenting.
+  if (vrButton.isPresenting()) {
+    controls.update();
+  }
   // Render the scene.
   effect.render(scene, camera);
 
