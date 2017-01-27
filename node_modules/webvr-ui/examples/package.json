@@ -1,0 +1,26 @@
+{
+  "name": "webvr-ui-example",
+  "version": "0.0.1",
+  "description": "Example of using WebVR UI Library",
+  "authors": [
+    "Kyle Phillips <kylephillips@google.com>",
+    "Jonas Jongejan <jongejan@google.com>"
+  ],
+  "dependencies": {
+    "three": "^0.84.0",
+    "webvr-polyfill": "^0.9.25"
+  },
+  "keywords": [
+    "vr",
+    "webvr"
+  ],
+  "license": "Apache-2.0",
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
+  },
+  "directories": {
+    "example": "example"
+  }
+}

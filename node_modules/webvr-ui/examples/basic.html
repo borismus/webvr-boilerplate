@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <title>WebVR UI | Basic Example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Origin Trial Token, feature = WebVR, origin = https://googlevr.github.io, expires = 2017-03-08 -->
+    <meta http-equiv="origin-trial" data-feature="WebVR" data-expires="2017-03-08" content="Avj04jeNgDLWRsM4igk+VQv+mYTFHk+8PlUpFGhlKHBQ67cYkrCm1XqG68vNvw/LpzOZdTAm2G7AdL8V2GUjaAIAAABReyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXZyLmdpdGh1Yi5pbzo0NDMiLCJmZWF0dXJlIjoiV2ViVlIiLCJleHBpcnkiOjE0ODg5ODYzMjV9">
+
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+            font-family: 'Karla', sans-serif;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+        }
+
+        p {
+            margin:0;
+        }
+
+        #ui {
+            color: white;
+            text-align: center;
+            z-index: 1;
+
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 300px;
+        }
+
+        #button {
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        a {
+            color: white;
+        }
+
+        #exit {
+            display: none;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 25px;
+            text-decoration: none;
+            z-index: 2;
+        }
+
+        #learn-more {
+            display: none;
+        }
+    </style>
+
+
+    <!-- three.js library -->
+    <script src="node_modules/three/build/three.js"></script>
+
+    <!-- VRControls.js applies the WebVR transformations to a three.js camera object. -->
+    <script src="node_modules/three/examples/js/controls/VRControls.js"></script>
+
+    <!-- VREffect.js handles stereo camera setup and rendering.  -->
+    <script src="node_modules/three/examples/js/effects/VREffect.js"></script>
+
+    <!-- A polyfill for the WebVR API.  -->
+    <script src="node_modules/webvr-polyfill/build/webvr-polyfill.js"></script>
+
+    <!-- Include WebVR UI -->
+    <script src="../build/webvr-ui.js"></script>
+
+</head>
+<body>
+
+<div id="ui">
+    <h1>WebVR UI Basic Example</h1>
+    <p>Example showing how to enter VR and without headset</p>
+
+    <div id="button"></div>
+
+    <div id="help">
+        <a href="#" onclick="enterVR.requestEnterFullscreen()">Try it without a headset</a>
+        <span id="learn-more">
+            or <a href="https://webvr.info" target="_blank">get set up in VR.</a>
+        </span>
+
+    </div>
+</div>
+<a href="#" id="exit" onclick="enterVR.requestExit()">✕</a>
+
+<!-- Github corner-->
+<div class="github-corner-wrap"><a href="https://github.com/googlevr/webvr-ui/blob/master/examples/basic.html" class="github-corner" aria-label="View source on Github"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#fff; color:#151513; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a></div><style>.github-corner-wrap{position: absolute; right:0; z-index: 1} .github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+</body>
+
+<script>
+    // Setup three.js WebGL renderer.
+    var renderer = new THREE.WebGLRenderer();
+
+    // Create perspective camera used in VR
+    var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+
+    //
+    // BUTTON SETUP
+    //
+
+    // Create WebVR UI Enter VR Button
+    var options = {
+        color: 'white',
+        background: false,
+        corners: 'square'
+    };
+
+    var enterVR = new webvrui.EnterVRButton(renderer.domElement, options)
+            .on("enter", function(){
+                console.log("enter VR")
+            })
+            .on("exit", function(){
+                console.log("exit VR");
+                camera.quaternion.set(0,0,0,1);
+                camera.position.set(0,controls.userHeight,0);
+            })
+            .on("error", function(error){
+                document.getElementById("learn-more").style.display = "inline";
+                console.error(error)
+            })
+            .on("hide", function(){
+                document.getElementById("ui").style.display = "none";
+                // On iOS there is no button to close fullscreen mode, so we need to provide one
+                if(enterVR.state == webvrui.State.PRESENTING_FULLSCREEN) document.getElementById("exit").style.display = "initial";
+            })
+            .on("show", function(){
+                document.getElementById("ui").style.display = "inherit";
+                document.getElementById("exit").style.display = "none";
+            });
+
+
+    // Add button to the #button element
+    document.getElementById("button").appendChild(enterVR.domElement);
+
+    //
+    // WEBGL SCENE SETUP
+    //
+
+    // Append the canvas element created by the renderer to document body element.
+    document.body.appendChild(renderer.domElement);
+
+    // Create a three.js scene.
+    var scene = new THREE.Scene();
+
+    // Create a three.js camera.
+    var controls = new THREE.VRControls(camera);
+    controls.standing = true;
+    camera.position.y = controls.userHeight;
+
+    // Create VR Effect rendering in stereoscopic mode
+    var effect = new THREE.VREffect(renderer);
+    effect.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
+
+    // Create 3D objects in scene.
+    var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    var material = new THREE.MeshNormalMaterial();
+    var cube = new THREE.Mesh(geometry, material);
+    cube.position.set(0, controls.userHeight, -0.8);
+    scene.add(cube);
+
+    // Hande canvas resizing
+    window.addEventListener('resize', onResize, true);
+    window.addEventListener('vrdisplaypresentchange', onResize, true);
+
+    function onResize(e) {
+        effect.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+    }
+
+    // Get the HMD
+    var animationDisplay;
+    enterVR.getVRDisplay()
+            .then(function(display) {
+                animationDisplay = display;
+                display.requestAnimationFrame(animate);
+            })
+            .catch(function(){
+                // If there is no display available, fallback to window
+                animationDisplay = window;
+                window.requestAnimationFrame(animate);
+            });
+
+    // Request animation frame loop function
+    var lastRender = 0;
+    function animate(timestamp) {
+        var delta = Math.min(timestamp - lastRender, 500);
+        lastRender = timestamp;
+
+        // Apply rotation to cube mesh
+        cube.rotation.y += delta * 0.0003;
+
+        if(enterVR.isPresenting()){
+            controls.update();
+            renderer.render(scene,camera);
+            effect.render(scene, camera);
+        } else {
+            renderer.render(scene,camera);
+        }
+        animationDisplay.requestAnimationFrame(animate);
+    }
+</script>
+
+</html>

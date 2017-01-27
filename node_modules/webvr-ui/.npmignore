@@ -1,0 +1,14 @@
+# editor files
+.idea/
+*.swp
+
+### Node ###
+# Logs
+logs
+*.log
+npm-debug.log*
+
+
+node_modules
+
+.DS_Store

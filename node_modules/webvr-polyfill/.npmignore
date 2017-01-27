@@ -1,0 +1,16 @@
+*.log
+*.pid
+*.seed
+*.un~
+*~
+.DS_Store
+.netrwhist
+.node_repl_history
+.npm
+Session.vim
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+examples
+logs
+node_modules
+pids
