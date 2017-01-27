@@ -16,13 +16,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/borismus/webvr-boilerplate.git"
+    "url": "git+https://github.com/googlevr/webvr-boilerplate.git"
   },
   "keywords": ["vr"],
-  "author": "Boris Smus",
+  "author": "Boris Smus <boris@smus.com>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/borismus/webvr-boilerplate/issues"
+    "url": "https://github.com/googlevr/webvr-boilerplate/issues"
   },
-  "homepage": "https://github.com/borismus/webvr-boilerplate#readme"
+  "homepage": "https://github.com/googlevr/webvr-boilerplate#readme"
 }
