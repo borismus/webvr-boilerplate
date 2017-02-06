@@ -10,6 +10,7 @@ UI][ui] project to render the UI to enter VR and magic window modes.
 [three]: http://threejs.org/
 [polyfill]: https://github.com/googlevr/webvr-polyfill
 [ui]: https://github.com/googlevr/webvr-ui
+[spec]: https://w3c.github.io/webvr/
 
 ## Getting started
 
